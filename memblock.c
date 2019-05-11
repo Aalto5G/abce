@@ -5,6 +5,23 @@
 #include "murmur.h"
 #include "containerof.h"
 
+void *std_alloc(void *old, size_t newsz, void *alloc_baton)
+{
+  if (old == NULL)
+  {
+    return malloc(newsz == 0 ? 1 : newsz);
+  }
+  else if (newsz == 0)
+  {
+    free(old);
+    return NULL;
+  }
+  else
+  {
+    return realloc(old, newsz);
+  }
+}
+
 struct abce {
   void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
   void *alloc_baton;
@@ -51,7 +68,8 @@ enum type {
   T_PB, // packet buffer
   T_IOS,
   T_BP,
-  T_SP,
+  T_IP,
+  T_LP,
   T_A,
   T_SC,
   T_N,
@@ -91,6 +109,7 @@ memblock_create_string(struct abce *abce, const char *str, size_t sz)
   struct memblockarea *mba;
   struct memblock mb = {};
   mba = abce->alloc(NULL, sizeof(*mba) + sz + 1, abce->alloc_baton);
+  mba->u.str.size = sz;
   memcpy(mba->u.str.buf, str, sz);
   mba->u.str.buf[sz] = '\0';
   mba->refcnt = 1;
@@ -99,6 +118,11 @@ memblock_create_string(struct abce *abce, const char *str, size_t sz)
   return mb;
 }
 
+static inline struct memblock
+memblock_create_string_nul(struct abce *abce, const char *str)
+{
+  return memblock_create_string(abce, str, strlen(str));
+}
 
 static inline uint32_t str_hash(char *str)
 {
@@ -337,7 +361,7 @@ struct memblock memblock_create_scope(struct abce *abce, size_t capacity)
   size_t i;
 
   capacity = next_highest_power_of_2(capacity);
-  
+
   mba = abce->alloc(NULL, sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads),
                     abce->alloc_baton);
   mba->u.sc.size = capacity;
@@ -395,6 +419,7 @@ void memblock_refdn(struct abce *abce, struct memblock *mb)
           memblock_refdn(abce, &mbe->val);
           rb_tree_nocmp_delete(&mb->u.area->u.tree.tree,
                                mb->u.area->u.tree.tree.root);
+          abce->alloc(mbe, 0, abce->alloc_baton);
         }
         abce->alloc(mb->u.area, 0, abce->alloc_baton);
       }
@@ -413,6 +438,7 @@ void memblock_refdn(struct abce *abce, struct memblock *mb)
         {
           memblock_refdn(abce, &mb->u.area->u.ar.mbs[i]);
         }
+        abce->alloc(mb->u.area->u.ar.mbs, 0, abce->alloc_baton);
         abce->alloc(mb->u.area, 0, abce->alloc_baton);
       }
       break;
@@ -423,18 +449,23 @@ void memblock_refdn(struct abce *abce, struct memblock *mb)
       }
       break;
     case T_SC:
-      for (i = 0; i < mb->u.area->u.sc.size; i++)
+      if (!--mb->u.area->refcnt)
       {
-        while (mb->u.area->u.sc.heads[i].root != NULL)
+        for (i = 0; i < mb->u.area->u.sc.size; i++)
         {
-          struct memblock_rb_entry *mbe =
-            CONTAINER_OF(mb->u.area->u.sc.heads[i].root,
-                         struct memblock_rb_entry, n);
-          memblock_refdn(abce, &mbe->key);
-          memblock_refdn(abce, &mbe->val);
-          rb_tree_nocmp_delete(&mb->u.area->u.sc.heads[i],
-                               mb->u.area->u.sc.heads[i].root);
+          while (mb->u.area->u.sc.heads[i].root != NULL)
+          {
+            struct memblock_rb_entry *mbe =
+              CONTAINER_OF(mb->u.area->u.sc.heads[i].root,
+                           struct memblock_rb_entry, n);
+            memblock_refdn(abce, &mbe->key);
+            memblock_refdn(abce, &mbe->val);
+            rb_tree_nocmp_delete(&mb->u.area->u.sc.heads[i],
+                                 mb->u.area->u.sc.heads[i].root);
+            abce->alloc(mbe, 0, abce->alloc_baton);
+          }
         }
+        abce->alloc(mb->u.area, 0, abce->alloc_baton);
       }
       break;
     default:
@@ -445,6 +476,207 @@ void memblock_refdn(struct abce *abce, struct memblock *mb)
   mb->u.area = NULL;
 }
 
+void memblock_dump_impl(const struct memblock *mb);
+
+static inline void
+memblock_array_pop_back(struct abce *abce,
+                        struct memblock *mb, const struct memblock *it)
+{
+  if (mb->typ != T_A)
+  {
+    abort();
+  }
+  if (mb->u.area->u.ar.size <= 0)
+  {
+    abort();
+  }
+  memblock_refdn(abce, &mb->u.area->u.ar.mbs[--mb->u.area->u.ar.size]);
+}
+
+static inline void
+memblock_array_append(struct abce *abce,
+                      struct memblock *mb, const struct memblock *it)
+{
+  if (mb->typ != T_A)
+  {
+    abort();
+  }
+  if (mb->u.area->u.ar.size >= mb->u.area->u.ar.capacity)
+  {
+    size_t new_cap = 2*mb->u.area->u.ar.size + 1;
+    struct memblock *mbs2;
+    mbs2 = abce->alloc(mb->u.area->u.ar.mbs,
+                       sizeof(*mb->u.area->u.ar.mbs)*new_cap,
+                       abce->alloc_baton);
+    mb->u.area->u.ar.capacity = new_cap;
+    mb->u.area->u.ar.mbs = mbs2;
+  }
+  mb->u.area->u.ar.mbs[mb->u.area->u.ar.size++] = memblock_refup(abce, it);
+}
+
+void memblock_treedump(const struct rb_tree_node *n, int *first)
+{
+  struct memblock_rb_entry *e = CONTAINER_OF(n, struct memblock_rb_entry, n);
+  if (n == NULL)
+  {
+    return;
+  }
+  if (*first)
+  {
+    *first = 0;
+  }
+  else
+  {
+    printf(", ");
+  }
+  memblock_treedump(n->left, first);
+  memblock_dump_impl(&e->key);
+  printf(": ");
+  memblock_dump_impl(&e->val);
+  memblock_treedump(n->right, first);
+}
+
+void dump_str(const char *str, size_t sz)
+{
+  size_t i;
+  printf("\"");
+  for (i = 0; i < sz; i++)
+  {
+    unsigned char uch = (unsigned char)str[i];
+    if (uch == '\n')
+    {
+      printf("\\n");
+    }
+    else if (uch == '\r')
+    {
+      printf("\\r");
+    }
+    else if (uch == '\t')
+    {
+      printf("\\t");
+    }
+    else if (uch == '\b')
+    {
+      printf("\\b");
+    }
+    else if (uch == '\f')
+    {
+      printf("\\f");
+    }
+    else if (uch == '\\')
+    {
+      printf("\\\\");
+    }
+    else if (uch == '"')
+    {
+      printf("\"");
+    }
+    else if (uch < 0x20)
+    {
+      printf("\\u%.4X", uch);
+    }
+    else
+    {
+      putchar(uch);
+    }
+  }
+  printf("\"");
+}
+
+void memblock_dump_impl(const struct memblock *mb)
+{
+  size_t i;
+  int first = 1;
+  switch (mb->typ)
+  {
+    case T_PB:
+      printf("pb");
+      break;
+    case T_N:
+      printf("null");
+      break;
+    case T_D:
+      printf("%.20g", mb->u.d);
+      break;
+    case T_B:
+      printf("%s", mb->u.d ? "true" : "false");
+      break;
+    case T_F:
+      printf("fun(%lld)", (long long)mb->u.d);
+      break;
+    case T_BP:
+      printf("bp(%lld)", (long long)mb->u.d);
+      break;
+    case T_IP:
+      printf("ip(%lld)", (long long)mb->u.d);
+      break;
+    case T_LP:
+      printf("lp(%lld)", (long long)mb->u.d);
+      break;
+    case T_IOS:
+      printf("ios(%p)", mb->u.area);
+      break;
+    case T_A:
+      printf("[");
+      for (i = 0; i < mb->u.area->u.ar.size; i++)
+      {
+        if (i != 0)
+        {
+          printf(", ");
+        }
+        memblock_dump_impl(&mb->u.area->u.ar.mbs[i]);
+      }
+      printf("]");
+      break;
+    case T_SC:
+      printf("sc(%zu){", mb->u.area->u.sc.size);
+      for (i = 0; i < mb->u.area->u.sc.size; i++)
+      {
+        memblock_treedump(mb->u.area->u.sc.heads[i].root, &first);
+      }
+      printf("}");
+      break;
+    case T_T:
+      printf("{");
+      memblock_treedump(mb->u.area->u.tree.tree.root, &first);
+      printf("}");
+      break;
+    case T_S:
+      dump_str(mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      break;
+  }
+}
+
+void memblock_dump(const struct memblock *mb)
+{
+  memblock_dump_impl(mb);
+  printf("\n");
+}
+
 int main(int argc, char **argv)
 {
+  struct abce real_abce = {.alloc = std_alloc};
+  struct abce *abce = &real_abce;
+  struct memblock mba = memblock_create_array(abce);
+  struct memblock mbsc = memblock_create_scope(abce, 16);
+  struct memblock mbs1 = memblock_create_string_nul(abce, "foo");
+  struct memblock mbs2 = memblock_create_string_nul(abce, "bar");
+  struct memblock mbs3 = memblock_create_string_nul(abce, "baz");
+  struct memblock mbs4 = memblock_create_string_nul(abce, "barf");
+  struct memblock mbs5 = memblock_create_string_nul(abce, "quux");
+  memblock_array_append(abce, &mba, &mbs1);
+  memblock_array_append(abce, &mba, &mbs2);
+  memblock_array_append(abce, &mba, &mbs3);
+  sc_put_val_mb(abce, &mbsc, &mbs1, &mbs2);
+  sc_put_val_mb(abce, &mbsc, &mbs3, &mbs4);
+  memblock_dump(&mba);
+  memblock_dump(&mbsc);
+  memblock_refdn(abce, &mba);
+  memblock_refdn(abce, &mbsc);
+  memblock_refdn(abce, &mbs1);
+  memblock_refdn(abce, &mbs2);
+  memblock_refdn(abce, &mbs3);
+  memblock_refdn(abce, &mbs4);
+  memblock_refdn(abce, &mbs5);
+  return 0;
 }
