@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #include "rbtree.h"
 #include "murmur.h"
 #include "containerof.h"
@@ -778,6 +780,56 @@ void memblock_dump(const struct memblock *mb)
   printf("\n");
 }
 
+static inline size_t topages(size_t limit)
+{
+  long pagesz = sysconf(_SC_PAGE_SIZE);
+  size_t pages, actlimit;
+  if (pagesz <= 0)
+  {
+    abort();
+  }
+  limit *= sizeof(struct memblock);
+  pages = (limit + (pagesz-1)) / pagesz;
+  actlimit = pages * pagesz;
+  return actlimit;
+}
+
+struct memblock *alloc_stack(size_t limit)
+{
+  return mmap(NULL, topages(limit), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+}
+
+void free_stack(struct memblock *stackbase, size_t limit)
+{
+  if (munmap(stackbase, topages(limit)) != 0)
+  {
+    abort();
+  }
+}
+
+void stacktest(struct abce *abce, struct memblock *stackbase, size_t limit)
+{
+  size_t sp = 0;
+  size_t i;
+  for (i = 0; i < 10000; i++)
+  {
+    stackbase[sp++] = memblock_create_array(abce);
+  }
+
+  while (sp > 0)
+  {
+    memblock_refdn(abce, &stackbase[--sp]);
+  }
+}
+
+void stacktest_main(struct abce *abce)
+{
+  size_t limit = 1024*1024;
+  struct memblock *stackbase = alloc_stack(limit);
+  stacktest(abce, stackbase, limit);
+  free_stack(stackbase, limit);
+}
+
 int main(int argc, char **argv)
 {
   struct abce real_abce = {.alloc = std_alloc};
@@ -812,5 +864,6 @@ int main(int argc, char **argv)
   memblock_refdn(abce, &mbs3);
   memblock_refdn(abce, &mbs4);
   memblock_refdn(abce, &mbs5);
+  stacktest_main(abce);
   return 0;
 }
