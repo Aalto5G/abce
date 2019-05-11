@@ -139,7 +139,7 @@ memblock_create_string_nul(struct abce *abce, const char *str)
   return memblock_create_string(abce, str, strlen(str));
 }
 
-static inline uint32_t str_hash(char *str)
+static inline uint32_t str_hash(const char *str)
 {
   size_t len = strlen(str);
   return murmur_buf(0x12345678U, str, len);
@@ -152,7 +152,7 @@ static inline uint32_t mb_str_hash(const struct memblock *mb)
   }
   return murmur_buf(0x12345678U, mb->u.area->u.str.buf, mb->u.area->u.str.size);
 }
-static inline int str_cmp_asym(char *str, struct rb_tree_node *n2, void *ud)
+static inline int str_cmp_asym(const char *str, struct rb_tree_node *n2, void *ud)
 {
   struct memblock_rb_entry *e = CONTAINER_OF(n2, struct memblock_rb_entry, n);
   size_t len1 = strlen(str);
@@ -247,17 +247,12 @@ static inline int str_cmp_sym(
   return 0;
 }
 
-static inline const struct memblock *sc_get_myval_mb(
-  const struct memblock *mb, const struct memblock *key)
+static inline const struct memblock *sc_get_myval_mb_area(
+  const struct memblockarea *mba, const struct memblock *key)
 {
-  struct memblockarea *mba = mb->u.area;
   uint32_t hashval;
   size_t hashloc;
   struct rb_tree_node *n;
-  if (mb->typ != T_SC)
-  {
-    abort();
-  }
   if (key->typ != T_S)
   {
     abort();
@@ -272,17 +267,22 @@ static inline const struct memblock *sc_get_myval_mb(
   return &CONTAINER_OF(n, struct memblock_rb_entry, n)->val;
 }
 
-static inline const struct memblock *sc_get_myval_str(
-  const struct memblock *mb, char *str)
+static inline const struct memblock *sc_get_myval_mb(
+  const struct memblock *mb, const struct memblock *key)
 {
-  struct memblockarea *mba = mb->u.area;
-  uint32_t hashval;
-  size_t hashloc;
-  struct rb_tree_node *n;
   if (mb->typ != T_SC)
   {
     abort();
   }
+  return sc_get_myval_mb_area(mb->u.area, key);
+}
+
+static inline const struct memblock *sc_get_myval_str_area(
+  const struct memblockarea *mba, const char *str)
+{
+  uint32_t hashval;
+  size_t hashloc;
+  struct rb_tree_node *n;
   hashval = str_hash(str);
   hashloc = hashval & (mba->u.sc.size - 1);
   n = RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], str_cmp_asym, NULL, str);
@@ -291,6 +291,65 @@ static inline const struct memblock *sc_get_myval_str(
     return NULL;
   }
   return &CONTAINER_OF(n, struct memblock_rb_entry, n)->val;
+}
+
+static inline const struct memblock *sc_get_myval_str(
+  const struct memblock *mb, const char *str)
+{
+  if (mb->typ != T_SC)
+  {
+    abort();
+  }
+  return sc_get_myval_str_area(mb->u.area, str);
+}
+
+const struct memblock *sc_get_rec_mb_area(
+  const struct memblockarea *mba, const struct memblock *it)
+{
+  const struct memblock *mb = sc_get_myval_mb_area(mba, it);
+  if (mb != NULL)
+  {
+    return mb;
+  }
+  if (mba->u.sc.parent != NULL && !mba->u.sc.holey)
+  {
+    return sc_get_rec_mb_area(mba->u.sc.parent, it);
+  }
+  return NULL;
+}
+
+const struct memblock *
+sc_get_rec_mb(const struct memblock *mb, const struct memblock *it)
+{
+  if (mb->typ != T_SC)
+  {
+    abort();
+  }
+  return sc_get_rec_mb_area(mb->u.area, it);
+}
+
+const struct memblock *sc_get_rec_str_area(
+  const struct memblockarea *mba, const char *str)
+{
+  const struct memblock *mb = sc_get_myval_str_area(mba, str);
+  if (mb != NULL)
+  {
+    return mb;
+  }
+  if (mba->u.sc.parent != NULL && !mba->u.sc.holey)
+  {
+    return sc_get_rec_str_area(mba->u.sc.parent, str);
+  }
+  return NULL;
+}
+const struct memblock *
+sc_get_rec_str(const struct memblock *mb, const char *str)
+{
+  if (mb->typ != T_SC)
+  {
+    abort();
+  }
+  return sc_get_rec_str_area(mb->u.area, str);
 }
 
 static inline int sc_put_val_mb(
@@ -724,7 +783,8 @@ int main(int argc, char **argv)
   struct abce real_abce = {.alloc = std_alloc};
   struct abce *abce = &real_abce;
   struct memblock mba = memblock_create_array(abce);
-  struct memblock mbsc = memblock_create_scope_noparent(abce, 16);
+  struct memblock mbsc1 = memblock_create_scope_noparent(abce, 16);
+  struct memblock mbsc2 = memblock_create_scope(abce, 16, &mbsc1, 0);
   struct memblock mbs1 = memblock_create_string_nul(abce, "foo");
   struct memblock mbs2 = memblock_create_string_nul(abce, "bar");
   struct memblock mbs3 = memblock_create_string_nul(abce, "baz");
@@ -733,12 +793,20 @@ int main(int argc, char **argv)
   memblock_array_append(abce, &mba, &mbs1);
   memblock_array_append(abce, &mba, &mbs2);
   memblock_array_append(abce, &mba, &mbs3);
-  sc_put_val_mb(abce, &mbsc, &mbs1, &mbs2);
-  sc_put_val_mb(abce, &mbsc, &mbs3, &mbs4);
+  sc_put_val_mb(abce, &mbsc1, &mbs1, &mbs2);
+  sc_put_val_mb(abce, &mbsc1, &mbs3, &mbs4);
+  sc_put_val_mb(abce, &mbsc2, &mbs2, &mbs1);
+  sc_put_val_mb(abce, &mbsc2, &mbs4, &mbs3);
   memblock_dump(&mba);
-  memblock_dump(&mbsc);
+  memblock_dump(&mbsc1);
+  memblock_dump(&mbsc2);
+  memblock_dump(sc_get_rec_str(&mbsc2, "foo"));
+  memblock_dump(sc_get_rec_str(&mbsc2, "bar"));
+  memblock_dump(sc_get_rec_str(&mbsc2, "baz"));
+  memblock_dump(sc_get_rec_str(&mbsc2, "barf"));
   memblock_refdn(abce, &mba);
-  memblock_refdn(abce, &mbsc);
+  memblock_refdn(abce, &mbsc1);
+  memblock_refdn(abce, &mbsc2);
   memblock_refdn(abce, &mbs1);
   memblock_refdn(abce, &mbs2);
   memblock_refdn(abce, &mbs3);

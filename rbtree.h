@@ -83,7 +83,7 @@ static inline void rb_tree_delete(struct rb_tree *tree, struct rb_tree_node *nod
 
 #define RB_TREE_NOCMP_FIND(tree, cmp, cmp_userdata, tofind) \
   ({ \
-    struct rb_tree_nocmp *__rb_tree_find_tree = (tree); \
+    const struct rb_tree_nocmp *__rb_tree_find_tree = (tree); \
     struct rb_tree_node *__rb_tree_find_node = __rb_tree_find_tree->root; \
     while (__rb_tree_find_node != NULL) \
     { \
