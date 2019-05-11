@@ -34,6 +34,8 @@ struct memblock_tree {
   struct rb_tree_nocmp tree;
 };
 struct memblock_scope {
+  int holey;
+  struct memblockarea *parent;
   size_t size;
   struct rb_tree_nocmp heads[0];
 };
@@ -101,6 +103,19 @@ memblock_refup(struct abce *abce, const struct memblock *mb)
       break;
   }
   return *mb;
+}
+
+static inline struct memblockarea*
+memblock_arearefup(struct abce *abce, const struct memblock *mb)
+{
+  switch (mb->typ)
+  {
+    case T_T: case T_S: case T_IOS: case T_A: case T_SC:
+      mb->u.area->refcnt++;
+      return mb->u.area;
+    default:
+      abort();
+  }
 }
 
 static inline struct memblock
@@ -232,7 +247,7 @@ static inline int str_cmp_sym(
   return 0;
 }
 
-static inline const struct memblock *sc_get_val_mb(
+static inline const struct memblock *sc_get_myval_mb(
   const struct memblock *mb, const struct memblock *key)
 {
   struct memblockarea *mba = mb->u.area;
@@ -257,7 +272,7 @@ static inline const struct memblock *sc_get_val_mb(
   return &CONTAINER_OF(n, struct memblock_rb_entry, n)->val;
 }
 
-static inline const struct memblock *sc_get_val_str(
+static inline const struct memblock *sc_get_myval_str(
   const struct memblock *mb, char *str)
 {
   struct memblockarea *mba = mb->u.area;
@@ -354,7 +369,8 @@ static inline size_t next_highest_power_of_2(size_t x)
   return x;
 }
 
-struct memblock memblock_create_scope(struct abce *abce, size_t capacity)
+struct memblock memblock_create_scope(struct abce *abce, size_t capacity,
+                                      const struct memblock *parent, int holey)
 {
   struct memblockarea *mba;
   struct memblock mb = {};
@@ -365,6 +381,26 @@ struct memblock memblock_create_scope(struct abce *abce, size_t capacity)
   mba = abce->alloc(NULL, sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads),
                     abce->alloc_baton);
   mba->u.sc.size = capacity;
+  mba->u.sc.holey = holey;
+  if (parent)
+  {
+    if (parent->typ == T_N)
+    {
+      mba->u.sc.parent = NULL;
+    }
+    else if (parent->typ != T_SC)
+    {
+      abort();
+    }
+    else
+    {
+      mba->u.sc.parent = memblock_arearefup(abce, parent);
+    }
+  }
+  else
+  {
+    mba->u.sc.parent = NULL;
+  }
   for (i = 0; i < capacity; i++)
   {
     rb_tree_nocmp_init(&mba->u.sc.heads[i]);
@@ -373,6 +409,11 @@ struct memblock memblock_create_scope(struct abce *abce, size_t capacity)
   mb.typ = T_SC;
   mb.u.area = mba;
   return mb;
+}
+
+struct memblock memblock_create_scope_noparent(struct abce *abce, size_t capacity)
+{
+  return memblock_create_scope(abce, capacity, NULL, 0);
 }
 
 struct memblock memblock_create_tree(struct abce *abce)
@@ -402,71 +443,18 @@ struct memblock memblock_create_array(struct abce *abce)
   return mb;
 }
 
+void memblock_arearefdn(struct abce *abce, struct memblockarea **mba, enum type typ);
+
 void memblock_refdn(struct abce *abce, struct memblock *mb)
 {
-  size_t i;
   switch (mb->typ)
   {
     case T_T:
-      if (!--mb->u.area->refcnt)
-      {
-        while (mb->u.area->u.tree.tree.root != NULL)
-        {
-          struct memblock_rb_entry *mbe =
-            CONTAINER_OF(mb->u.area->u.tree.tree.root,
-                         struct memblock_rb_entry, n);
-          memblock_refdn(abce, &mbe->key);
-          memblock_refdn(abce, &mbe->val);
-          rb_tree_nocmp_delete(&mb->u.area->u.tree.tree,
-                               mb->u.area->u.tree.tree.root);
-          abce->alloc(mbe, 0, abce->alloc_baton);
-        }
-        abce->alloc(mb->u.area, 0, abce->alloc_baton);
-      }
-      break;
     case T_IOS:
-      if (!--mb->u.area->refcnt)
-      {
-        fclose(mb->u.area->u.ios.f);
-        abce->alloc(mb->u.area, 0, abce->alloc_baton);
-      }
-      break;
     case T_A:
-      if (!--mb->u.area->refcnt)
-      {
-        for (i = 0; i < mb->u.area->u.ar.size; i++)
-        {
-          memblock_refdn(abce, &mb->u.area->u.ar.mbs[i]);
-        }
-        abce->alloc(mb->u.area->u.ar.mbs, 0, abce->alloc_baton);
-        abce->alloc(mb->u.area, 0, abce->alloc_baton);
-      }
-      break;
     case T_S:
-      if (!--mb->u.area->refcnt)
-      {
-        abce->alloc(mb->u.area, 0, abce->alloc_baton);
-      }
-      break;
     case T_SC:
-      if (!--mb->u.area->refcnt)
-      {
-        for (i = 0; i < mb->u.area->u.sc.size; i++)
-        {
-          while (mb->u.area->u.sc.heads[i].root != NULL)
-          {
-            struct memblock_rb_entry *mbe =
-              CONTAINER_OF(mb->u.area->u.sc.heads[i].root,
-                           struct memblock_rb_entry, n);
-            memblock_refdn(abce, &mbe->key);
-            memblock_refdn(abce, &mbe->val);
-            rb_tree_nocmp_delete(&mb->u.area->u.sc.heads[i],
-                                 mb->u.area->u.sc.heads[i].root);
-            abce->alloc(mbe, 0, abce->alloc_baton);
-          }
-        }
-        abce->alloc(mb->u.area, 0, abce->alloc_baton);
-      }
+      memblock_arearefdn(abce, &mb->u.area, mb->typ);
       break;
     default:
       break;
@@ -474,6 +462,84 @@ void memblock_refdn(struct abce *abce, struct memblock *mb)
   mb->typ = T_N;
   mb->u.d = 0.0;
   mb->u.area = NULL;
+}
+
+void memblock_arearefdn(struct abce *abce, struct memblockarea **mbap, enum type typ)
+{
+  size_t i;
+  struct memblockarea *mba = *mbap;
+  if (mba == NULL)
+  {
+    return;
+  }
+  switch (typ)
+  {
+    case T_T:
+      if (!--mba->refcnt)
+      {
+        while (mba->u.tree.tree.root != NULL)
+        {
+          struct memblock_rb_entry *mbe =
+            CONTAINER_OF(mba->u.tree.tree.root,
+                         struct memblock_rb_entry, n);
+          memblock_refdn(abce, &mbe->key);
+          memblock_refdn(abce, &mbe->val);
+          rb_tree_nocmp_delete(&mba->u.tree.tree,
+                               mba->u.tree.tree.root);
+          abce->alloc(mbe, 0, abce->alloc_baton);
+        }
+        abce->alloc(mba, 0, abce->alloc_baton);
+      }
+      break;
+    case T_IOS:
+      if (!--mba->refcnt)
+      {
+        fclose(mba->u.ios.f);
+        abce->alloc(mba, 0, abce->alloc_baton);
+      }
+      break;
+    case T_A:
+      if (!--mba->refcnt)
+      {
+        for (i = 0; i < mba->u.ar.size; i++)
+        {
+          memblock_refdn(abce, &mba->u.ar.mbs[i]);
+        }
+        abce->alloc(mba->u.ar.mbs, 0, abce->alloc_baton);
+        abce->alloc(mba, 0, abce->alloc_baton);
+      }
+      break;
+    case T_S:
+      if (!--mba->refcnt)
+      {
+        abce->alloc(mba, 0, abce->alloc_baton);
+      }
+      break;
+    case T_SC:
+      memblock_arearefdn(abce, &mba->u.sc.parent, T_SC);
+      if (!--mba->refcnt)
+      {
+        for (i = 0; i < mba->u.sc.size; i++)
+        {
+          while (mba->u.sc.heads[i].root != NULL)
+          {
+            struct memblock_rb_entry *mbe =
+              CONTAINER_OF(mba->u.sc.heads[i].root,
+                           struct memblock_rb_entry, n);
+            memblock_refdn(abce, &mbe->key);
+            memblock_refdn(abce, &mbe->val);
+            rb_tree_nocmp_delete(&mba->u.sc.heads[i],
+                                 mba->u.sc.heads[i].root);
+            abce->alloc(mbe, 0, abce->alloc_baton);
+          }
+        }
+        abce->alloc(mba, 0, abce->alloc_baton);
+      }
+      break;
+    default:
+      break;
+  }
+  *mbap = NULL;
 }
 
 void memblock_dump_impl(const struct memblock *mb);
@@ -658,7 +724,7 @@ int main(int argc, char **argv)
   struct abce real_abce = {.alloc = std_alloc};
   struct abce *abce = &real_abce;
   struct memblock mba = memblock_create_array(abce);
-  struct memblock mbsc = memblock_create_scope(abce, 16);
+  struct memblock mbsc = memblock_create_scope_noparent(abce, 16);
   struct memblock mbs1 = memblock_create_string_nul(abce, "foo");
   struct memblock mbs2 = memblock_create_string_nul(abce, "bar");
   struct memblock mbs3 = memblock_create_string_nul(abce, "baz");
