@@ -1,0 +1,34 @@
+what's good in Lua:
+- coroutines, hurray! However, coroutines may limit performance in programs
+  that don't need them.
+what's lacking in Lua:
+- reliance on garbage collector
+  - in real time environments, the latency caused may be simply unacceptable
+  - garbage collection should be complemented by reference counting, to make
+    garbage collection much rarer than it is now in Lua
+- mmap'd stack
+  - this makes Lua portable, but with suitable abstraction, mmap'd stack
+    can be supported while at the same time being portable
+- recursive scoping
+- lack of LALR parser
+  - this may limit performance of reading Lua source code to low values
+- arbitrary low limits, e.g. at most 200 local variables
+- a strange table data type with one-based indexing that is foreign to most
+  programmers, while at the same time being incapable of representing the 
+  difference between JSON objects {} and [] -- clearly, Lua is not the
+  programming language for the JSON era.
+- lack of dynamic scoping
+- lack of standardized bytecode format, making it hard to distribute
+  commercial products written in Lua
+  - examples: Lua 5.1 and 5.2 are not bytecode compatible
+  - LuaJIT does not support standard Lua interpreter bytecode
+  - bytecode on different platforms may be incompatible even given same version
+    of Lua
+- Lua contexts do not have userdata pointer
+
+We want to create a programming language that can be embedded to another LALR
+parsed file that has its own set of tokens. This means all variables must use
+sigils ($) and so must all reserved words (@). Operators in Aplan are the
+standard C ones, so most configuration and programming language related lexer
+grammars probably can support these operators. If not, the programmer can
+create a custom variant of Aplan with different operators.
