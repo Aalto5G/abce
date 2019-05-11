@@ -7,8 +7,8 @@ what's lacking in Lua:
   - garbage collection should be complemented by reference counting, to make
     garbage collection much rarer than it is now in Lua
 - mmap'd stack
-  - this makes Lua portable, but with suitable abstraction, mmap'd stack
-    can be supported while at the same time being portable
+  - lack of this makes Lua portable, but with suitable abstraction, mmap'd
+    stack can be supported while at the same time being portable
 - recursive scoping
 - lack of LALR parser
   - this may limit performance of reading Lua source code to low values
