@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -1393,12 +1394,149 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       struct memblock mb;
       GETMB(&mb, -1);
+      POP(abce);
       memblock_dump(&mb);
       memblock_refdn(abce, &mb);
       return 0;
     }
+    case ABCE_OPCODE_ABS:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, fabs(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_SQRT:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, sqrt(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_LOG:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, log(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_EXP:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, exp(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_FLOOR:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, floor(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_CEIL:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, ceil(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_COS:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, cos(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_SIN:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, sin(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_TAN:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, tan(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_ACOS:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, acos(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_ASIN:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, asin(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_ATAN:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP(abce);
+      if (abce_push_double(abce, atan(dbl)) != 0)
+      {
+        abort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_EXIT:
+    {
+      return -EINTR;
+    }
     default:
-      return -EFAULT;
+      return -EILSEQ;
   }
   return ret;
 }
@@ -1940,7 +2078,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       int ret2 = abce->trap(abce, ins, addcode, addsz);
       if (ret2 != 0)
       {
-        ret = ret;
+        ret = ret2;
         break;
       }
     }
@@ -1949,7 +2087,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       int ret2 = abce_mid(abce, ins, addcode, addsz);
       if (ret2 != 0)
       {
-        ret = ret;
+        ret = ret2;
         break;
       }
     }
@@ -1958,7 +2096,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       int ret2 = abce->trap(abce, ins, addcode, addsz);
       if (ret2 != 0)
       {
-        ret = ret;
+        ret = ret2;
         break;
       }
     }
@@ -1972,12 +2110,16 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       int ret2 = abce->trap(abce, ins, addcode, addsz);
       if (ret2 != 0)
       {
-        ret = ret;
+        ret = ret2;
         break;
       }
     }
   }
   if (ret == -EAGAIN)
+  {
+    ret = 0;
+  }
+  if (ret == -EINTR)
   {
     ret = 0;
   }
