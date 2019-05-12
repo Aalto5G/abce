@@ -28,6 +28,7 @@ void *std_alloc(void *old, size_t newsz, void *alloc_baton)
 
 struct abce {
   void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
+  int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
   void *alloc_baton;
   void *userdata;
   struct memblock *stackbase;
@@ -208,7 +209,7 @@ static inline int abce_getbp(struct abce *abce, int64_t idx)
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (mb->typ != T_D || mb->typ != T_B)
+  if (mb->typ != T_BP)
   {
     return -EINVAL;
   }
@@ -231,8 +232,9 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (mb->typ != T_D || mb->typ != T_B)
+  if (mb->typ != T_IP)
   {
+    printf("invalid typ: %d\n", mb->typ);
     return -EINVAL;
   }
   trial = mb->u.d;
@@ -256,6 +258,22 @@ static inline int abce_getmb(struct memblock *mb, struct abce *abce, int64_t idx
   *mb = memblock_refup(abce, mbptr);
   return 0;
 }
+static inline int abce_getmbar(struct memblock *mb, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mbptr;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mbptr = &abce->stackbase[addr];
+  if (mbptr->typ != T_A)
+  {
+    return -EINVAL;
+  }
+  *mb = memblock_refup(abce, mbptr);
+  return 0;
+}
 
 static inline int abce_verifyaddr(struct abce *abce, int64_t idx)
 {
@@ -275,8 +293,9 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
   {
     return -EOVERFLOW;
   }
+  printf("addr %d\n", (int)addr);
   mb = &abce->stackbase[addr];
-  if (mb->typ != T_D || mb->typ != T_B)
+  if (mb->typ != T_D && mb->typ != T_B)
   {
     return -EINVAL;
   }
@@ -365,6 +384,40 @@ static inline int abce_push_fun(struct abce *abce, double fun_addr)
   abce->stackbase[abce->sp].u.d = fun_addr;
   abce->sp++;
   return 0;
+}
+
+static inline int abce_add_ins(struct abce *abce, uint16_t ins)
+{
+  if (ins >= 2048)
+  {
+    if (abce->bytecodesz + 3 > abce->bytecodecap)
+    {
+      return -EFAULT;
+    }
+    abce->bytecode[abce->bytecodesz++] = (ins>>12) | 0xE0;
+    abce->bytecode[abce->bytecodesz++] = ((ins>>6)&0x3F) | 0x80;
+    abce->bytecode[abce->bytecodesz++] = ((ins)&0x3F) | 0x80;
+    return 0;
+  }
+  else if (ins >= 128)
+  {
+    if (abce->bytecodesz + 2 > abce->bytecodecap)
+    {
+      return -EFAULT;
+    }
+    abce->bytecode[abce->bytecodesz++] = ((ins>>6)) | 0xC0;
+    abce->bytecode[abce->bytecodesz++] = ((ins)&0x3F) | 0x80;
+    return 0;
+  }
+  else
+  {
+    if (abce->bytecodesz >= abce->bytecodecap)
+    {
+      return -EFAULT;
+    }
+    abce->bytecode[abce->bytecodesz++] = ins;
+    return 0;
+  }
 }
 
 static inline int abce_add_byte(struct abce *abce, unsigned char byte)
@@ -1058,7 +1111,6 @@ static inline size_t topages(size_t limit)
   {
     abort();
   }
-  limit *= sizeof(struct memblock);
   pages = (limit + (pagesz-1)) / pagesz;
   actlimit = pages * pagesz;
   return actlimit;
@@ -1066,15 +1118,54 @@ static inline size_t topages(size_t limit)
 
 struct memblock *alloc_stack(size_t limit)
 {
-  return mmap(NULL, topages(limit), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  return mmap(NULL, topages(limit * sizeof(struct memblock)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 }
 
 void free_stack(struct memblock *stackbase, size_t limit)
 {
-  if (munmap(stackbase, topages(limit)) != 0)
+  if (munmap(stackbase, topages(limit * sizeof(struct memblock))) != 0)
   {
     abort();
   }
+}
+
+unsigned char *alloc_bcode(size_t limit)
+{
+  return mmap(NULL, topages(limit), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+}
+
+void free_bcode(unsigned char *bcodebase, size_t limit)
+{
+  if (munmap(bcodebase, topages(limit)) != 0)
+  {
+    abort();
+  }
+}
+
+void abce_init(struct abce *abce)
+{
+  abce->alloc = std_alloc;
+  abce->trap = NULL;
+  abce->alloc_baton = NULL;
+  abce->userdata = NULL;
+  abce->stacklimit = 1024*1024;
+  abce->stackbase = alloc_stack(abce->stacklimit);
+  abce->sp = 0;
+  abce->bp = 0;
+  abce->ip = 0;
+  abce->bytecodecap = 32*1024*1024;
+  abce->bytecode = alloc_bcode(abce->bytecodecap);
+  abce->bytecodesz = 0;
+}
+
+void abce_free(struct abce *abce)
+{
+  free_stack(abce->stackbase, abce->stacklimit);
+  abce->stackbase = NULL;
+  abce->stacklimit = 0;
+  free_bcode(abce->bytecode, abce->bytecodecap);
+  abce->bytecode = NULL;
+  abce->bytecodecap = 0;
 }
 
 void stacktest(struct abce *abce, struct memblock *stackbase, size_t limit)
@@ -1154,6 +1245,7 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
   }
   else if (unlikely((ophi & 0xC0) == 0x80))
   {
+    printf("EILSEQ 1\n");
     return -EILSEQ;
   }
   else if (likely((ophi & 0xE0) == 0xC0))
@@ -1164,11 +1256,13 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
     }
     if (unlikely((oplo & 0xC0) != 0x80))
     {
+      printf("EILSEQ 2\n");
       return -EILSEQ;
     }
     *ins = ((ophi&0x1F) << 6) | (oplo & 0x3F);
     if (unlikely(*ins < 128))
     {
+      printf("EILSEQ 3\n");
       return -EILSEQ;
     }
     return 0;
@@ -1181,6 +1275,7 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
     }
     if (unlikely((opmid & 0xC0) != 0x80))
     {
+      printf("EILSEQ 4\n");
       return -EILSEQ;
     }
     if (fetch_b(&oplo, abce, addcode, addsz) != 0)
@@ -1189,17 +1284,20 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
     }
     if (unlikely((oplo & 0xC0) != 0x80))
     {
+      printf("EILSEQ 5\n");
       return -EILSEQ;
     }
     *ins = ((ophi&0xF) << 12) | ((opmid&0x3F) << 6) | (oplo & 0x3F);
     if (unlikely(*ins <= 0x7FF))
     {
+      printf("EILSEQ 6\n");
       return -EILSEQ;
     }
     return 0;
   }
   else
   {
+    printf("EILSEQ 7\n");
     return -EILSEQ;
   }
 }
@@ -1267,6 +1365,15 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
       break; \
     } \
   }
+#define GETMBAR(mb, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getmbar((mb), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
 #define POP(mb) \
   if(1) { \
     int _getdbl_rettmp = abce_pop(abce); \
@@ -1276,11 +1383,31 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
     } \
   }
 
+int
+abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
+{
+  int ret = 0;
+  switch (ins)
+  {
+    case ABCE_OPCODE_DUMP:
+    {
+      struct memblock mb;
+      GETMB(&mb, -1);
+      memblock_dump(&mb);
+      memblock_refdn(abce, &mb);
+      return 0;
+    }
+    default:
+      return -EFAULT;
+  }
+  return ret;
+}
+
 int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   // code:
   const size_t guard = 100;
-  int ret;
+  int ret = -EAGAIN;
   while (ret == -EAGAIN &&
          ((abce->ip >= 0 && abce->ip < abce->bytecodesz) ||
          (abce->ip >= -addsz-guard && abce->ip < -guard)))
@@ -1291,6 +1418,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       ret = -EFAULT;
       break;
     }
+    printf("fetched ins %d\n", (int)ins); 
     if (likely(ins < 64))
     {
       switch (ins)
@@ -1397,9 +1525,13 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         case ABCE_OPCODE_RET:
         {
           struct memblock mb;
+          printf("ret, stack size %d\n", (int)abce->sp);
           GETIP(-2);
+          printf("gotten ip\n");
           GETBP(-3);
+          printf("gotten bp\n");
           GETMB(&mb, -1);
+          printf("gotten mb\n");
           POP(abce);
           POP(abce);
           POP(abce);
@@ -1761,22 +1893,67 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           }
           break;
         }
+        case ABCE_OPCODE_PUSH_NEW_ARRAY:
+        {
+          struct memblock mb;
+          int rettmp;
+          mb = memblock_create_array(abce); // FIXME errors
+          rettmp = abce_push_mb(abce, &mb);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            memblock_refdn(abce, &mb);
+            break;
+          }
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        case ABCE_OPCODE_APPEND_MAINTAIN:
+        {
+          struct memblock mb;
+          struct memblock mbar;
+          GETMBAR(&mbar, -2);
+          GETMB(&mb, -1); // can't fail if GETMBAR succeeded
+          POP(abce);
+          memblock_array_append(abce, &mbar, &mb); // FIXME errors
+          memblock_refdn(abce, &mbar);
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        default:
+        {
+          printf("Invalid instruction %d\n", (int)ins);
+          ret = EILSEQ;
+          break;
+        }
       }
     }
     else if (likely(ins < 128))
     {
-      printf("Trap short\n");
-      abort();
+      int ret2 = abce->trap(abce, ins, addcode, addsz);
+      if (ret2 != 0)
+      {
+        ret = ret;
+        break;
+      }
     }
     else if (likely(ins < 0x400))
     {
-      printf("mid\n");
-      abort();
+      int ret2 = abce_mid(abce, ins, addcode, addsz);
+      if (ret2 != 0)
+      {
+        ret = ret;
+        break;
+      }
     }
     else if (likely(ins < 0x800))
     {
-      printf("Trap mid\n");
-      abort();
+      int ret2 = abce->trap(abce, ins, addcode, addsz);
+      if (ret2 != 0)
+      {
+        ret = ret;
+        break;
+      }
     }
     else if (likely(ins < 0x8000))
     {
@@ -1785,15 +1962,62 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
     }
     else
     {
-      printf("Trap long\n");
-      abort();
+      int ret2 = abce->trap(abce, ins, addcode, addsz);
+      if (ret2 != 0)
+      {
+        ret = ret;
+        break;
+      }
     }
+  }
+  if (ret == -EAGAIN)
+  {
+    ret = 0;
   }
   return ret;
 }
 
 int main(int argc, char **argv)
 {
+  struct abce abce;
+  abce_init(&abce);
+
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
+  abce_add_double(&abce, 4 + 2*2 + 2*8); // jmp offset
+  abce_add_ins(&abce, ABCE_OPCODE_FUNIFY);
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
+  abce_add_double(&abce, 0); // arg cnt
+  abce_add_ins(&abce, ABCE_OPCODE_CALL);
+  abce_add_ins(&abce, ABCE_OPCODE_DUMP);
+  abce_add_ins(&abce, ABCE_OPCODE_EXIT);
+
+  abce_add_ins(&abce, ABCE_OPCODE_FUN_HEADER);
+  abce_add_double(&abce, 0);
+
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_NEW_ARRAY); // lists
+
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_NEW_ARRAY); // list
+
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
+  abce_add_double(&abce, 5.6);
+  abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
+
+  abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
+
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_NEW_ARRAY); // list
+
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
+  abce_add_double(&abce, 6.7);
+  abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
+
+  abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
+
+  abce_add_ins(&abce, ABCE_OPCODE_RET);
+
+  printf("%d\n", engine(&abce, NULL, 0));
+
+  abce_free(&abce);
+/*
   struct abce real_abce = {.alloc = std_alloc};
   struct abce *abce = &real_abce;
   struct memblock mba = memblock_create_array(abce);
@@ -1827,5 +2051,6 @@ int main(int argc, char **argv)
   memblock_refdn(abce, &mbs4);
   memblock_refdn(abce, &mbs5);
   stacktest_main(abce);
+*/
   return 0;
 }
