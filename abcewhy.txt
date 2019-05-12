@@ -6,18 +6,23 @@ what's lacking in Lua:
   - in real time environments, the latency caused may be simply unacceptable
   - garbage collection should be complemented by reference counting, to make
     garbage collection much rarer than it is now in Lua
-- mmap'd stack
+- lack of mmap'd stack
   - lack of this makes Lua portable, but with suitable abstraction, mmap'd
     stack can be supported while at the same time being portable
 - recursive scoping
 - lack of LALR parser
   - this may limit performance of reading Lua source code to low values
+- line number madness
+  - Lua not designed to be embedded into another kind of file than Lua source
+    file: if this embedding is done by e.g. lua_pcall, and evaluation fails,
+    the line numbers refer to numbers within the embedded Lua snippet, not
+    to numbers within the whole file
 - arbitrary low limits, e.g. at most 200 local variables
 - a strange table data type with one-based indexing that is foreign to most
   programmers, while at the same time being incapable of representing the 
   difference between JSON objects {} and [] -- clearly, Lua is not the
   programming language for the JSON era.
-- lack of dynamic scoping
+- lack of optional dynamic scoping
 - lack of standardized bytecode format, making it hard to distribute
   commercial products written in Lua
   - examples: Lua 5.1 and 5.2 are not bytecode compatible
