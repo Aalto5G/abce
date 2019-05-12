@@ -39,6 +39,7 @@ grammars probably can support these operators. If not, the programmer can
 create a custom variant of Aplan with different operators.
 
 Design criteria
+- Bytecode engine that fits to L1 cache
 - A stable and extensible bytecode
 - As simple language as possible
 - Language easily modifiable
