@@ -1514,7 +1514,7 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
       break; \
     } \
   }
-#define POP(mb) \
+#define POP() \
   if(1) { \
     int _getdbl_rettmp = abce_pop(abce); \
     if (_getdbl_rettmp != 0) \
@@ -1533,7 +1533,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       struct memblock mb;
       GETMB(&mb, -1);
-      POP(abce);
+      POP();
       memblock_dump(&mb);
       memblock_refdn(abce, &mb);
       return 0;
@@ -1542,7 +1542,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, fabs(dbl)) != 0)
       {
         abort();
@@ -1553,7 +1553,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, sqrt(dbl)) != 0)
       {
         abort();
@@ -1564,7 +1564,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, log(dbl)) != 0)
       {
         abort();
@@ -1575,7 +1575,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, exp(dbl)) != 0)
       {
         abort();
@@ -1586,7 +1586,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, floor(dbl)) != 0)
       {
         abort();
@@ -1597,7 +1597,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, ceil(dbl)) != 0)
       {
         abort();
@@ -1608,7 +1608,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, cos(dbl)) != 0)
       {
         abort();
@@ -1619,7 +1619,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, sin(dbl)) != 0)
       {
         abort();
@@ -1630,7 +1630,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, tan(dbl)) != 0)
       {
         abort();
@@ -1641,7 +1641,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, acos(dbl)) != 0)
       {
         abort();
@@ -1652,7 +1652,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, asin(dbl)) != 0)
       {
         abort();
@@ -1663,7 +1663,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       double dbl;
       GETDBL(&dbl, -1);
-      POP(abce);
+      POP();
       if (abce_push_double(abce, atan(dbl)) != 0)
       {
         abort();
@@ -1749,7 +1749,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d;
           int rettmp;
           GETDBL(&d, -1);
-          POP(abce);
+          POP();
           rettmp = abce_push_fun(abce, d);
           if (rettmp != 0)
           {
@@ -1767,8 +1767,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int rettmp;
           GETDBL(&argcnt, -1);
           GETFUNADDR(&new_ip, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           // FIXME off by one?
           if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
                 (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard)))
@@ -1804,6 +1804,76 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           }
           break;
         }
+        case ABCE_OPCODE_POP_MANY:
+        {
+          double cnt;
+          size_t idx;
+          GETDBL(&cnt, -1);
+          POP();
+          for (idx = 0; idx < cnt; idx++)
+          {
+            int rettmp = abce_pop(abce);
+            if (rettmp != 0)
+            {
+              ret = -EOVERFLOW;
+              break;
+            }
+          }
+          break;
+        }
+        case ABCE_OPCODE_POP:
+        {
+          int _getdbl_rettmp = abce_pop(abce);
+          if (_getdbl_rettmp != 0)
+          {
+            ret = -EOVERFLOW;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_PUSH_STACK:
+        {
+          struct memblock mb;
+          double loc;
+          GETDBL(&loc, -1);
+          POP();
+          if (loc != (double)(uint64_t)loc)
+          {
+            ret = -EINVAL;
+            break;
+          }
+          GETMB(&mb, loc);
+          if (abce_push_mb(abce, &mb) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        case ABCE_OPCODE_SET_STACK:
+        {
+          struct memblock mb;
+          double loc;
+          size_t addr;
+          GETDBL(&loc, -2);
+          if (loc != (double)(uint64_t)loc)
+          {
+            ret = -EINVAL;
+            break;
+          }
+          GETMB(&mb, -1);
+          POP();
+          POP();
+          if (abce_calc_addr(&addr, abce, loc) != 0)
+          {
+            memblock_refdn(abce, &mb);
+            ret = -EOVERFLOW;
+            break;
+          }
+          memblock_refdn(abce, &abce->stackbase[addr]);
+          abce->stackbase[addr] = mb;
+          break;
+        }
         case ABCE_OPCODE_RET:
         {
           struct memblock mb;
@@ -1814,9 +1884,9 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           printf("gotten bp\n");
           GETMB(&mb, -1);
           printf("gotten mb\n");
-          POP(abce);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
+          POP();
           if (abce_push_mb(abce, &mb) != 0)
           {
             abort();
@@ -1839,18 +1909,18 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           }
           VERIFYADDR(-5 - cntloc - cntargs);
           GETMB(&mb, -3);
-          POP(abce); // cntloc
-          POP(abce); // cntargs
-          POP(abce); // retval
+          POP(); // cntloc
+          POP(); // cntargs
+          POP(); // retval
           for (i = 0; i < cntloc; i++)
           {
-            POP(abce);
+            POP();
           }
-          POP(abce); // ip
-          POP(abce); // bp
+          POP(); // ip
+          POP(); // bp
           for (i = 0; i < cntargs; i++)
           {
-            POP(abce);
+            POP();
           }
           if (abce_push_mb(abce, &mb) != 0)
           {
@@ -1865,7 +1935,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d;
           int64_t new_ip;
           GETDBL(&d, -1);
-          POP(abce);
+          POP();
           new_ip = d;
           if (!((new_ip >= 0 && (size_t)new_ip <= abce->bytecodesz) ||
                 (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip <= -(int64_t)guard)))
@@ -1884,8 +1954,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int64_t new_ip;
           GETBOOLEAN(&b, -1);
           GETDBL(&d, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           new_ip = d;
           if (!((new_ip >= 0 && (size_t)new_ip <= abce->bytecodesz) ||
                 (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip <= -(int64_t)guard)))
@@ -1903,7 +1973,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           int b;
           GETBOOLEAN(&b, -1);
-          POP(abce);
+          POP();
           if (abce_push_boolean(abce, b) != 0)
           {
             abort();
@@ -1915,8 +1985,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(d1 == d2)) != 0)
           {
             abort();
@@ -1928,8 +1998,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(d1 != d2)) != 0)
           {
             abort();
@@ -1941,8 +2011,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int b1, b2;
           GETBOOLEAN(&b2, -1);
           GETBOOLEAN(&b1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(b1 && b2)) != 0)
           {
             abort();
@@ -1954,8 +2024,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (((int64_t)d1) & ((int64_t)d2))) != 0)
           {
             abort();
@@ -1967,8 +2037,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int b1, b2;
           GETBOOLEAN(&b2, -1);
           GETBOOLEAN(&b1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(b1 || b2)) != 0)
           {
             abort();
@@ -1980,8 +2050,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (((int64_t)d1) | ((int64_t)d2))) != 0)
           {
             abort();
@@ -1993,8 +2063,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (((int64_t)d1) ^ ((int64_t)d2))) != 0)
           {
             abort();
@@ -2005,7 +2075,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           int b;
           GETBOOLEAN(&b, -1);
-          POP(abce);
+          POP();
           if (abce_push_boolean(abce, !b) != 0)
           {
             abort();
@@ -2016,7 +2086,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           double d;
           GETDBL(&d, -1);
-          POP(abce);
+          POP();
           if (abce_push_double(abce, ~(int64_t)d) != 0)
           {
             abort();
@@ -2028,8 +2098,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(d1 < d2)) != 0)
           {
             abort();
@@ -2041,8 +2111,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(d1 > d2)) != 0)
           {
             abort();
@@ -2054,8 +2124,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(d1 <= d2)) != 0)
           {
             abort();
@@ -2067,8 +2137,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_boolean(abce, !!(d1 >= d2)) != 0)
           {
             abort();
@@ -2080,8 +2150,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (((int64_t)d1) >> ((int64_t)d2))) != 0)
           {
             abort();
@@ -2093,8 +2163,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (((int64_t)d1) << ((int64_t)d2))) != 0)
           {
             abort();
@@ -2106,8 +2176,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (d1 + d2)) != 0)
           {
             abort();
@@ -2119,8 +2189,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (d1 - d2)) != 0)
           {
             abort();
@@ -2132,8 +2202,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (d1 * d2)) != 0)
           {
             abort();
@@ -2145,8 +2215,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (d1 / d2)) != 0)
           {
             abort();
@@ -2158,8 +2228,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double d1, d2;
           GETDBL(&d2, -1);
           GETDBL(&d1, -2);
-          POP(abce);
-          POP(abce);
+          POP();
+          POP();
           if (abce_push_double(abce, (((int64_t)d1) % ((int64_t)d2))) != 0)
           {
             abort();
@@ -2170,7 +2240,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           double d;
           GETDBL(&d, -1);
-          POP(abce);
+          POP();
           if (abce_push_double(abce, -d) != 0)
           {
             abort();
@@ -2198,7 +2268,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           struct memblock mbar;
           GETMBAR(&mbar, -2);
           GETMB(&mb, -1); // can't fail if GETMBAR succeeded
-          POP(abce);
+          POP();
           memblock_array_append(abce, &mbar, &mb); // FIXME errors
           memblock_refdn(abce, &mbar);
           memblock_refdn(abce, &mb);
@@ -2224,7 +2294,7 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           double dbl;
           int64_t i64;
           GETDBL(&dbl, -1);
-          POP(abce);
+          POP();
           if ((double)(uint64_t)dbl != dbl)
           {
             ret = -EINVAL;
