@@ -32,28 +32,6 @@ struct const_str_len {
   size_t len;
 };
 
-struct abce {
-  void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
-  int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
-  void *alloc_baton;
-  void *userdata;
-  // Stack and registers
-  struct memblock *stackbase;
-  size_t stacklimit;
-  size_t sp;
-  size_t bp;
-  int64_t ip;
-  // Byte code
-  unsigned char *bytecode;
-  size_t bytecodesz;
-  size_t bytecodecap;
-  // Object cache
-  struct memblock *cachebase;
-  size_t cachesz;
-  size_t cachecap;
-  struct rb_tree_nocmp strcache[1024];
-};
-
 struct memblock;
 
 struct memblock_tree {
@@ -115,6 +93,30 @@ struct memblock_rb_entry {
   struct rb_tree_node n;
   struct memblock key; // must be a string!
   struct memblock val;
+};
+
+struct abce {
+  void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
+  int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
+  void *alloc_baton;
+  void *userdata;
+  // Stack and registers
+  struct memblock *stackbase;
+  size_t stacklimit;
+  size_t sp;
+  size_t bp;
+  int64_t ip;
+  // Byte code
+  unsigned char *bytecode;
+  size_t bytecodesz;
+  size_t bytecodecap;
+  // Object cache
+  struct memblock *cachebase;
+  size_t cachesz;
+  size_t cachecap;
+  struct rb_tree_nocmp strcache[1024];
+  // Dynamic scope
+  struct memblock dynscope;
 };
 
 static inline int abce_add_double(struct abce *abce, double dbl)
@@ -300,6 +302,22 @@ static inline int abce_getmb(struct memblock *mb, struct abce *abce, int64_t idx
     return -EOVERFLOW;
   }
   mbptr = &abce->stackbase[addr];
+  *mb = memblock_refup(abce, mbptr);
+  return 0;
+}
+static inline int abce_getmbsc(struct memblock *mb, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mbptr;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mbptr = &abce->stackbase[addr];
+  if (mbptr->typ != T_SC)
+  {
+    return -EINVAL;
+  }
   *mb = memblock_refup(abce, mbptr);
   return 0;
 }
@@ -1521,6 +1539,15 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
       break; \
     } \
   }
+#define GETMBSC(mb, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getmbsc((mb), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
 #define GETMBAR(mb, idx) \
   if(1) { \
     int _getdbl_rettmp = abce_getmbar((mb), abce, (idx)); \
@@ -2463,19 +2490,85 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           }
           break;
         }
-        case ABCE_OPCODE_APPENDALL_MAINTAIN:
+        case ABCE_OPCODE_SCOPEVAR:
+        {
+          struct memblock mbsc, mbit;
+          const struct memblock *ptr;
+          GETMBSC(&mbsc, -1);
+          GETMB(&mbit, -2);
+          if (mbit.typ != T_S)
+          {
+            memblock_refdn(abce, &mbsc);
+            memblock_refdn(abce, &mbit);
+            ret = -EINVAL;
+            break;
+          }
+          POP();
+          POP();
+          ptr = sc_get_rec_mb(&mbsc, &mbit);
+          if (ptr == NULL)
+          {
+            ret = -ENOENT;
+            break;
+          }
+          if (abce_push_mb(abce, ptr) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_SCOPE_HAS:
+        {
+          struct memblock mbsc, mbit;
+          const struct memblock *ptr;
+          GETMBSC(&mbsc, -1);
+          GETMB(&mbit, -2);
+          if (mbit.typ != T_S)
+          {
+            memblock_refdn(abce, &mbsc);
+            memblock_refdn(abce, &mbit);
+            ret = -EINVAL;
+            break;
+          }
+          POP();
+          POP();
+          ptr = sc_get_rec_mb(&mbsc, &mbit);
+          if (abce_push_boolean(abce, ptr != NULL) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_GETSCOPE_DYN:
+        {
+          if (abce_push_mb(abce, &abce->dynscope) != 0)
+          {
+            ret = -EOVERFLOW;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_TYPE:
+        {
+          struct memblock mb;
+          GETMB(&mb, -1);
+          POP();
+          if (abce_push_double(abce, mb.typ) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
         case ABCE_OPCODE_DICTSET_MAINTAIN:
         case ABCE_OPCODE_DICTDEL:
         case ABCE_OPCODE_DICTGET:
-        case ABCE_OPCODE_GETSCOPE_DYN:
-        case ABCE_OPCODE_SCOPEVAR:
-        case ABCE_OPCODE_SCOPEVAR_SET:
         case ABCE_OPCODE_DICTNEXT_SAFE:
-        case ABCE_OPCODE_TYPE:
         case ABCE_OPCODE_DICTHAS:
-        case ABCE_OPCODE_SCOPE_HAS:
+        case ABCE_OPCODE_SCOPEVAR_SET:
         case ABCE_OPCODE_CALL_IF_FUN:
-        case ABCE_OPCODE_DICTLEN:
+        case ABCE_OPCODE_DICTLEN: // RFE should this be moved elsewhere? A complex operation.
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
