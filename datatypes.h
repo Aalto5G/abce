@@ -13,6 +13,9 @@
 #include "likely.h"
 #include "abceopcodes.h"
 
+#define ABCE_DEFAULT_SCOPE_SIZE 8192
+#define ABCE_DEFAULT_CACHE_SIZE 8192
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -106,7 +109,7 @@ struct abce {
   struct abce_mb *cachebase;
   size_t cachesz;
   size_t cachecap;
-  struct rb_tree_nocmp strcache[1024];
+  struct rb_tree_nocmp strcache[ABCE_DEFAULT_CACHE_SIZE];
   // Dynamic scope
   struct abce_mb dynscope;
 };

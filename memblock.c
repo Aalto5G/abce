@@ -11,8 +11,6 @@
 #include "abceopcodes.h"
 #include "datatypes.h"
 
-#define DEFAULT_SCOPE_SIZE 1024
-
 void *abce_std_alloc(void *old, size_t newsz, void *alloc_baton)
 {
   if (old == NULL)
@@ -452,7 +450,7 @@ void abce_init(struct abce *abce)
   abce->cachebase = alloc_stack(abce->cachecap);
   abce->cachesz = 0;
 
-  abce->dynscope = abce_mb_create_scope_noparent(abce, DEFAULT_SCOPE_SIZE);
+  abce->dynscope = abce_mb_create_scope_noparent(abce, ABCE_DEFAULT_SCOPE_SIZE);
 }
 
 void abce_free(struct abce *abce)
