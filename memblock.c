@@ -456,6 +456,7 @@ void abce_init(struct abce *abce)
 void abce_free(struct abce *abce)
 {
   size_t i;
+  abce_mb_refdn(abce, &abce->dynscope);
   for (i = 0; i < sizeof(abce->strcache)/sizeof(*abce->strcache); i++)
   {
     while (abce->strcache[i].root != NULL)
