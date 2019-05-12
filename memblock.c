@@ -1496,7 +1496,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (!((new_ip >= 0 && new_ip+10 <= abce->bytecodesz) ||
                 (new_ip >= -addsz-guard && new_ip+10 <= -guard)))
           {
-            return -EFAULT;
+            ret = -EFAULT;
+            break;
           }
           abce_push_bp(abce);
           abce_push_ip(abce);
@@ -1504,21 +1505,25 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           rettmp = fetch_i(&ins2, abce, addcode, addsz);
           if (rettmp != 0)
           {
-            return rettmp;
+            ret = rettmp;
+            break;
           }
           if (ins2 != ABCE_OPCODE_FUN_HEADER)
           {
-            return -EINVAL;
+            ret = -EINVAL;
+            break;
           }
           double dbl;
           rettmp = fetch_d(&dbl, abce, addcode, addsz);
           if (rettmp != 0)
           {
-            return rettmp;
+            ret = rettmp;
+            break;
           }
           if (dbl != (double)(uint64_t)argcnt)
           {
-            return -EINVAL;
+            ret = -EINVAL;
+            break;
           }
           break;
         }
@@ -1588,7 +1593,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (!((new_ip >= 0 && new_ip <= abce->bytecodesz) ||
                 (new_ip >= -addsz-guard && new_ip <= -guard)))
           {
-            return -EFAULT;
+            ret = -EFAULT;
+            break;
           }
           abce->ip = new_ip;
           break;
@@ -1607,7 +1613,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (!((new_ip >= 0 && new_ip <= abce->bytecodesz) ||
                 (new_ip >= -addsz-guard && new_ip <= -guard)))
           {
-            return -EFAULT;
+            ret = -EFAULT;
+            break;
           }
           if (!b)
           {
