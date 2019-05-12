@@ -319,6 +319,22 @@ static inline int abce_getmbar(struct memblock *mb, struct abce *abce, int64_t i
   *mb = memblock_refup(abce, mbptr);
   return 0;
 }
+static inline int abce_getmbstr(struct memblock *mb, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mbptr;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mbptr = &abce->stackbase[addr];
+  if (mbptr->typ != T_S)
+  {
+    return -EINVAL;
+  }
+  *mb = memblock_refup(abce, mbptr);
+  return 0;
+}
 
 static inline int abce_verifyaddr(struct abce *abce, int64_t idx)
 {
@@ -1514,6 +1530,15 @@ fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
       break; \
     } \
   }
+#define GETMBSTR(mb, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getmbstr((mb), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
 #define POP() \
   if(1) { \
     int _getdbl_rettmp = abce_pop(abce); \
@@ -1858,6 +1883,18 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           memblock_refdn(abce, &mbar);
           break;
         }
+        case ABCE_OPCODE_STRLEN:
+        {
+          struct memblock mbstr;
+          GETMBSTR(&mbstr, -1);
+          POP();
+          if (abce_push_double(abce, mbstr.u.area->u.str.size) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mbstr);
+          break;
+        }
         case ABCE_OPCODE_LISTSET:
         {
           struct memblock mbit;
@@ -1889,6 +1926,33 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           memblock_refdn(abce, &mbar.u.area->u.ar.mbs[locint]);
           mbar.u.area->u.ar.mbs[locint] = mbit;
           memblock_refdn(abce, &mbar);
+          break;
+        }
+        case ABCE_OPCODE_STRGET:
+        {
+          struct memblock mbstr;
+          double loc;
+          int64_t locint;
+          GETDBL(&loc, -1);
+          GETMBSTR(&mbstr, -2);
+          POP();
+          POP();
+          if (loc != (double)(uint64_t)loc)
+          {
+            ret = -EINVAL;
+            break;
+          }
+          locint = loc;
+          if (locint < 0 || locint >= mbstr.u.area->u.str.size)
+          {
+            ret = -ERANGE;
+            break;
+          }
+          if (abce_push_double(abce, (unsigned char)mbstr.u.area->u.str.buf[locint]) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mbstr);
           break;
         }
         case ABCE_OPCODE_LISTGET:
@@ -2399,6 +2463,19 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           }
           break;
         }
+        case ABCE_OPCODE_APPENDALL_MAINTAIN:
+        case ABCE_OPCODE_DICTSET_MAINTAIN:
+        case ABCE_OPCODE_DICTDEL:
+        case ABCE_OPCODE_DICTGET:
+        case ABCE_OPCODE_GETSCOPE_DYN:
+        case ABCE_OPCODE_SCOPEVAR:
+        case ABCE_OPCODE_SCOPEVAR_SET:
+        case ABCE_OPCODE_DICTNEXT_SAFE:
+        case ABCE_OPCODE_TYPE:
+        case ABCE_OPCODE_DICTHAS:
+        case ABCE_OPCODE_SCOPE_HAS:
+        case ABCE_OPCODE_CALL_IF_FUN:
+        case ABCE_OPCODE_DICTLEN:
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
