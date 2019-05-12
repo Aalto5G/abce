@@ -128,7 +128,27 @@ static inline int abce_add_double(struct abce *abce, double dbl)
   return 0;
 }
 
-void memblock_refdn(struct abce *abce, struct memblock *mb);
+void memblock_arearefdn(struct abce *abce, struct memblockarea **mba, enum type typ);
+
+static inline void memblock_refdn(struct abce *abce, struct memblock *mb)
+{
+  switch (mb->typ)
+  {
+    case T_T:
+    case T_IOS:
+    case T_A:
+    case T_S:
+    case T_SC:
+      memblock_arearefdn(abce, &mb->u.area, mb->typ);
+      break;
+    default:
+      break;
+  }
+  mb->typ = T_N;
+  mb->u.d = 0.0;
+  mb->u.area = NULL;
+}
+
 
 static inline struct memblock
 memblock_refup(struct abce *abce, const struct memblock *mb)
@@ -656,7 +676,7 @@ static inline int str_cmp_sym(
   return 0;
 }
 
-static inline int64_t cache_add_str(struct abce *abce, const char *str, size_t len)
+int64_t cache_add_str(struct abce *abce, const char *str, size_t len)
 {
   struct memblock mb;
   uint32_t hashval, hashloc;
@@ -689,6 +709,7 @@ static inline int64_t cache_add_str_nul(struct abce *abce, const char *str)
   return cache_add_str(abce, str, strlen(str));
 }
 
+// RFE remove inlining?
 static inline const struct memblock *sc_get_myval_mb_area(
   const struct memblockarea *mba, const struct memblock *key)
 {
@@ -719,6 +740,7 @@ static inline const struct memblock *sc_get_myval_mb(
   return sc_get_myval_mb_area(mb->u.area, key);
 }
 
+// RFE remove inlining?
 static inline const struct memblock *sc_get_myval_str_area(
   const struct memblockarea *mba, const char *str)
 {
@@ -794,7 +816,7 @@ sc_get_rec_str(const struct memblock *mb, const char *str)
   return sc_get_rec_str_area(mb->u.area, str);
 }
 
-static inline int sc_put_val_mb(
+int sc_put_val_mb(
   struct abce *abce,
   const struct memblock *mb, const struct memblock *pkey, const struct memblock *pval)
 {
@@ -824,7 +846,7 @@ static inline int sc_put_val_mb(
   return ret;
 }
 
-static inline int sc_put_val_str(
+int sc_put_val_str(
   struct abce *abce,
   const struct memblock *mb, char *str, const struct memblock *pval)
 {
@@ -912,7 +934,7 @@ struct memblock memblock_create_scope(struct abce *abce, size_t capacity,
   return mb;
 }
 
-struct memblock memblock_create_scope_noparent(struct abce *abce, size_t capacity)
+static inline struct memblock memblock_create_scope_noparent(struct abce *abce, size_t capacity)
 {
   return memblock_create_scope(abce, capacity, NULL, 0);
 }
@@ -942,27 +964,6 @@ struct memblock memblock_create_array(struct abce *abce)
   mb.typ = T_A;
   mb.u.area = mba;
   return mb;
-}
-
-void memblock_arearefdn(struct abce *abce, struct memblockarea **mba, enum type typ);
-
-void memblock_refdn(struct abce *abce, struct memblock *mb)
-{
-  switch (mb->typ)
-  {
-    case T_T:
-    case T_IOS:
-    case T_A:
-    case T_S:
-    case T_SC:
-      memblock_arearefdn(abce, &mb->u.area, mb->typ);
-      break;
-    default:
-      break;
-  }
-  mb->typ = T_N;
-  mb->u.d = 0.0;
-  mb->u.area = NULL;
 }
 
 void memblock_arearefdn(struct abce *abce, struct memblockarea **mbap, enum type typ)
@@ -1214,7 +1215,7 @@ void memblock_dump_impl(const struct memblock *mb)
   }
 }
 
-void memblock_dump(const struct memblock *mb)
+static inline void memblock_dump(const struct memblock *mb)
 {
   memblock_dump_impl(mb);
   printf("\n");
@@ -1259,7 +1260,7 @@ void free_bcode(unsigned char *bcodebase, size_t limit)
   }
 }
 
-void abce_init(struct abce *abce)
+static inline void abce_init(struct abce *abce)
 {
   memset(abce, 0, sizeof(*abce));
   abce->alloc = std_alloc;
