@@ -27,19 +27,31 @@ void *std_alloc(void *old, size_t newsz, void *alloc_baton)
   }
 }
 
+struct const_str_len {
+  const char *str;
+  size_t len;
+};
+
 struct abce {
   void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
   int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
   void *alloc_baton;
   void *userdata;
+  // Stack and registers
   struct memblock *stackbase;
+  size_t stacklimit;
   size_t sp;
   size_t bp;
   int64_t ip;
-  size_t stacklimit;
+  // Byte code
   unsigned char *bytecode;
   size_t bytecodesz;
   size_t bytecodecap;
+  // Object cache
+  struct memblock *cachebase;
+  size_t cachesz;
+  size_t cachecap;
+  struct rb_tree_nocmp strcache[1024];
 };
 
 struct memblock;
@@ -59,7 +71,9 @@ struct memblock_array {
   size_t size;
 };
 struct memblock_string {
+  struct rb_tree_node node;
   size_t size;
+  size_t locidx;
   char buf[0];
 };
 struct memblock_ios {
@@ -128,6 +142,16 @@ memblock_refup(struct abce *abce, const struct memblock *mb)
       break;
   }
   return *mb;
+}
+
+static inline int cache_add(struct abce *abce, const struct memblock *mb)
+{
+  if (abce->cachesz >= abce->cachecap)
+  {
+    return -EOVERFLOW;
+  }
+  abce->cachebase[abce->cachesz++] = memblock_refup(abce, mb);
+  return 0;
 }
 
 
@@ -470,6 +494,11 @@ static inline uint32_t str_hash(const char *str)
   size_t len = strlen(str);
   return murmur_buf(0x12345678U, str, len);
 }
+static inline uint32_t str_len_hash(const struct const_str_len *str_len)
+{
+  size_t len = str_len->len;
+  return murmur_buf(0x12345678U, str_len->str, len);
+}
 static inline uint32_t mb_str_hash(const struct memblock *mb)
 {
   if (mb->typ != T_S)
@@ -477,6 +506,31 @@ static inline uint32_t mb_str_hash(const struct memblock *mb)
     abort();
   }
   return murmur_buf(0x12345678U, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+}
+static inline int str_cache_cmp_asymlen(const struct const_str_len *str_len, struct rb_tree_node *n2, void *ud)
+{
+  struct memblock_string *e = CONTAINER_OF(n2, struct memblock_string, node);
+  size_t len1 = str_len->len;
+  size_t len2, lenmin;
+  int ret;
+  char *str2;
+  len2 = e->size;
+  str2 = e->buf;
+  lenmin = (len1 < len2) ? len1 : len2;
+  ret = memcmp(str_len->str, str2, lenmin);
+  if (ret != 0)
+  {
+    return ret;
+  }
+  if (len1 > len2)
+  {
+    return 1;
+  }
+  if (len1 < len2)
+  {
+    return -1;
+  }
+  return 0;
 }
 static inline int str_cmp_asym(const char *str, struct rb_tree_node *n2, void *ud)
 {
@@ -540,6 +594,35 @@ static inline int str_cmp_halfsym(
   return 0;
 }
 
+static inline int str_cache_cmp_sym(
+  struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
+{
+  struct memblock_string *e1 = CONTAINER_OF(n1, struct memblock_string, node);
+  struct memblock_string *e2 = CONTAINER_OF(n2, struct memblock_string, node);
+  size_t len1, len2, lenmin;
+  int ret;
+  char *str1, *str2;
+  len1 = e1->size;
+  str1 = e2->buf;
+  len2 = e2->size;
+  str2 = e2->buf;
+  lenmin = (len1 < len2) ? len1 : len2;
+  ret = memcmp(str1, str2, lenmin);
+  if (ret != 0)
+  {
+    return ret;
+  }
+  if (len1 > len2)
+  {
+    return 1;
+  }
+  if (len1 < len2)
+  {
+    return -1;
+  }
+  return 0;
+}
+
 static inline int str_cmp_sym(
   struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
 {
@@ -571,6 +654,39 @@ static inline int str_cmp_sym(
     return -1;
   }
   return 0;
+}
+
+static inline int64_t cache_add_str(struct abce *abce, const char *str, size_t len)
+{
+  struct memblock mb;
+  uint32_t hashval, hashloc;
+  struct const_str_len key = {.str = str, .len = len};
+  struct rb_tree_node *n;
+
+  hashval = str_len_hash(&key);
+  hashloc = hashval % (sizeof(abce->strcache)/sizeof(*abce->strcache));
+  n = RB_TREE_NOCMP_FIND(&abce->strcache[hashloc], str_cache_cmp_asymlen, NULL, &key);
+  if (n != NULL)
+  {
+    return CONTAINER_OF(n, struct memblock_string, node)->locidx;
+  }
+  if (abce->cachesz >= abce->cachecap)
+  {
+    return -EOVERFLOW;
+  }
+  mb = memblock_create_string(abce, str, len);
+  mb.u.area->u.str.locidx = abce->cachesz;
+  abce->cachebase[abce->cachesz++] = mb;
+  if (rb_tree_nocmp_insert_nonexist(&abce->strcache[hashloc], str_cache_cmp_sym, NULL, &mb.u.area->u.str.node) != 0)
+  {
+    abort();
+  }
+  return mb.u.area->u.str.locidx;
+}
+
+static inline int64_t cache_add_str_nul(struct abce *abce, const char *str)
+{
+  return cache_add_str(abce, str, strlen(str));
 }
 
 static inline const struct memblock *sc_get_myval_mb_area(
@@ -1145,6 +1261,7 @@ void free_bcode(unsigned char *bcodebase, size_t limit)
 
 void abce_init(struct abce *abce)
 {
+  memset(abce, 0, sizeof(*abce));
   abce->alloc = std_alloc;
   abce->trap = NULL;
   abce->alloc_baton = NULL;
@@ -1157,16 +1274,37 @@ void abce_init(struct abce *abce)
   abce->bytecodecap = 32*1024*1024;
   abce->bytecode = alloc_bcode(abce->bytecodecap);
   abce->bytecodesz = 0;
+
+  abce->cachecap = 1024*1024;
+  abce->cachebase = alloc_stack(abce->cachecap);
+  abce->cachesz = 0;
 }
 
 void abce_free(struct abce *abce)
 {
+  size_t i;
+  for (i = 0; i < sizeof(abce->strcache)/sizeof(*abce->strcache); i++)
+  {
+    while (abce->strcache[i].root != NULL)
+    {
+      struct memblock_string *mbe =
+        CONTAINER_OF(abce->strcache[i].root,
+                     struct memblock_string, node);
+      struct memblockarea *area = CONTAINER_OF(mbe, struct memblockarea, u.str);
+      rb_tree_nocmp_delete(&abce->strcache[i],
+                           abce->strcache[i].root);
+      memblock_arearefdn(abce, &area, T_S);
+    }
+  }
   free_stack(abce->stackbase, abce->stacklimit);
   abce->stackbase = NULL;
   abce->stacklimit = 0;
   free_bcode(abce->bytecode, abce->bytecodecap);
   abce->bytecode = NULL;
   abce->bytecodecap = 0;
+  free_stack(abce->cachebase, abce->cachecap);
+  abce->cachebase = NULL;
+  abce->cachecap = 0;
 }
 
 void stacktest(struct abce *abce, struct memblock *stackbase, size_t limit)
@@ -2065,6 +2203,44 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           memblock_refdn(abce, &mb);
           break;
         }
+        case ABCE_OPCODE_PUSH_NEW_DICT:
+        {
+          struct memblock mb;
+          int rettmp;
+          mb = memblock_create_tree(abce); // FIXME errors
+          rettmp = abce_push_mb(abce, &mb);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            memblock_refdn(abce, &mb);
+            break;
+          }
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        case ABCE_OPCODE_PUSH_FROM_CACHE:
+        {
+          double dbl;
+          int64_t i64;
+          GETDBL(&dbl, -1);
+          POP(abce);
+          if ((double)(uint64_t)dbl != dbl)
+          {
+            ret = -EINVAL;
+            break;
+          }
+          i64 = dbl;
+          if (i64 >= abce->cachesz)
+          {
+            ret = -EOVERFLOW;
+            break;
+          }
+          if (abce_push_mb(abce, &abce->cachebase[i64]) != 0)
+          {
+            abort();
+          }
+          break;
+        }
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
@@ -2128,8 +2304,20 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
 
 int main(int argc, char **argv)
 {
-  struct abce abce;
+  struct abce abce = {};
+  int64_t a, b;
   abce_init(&abce);
+
+  a = cache_add_str_nul(&abce, "foo");
+  printf("a %d\n", (int)a);
+  b = cache_add_str_nul(&abce, "bar");
+  printf("b %d\n", (int)b);
+  b = cache_add_str_nul(&abce, "bar");
+  printf("b %d\n", (int)b);
+  b = cache_add_str_nul(&abce, "bar");
+  printf("b %d\n", (int)b);
+  b = cache_add_str_nul(&abce, "bar");
+  printf("b %d\n", (int)b);
 
   abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
   abce_add_double(&abce, 4 + 2*2 + 2*8); // jmp offset
@@ -2148,7 +2336,8 @@ int main(int argc, char **argv)
   abce_add_ins(&abce, ABCE_OPCODE_PUSH_NEW_ARRAY); // list
 
   abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
-  abce_add_double(&abce, 5.6);
+  abce_add_double(&abce, a);
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_FROM_CACHE);
   abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
 
   abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
@@ -2156,7 +2345,8 @@ int main(int argc, char **argv)
   abce_add_ins(&abce, ABCE_OPCODE_PUSH_NEW_ARRAY); // list
 
   abce_add_ins(&abce, ABCE_OPCODE_PUSH_DBL);
-  abce_add_double(&abce, 6.7);
+  abce_add_double(&abce, b);
+  abce_add_ins(&abce, ABCE_OPCODE_PUSH_FROM_CACHE);
   abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
 
   abce_add_ins(&abce, ABCE_OPCODE_APPEND_MAINTAIN);
