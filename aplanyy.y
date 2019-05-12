@@ -164,9 +164,21 @@ aplanrules:
 | aplanrules NEWLINE
 | aplanrules assignrule
 | aplanrules FUNCTION VARREF_LITERAL OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
-{ free($3); }
+{
+  size_t funloc = aplanyy->abce.bytecodesz;
+  aplanyy_add_fun_sym(aplanyy, $3, 0, funloc);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_FUN_HEADER);
+  aplanyy_add_double(aplanyy, 0);
+}
   funlines
   ENDFUNCTION NEWLINE
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_NIL);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_RET);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_FUN_TRAILER);
+  aplanyy_add_double(aplanyy, symbol_add(aplanyy, $3, strlen($3)));
+  free($3);
+}
 ;
 
 maybe_parlist:
@@ -175,9 +187,9 @@ maybe_parlist:
 
 parlist:
 VARREF_LITERAL
-{ free($1); }
+{ free($1); abort(); /* not supported yet */}
 | parlist COMMA VARREF_LITERAL
-{ free($3); }
+{ free($3); abort(); /* not supported yet */}
 ;
 
 funlines:
@@ -199,6 +211,9 @@ bodylines:
 statement:
   lvalue EQUALS expr NEWLINE
 | RETURN expr NEWLINE
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_RET);
+}
 | BREAK NEWLINE
 | CONTINUE NEWLINE
 | ADD_RULE OPEN_PAREN expr CLOSE_PAREN NEWLINE
@@ -230,7 +245,7 @@ maybeqmequals: EQUALS {$$ = 0;} /* | QMEQUALS {$$ = 1;} */;
 assignrule:
 VARREF_LITERAL maybeqmequals
 {
-  size_t funloc = aplanyy->bytesz;
+  size_t funloc = aplanyy->abce.bytecodesz;
   aplanyy_add_fun_sym(aplanyy, $1, $2, funloc);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_FUN_HEADER);
   aplanyy_add_double(aplanyy, 0);
@@ -285,7 +300,7 @@ value:
   size_t symid = symbol_add(aplanyy, $1.str, $1.sz);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
   aplanyy_add_double(aplanyy, symid);
-  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_STRINGTAB);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($1.str);
   $$ = 0;
 }
@@ -424,6 +439,10 @@ expr0:
   free($1.str);
 }
 | NUMBER
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, $1);
+}
 | lvalue
 | lvalue OPEN_PAREN maybe_arglist CLOSE_PAREN
 | lvalue MAYBE_CALL

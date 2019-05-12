@@ -13,6 +13,10 @@
 #include "likely.h"
 #include "abceopcodes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *abce_std_alloc(void *old, size_t newsz, void *alloc_baton);
 
 struct abce_const_str_len {
@@ -515,7 +519,7 @@ abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = abce->alloc(NULL, sizeof(*mba) + sz + 1, abce->alloc_baton);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz + 1, abce->alloc_baton);
   mba->u.str.size = sz;
   memcpy(mba->u.str.buf, str, sz);
   mba->u.str.buf[sz] = '\0';
@@ -645,7 +649,7 @@ static inline int abce_str_cache_cmp_sym(
   int ret;
   char *str1, *str2;
   len1 = e1->size;
-  str1 = e2->buf;
+  str1 = e1->buf;
   len2 = e2->size;
   str2 = e2->buf;
   lenmin = (len1 < len2) ? len1 : len2;
@@ -795,7 +799,7 @@ int abce_sc_put_val_mb(
 
 int abce_sc_put_val_str(
   struct abce *abce,
-  const struct abce_mb *mb, char *str, const struct abce_mb *pval);
+  const struct abce_mb *mb, const char *str, const struct abce_mb *pval);
 
 
 static inline size_t abce_next_highest_power_of_2(size_t x)
@@ -825,7 +829,7 @@ static inline struct abce_mb abce_mb_create_tree(struct abce *abce)
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
   rb_tree_nocmp_init(&mba->u.tree.tree);
   mba->refcnt = 1;
   mb.typ = ABCE_T_A;
@@ -837,11 +841,11 @@ static inline struct abce_mb abce_mb_create_array(struct abce *abce)
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
   mba->u.ar.size = 0;
   mba->u.ar.capacity = 16;
   mba->u.ar.mbs =
-    abce->alloc(NULL, 16*sizeof(*mba->u.ar.mbs), abce->alloc_baton);
+    (struct abce_mb*)abce->alloc(NULL, 16*sizeof(*mba->u.ar.mbs), abce->alloc_baton);
   mba->refcnt = 1;
   mb.typ = ABCE_T_A;
   mb.u.area = mba;
@@ -879,7 +883,7 @@ abce_mb_array_append(struct abce *abce,
   {
     size_t new_cap = 2*mb->u.area->u.ar.size + 1;
     struct abce_mb *mbs2;
-    mbs2 = abce->alloc(mb->u.area->u.ar.mbs,
+    mbs2 = (struct abce_mb*)abce->alloc(mb->u.area->u.ar.mbs,
                        sizeof(*mb->u.area->u.ar.mbs)*new_cap,
                        abce->alloc_baton);
     mb->u.area->u.ar.capacity = new_cap;
@@ -1040,5 +1044,9 @@ int
 abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz);
 
 int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

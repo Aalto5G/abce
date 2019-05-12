@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include "datatypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,43 +72,46 @@ struct aplanyyrule {
 
 struct aplanyy {
   void *baton;
+  struct abce abce;
+/*
   uint8_t *bytecode;
   size_t bytecapacity;
   size_t bytesz;
+*/
 };
 
-size_t symbol_add(struct aplanyy *aplanyy, const char *symbol, size_t symlen);
-size_t aplanyy_add_fun_sym(struct aplanyy *aplanyy, const char *symbol, int maybe, size_t loc);
-
-static inline void aplanyy_add_byte(struct aplanyy *aplanyy, uint8_t byte)
+static inline void aplanyy_init(struct aplanyy *yy)
 {
-  size_t newcapacity;
-  if (aplanyy->bytesz >= aplanyy->bytecapacity)
-  {
-    newcapacity = 2*aplanyy->bytecapacity + 1;
-    aplanyy->bytecode = (uint8_t*)realloc(aplanyy->bytecode, sizeof(*aplanyy->bytecode)*newcapacity);
-    aplanyy->bytecapacity = newcapacity;
-  }
-  aplanyy->bytecode[aplanyy->bytesz++] = byte; 
+  abce_init(&yy->abce);
+}
+
+static inline size_t symbol_add(struct aplanyy *aplanyy, const char *symbol, size_t symlen)
+{
+  return abce_cache_add_str(&aplanyy->abce, symbol, symlen);
+}
+static inline size_t aplanyy_add_fun_sym(struct aplanyy *aplanyy, const char *symbol, int maybe, size_t loc)
+{
+  struct abce_mb mb;
+  mb.typ = ABCE_T_F;
+  mb.u.d = loc;
+  abce_sc_put_val_str(&aplanyy->abce, &aplanyy->abce.dynscope, symbol, &mb);
+  return (size_t)-1;
+}
+
+static inline void aplanyy_add_byte(struct aplanyy *aplanyy, uint16_t ins)
+{
+  abce_add_ins(&aplanyy->abce, ins);
 }
 
 static inline void aplanyy_add_double(struct aplanyy *aplanyy, double dbl)
 {
-  uint64_t val;
-  memcpy(&val, &dbl, 8);
-  aplanyy_add_byte(aplanyy, val>>56);
-  aplanyy_add_byte(aplanyy, val>>48);
-  aplanyy_add_byte(aplanyy, val>>40);
-  aplanyy_add_byte(aplanyy, val>>32);
-  aplanyy_add_byte(aplanyy, val>>24);
-  aplanyy_add_byte(aplanyy, val>>16);
-  aplanyy_add_byte(aplanyy, val>>8);
-  aplanyy_add_byte(aplanyy, val);
+  abce_add_double(&aplanyy->abce, dbl);
 }
 
 static inline void aplanyy_free(struct aplanyy *aplanyy)
 {
-  free(aplanyy->bytecode);
+  abce_free(&aplanyy->abce);
+  //free(aplanyy->bytecode);
   memset(aplanyy, 0, sizeof(*aplanyy));
 }
 

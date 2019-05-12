@@ -37,7 +37,7 @@ static inline void murmurctx_feed32(struct murmurctx *ctx, uint32_t val)
 static inline void murmurctx_feed_buf(
   struct murmurctx *ctx, const void *buf, size_t sz)
 {
-  const char *cbuf = buf;
+  const char *cbuf = (const char*)buf;
   size_t i = 0;
   struct murmurctx ctx2 = *ctx;
   while (i < (sz/4)*4)
