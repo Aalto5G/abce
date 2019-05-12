@@ -1,12 +1,5 @@
+#include <stdlib.h>
 #include "yyutils.h"
-#include <iostream>
-
-/*
-size_t symbol_add(struct aplanyy *aplanyy, const char *symbol, size_t symlen)
-{
-  abort();
-}
-*/
 
 int main(int argc, char **argv)
 {
@@ -17,7 +10,7 @@ int main(int argc, char **argv)
 
   if (!f)
   {
-    std::terminate();
+    abort();
   }
   aplanyydoparse(f, &aplanyy);
   fclose(f);
