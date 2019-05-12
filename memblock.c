@@ -762,6 +762,14 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
   // code:
   const size_t guard = 100;
   int ret = -EAGAIN;
+  if (addcode != NULL)
+  {
+    abce->ip = -(int64_t)addsz-(int64_t)guard;
+  }
+  else
+  {
+    abce->ip = 0;
+  }
   while (ret == -EAGAIN &&
          ((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
          (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard)))
