@@ -6,6 +6,8 @@
 #include "rbtree.h"
 #include "murmur.h"
 #include "containerof.h"
+#include "likely.h"
+#include "abceopcodes.h"
 
 void *std_alloc(void *old, size_t newsz, void *alloc_baton)
 {
@@ -28,6 +30,14 @@ struct abce {
   void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
   void *alloc_baton;
   void *userdata;
+  struct memblock *stackbase;
+  size_t sp;
+  size_t bp;
+  int64_t ip;
+  size_t stacklimit;
+  unsigned char *bytecode;
+  size_t bytecodesz;
+  size_t bytecodecap;
 };
 
 struct memblock;
@@ -91,6 +101,17 @@ struct memblock_rb_entry {
   struct memblock val;
 };
 
+static inline int abce_add_double(struct abce *abce, double dbl)
+{
+  if (abce->bytecodesz + 8 > abce->bytecodecap)
+  {
+    return -EFAULT;
+  }
+  memcpy(&abce->bytecode[abce->bytecodesz], &dbl, 8);
+  abce->bytecodesz += 8;
+  return 0;
+}
+
 void memblock_refdn(struct abce *abce, struct memblock *mb);
 
 static inline struct memblock
@@ -105,6 +126,255 @@ memblock_refup(struct abce *abce, const struct memblock *mb)
       break;
   }
   return *mb;
+}
+
+
+static inline int abce_pop(struct abce *abce)
+{
+  struct memblock *mb;
+  if (abce->sp == 0 || abce->sp <= abce->bp)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[--abce->sp];
+  memblock_refdn(abce, mb);
+  return 0;
+}
+
+static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
+{
+  size_t addr;
+  if (idx < 0)
+  {
+    addr = abce->sp + idx;
+    if (addr >= abce->sp || addr < abce->bp)
+    {
+      return -EOVERFLOW;
+    }
+  }
+  else
+  {
+    addr = abce->bp + idx;
+    if (addr >= abce->sp || addr < abce->bp)
+    {
+      return -EOVERFLOW;
+    }
+  }
+  *paddr = addr;
+  return 0;
+}
+
+static inline int abce_getboolean(int *b, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mb;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[addr];
+  if (mb->typ != T_D || mb->typ != T_B)
+  {
+    return -EINVAL;
+  }
+  *b = !!mb->u.d;
+  return 0;
+}
+
+static inline int abce_getfunaddr(int64_t *paddr, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mb;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[addr];
+  if (mb->typ != T_F)
+  {
+    return -EINVAL;
+  }
+  *paddr = mb->u.d;
+  return 0;
+}
+
+static inline int abce_getbp(struct abce *abce, int64_t idx)
+{
+  const struct memblock *mb;
+  size_t addr;
+  size_t trial;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[addr];
+  if (mb->typ != T_D || mb->typ != T_B)
+  {
+    return -EINVAL;
+  }
+  trial = mb->u.d;
+  if (trial != mb->u.d)
+  {
+    return -EINVAL;
+  }
+  abce->bp = trial;
+  return 0;
+}
+
+static inline int abce_getip(struct abce *abce, int64_t idx)
+{
+  const struct memblock *mb;
+  size_t addr;
+  size_t trial;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[addr];
+  if (mb->typ != T_D || mb->typ != T_B)
+  {
+    return -EINVAL;
+  }
+  trial = mb->u.d;
+  if (trial != mb->u.d)
+  {
+    return -EINVAL;
+  }
+  abce->ip = trial;
+  return 0;
+}
+
+static inline int abce_getmb(struct memblock *mb, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mbptr;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mbptr = &abce->stackbase[addr];
+  *mb = memblock_refup(abce, mbptr);
+  return 0;
+}
+
+static inline int abce_verifyaddr(struct abce *abce, int64_t idx)
+{
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  return 0;
+}
+
+static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
+{
+  const struct memblock *mb;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[addr];
+  if (mb->typ != T_D || mb->typ != T_B)
+  {
+    return -EINVAL;
+  }
+  *d = mb->u.d;
+  return 0;
+}
+
+static inline int abce_push_mb(struct abce *abce, const struct memblock *mb)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp] = memblock_refup(abce, mb);
+  abce->sp++;
+  return 0;
+}
+
+static inline int abce_push_boolean(struct abce *abce, int boolean)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp].typ = T_D;
+  abce->stackbase[abce->sp].u.d = boolean ? 1.0 : 0.0;
+  abce->sp++;
+  return 0;
+}
+
+static inline int abce_push_nil(struct abce *abce)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp].typ = T_N;
+  abce->sp++;
+  return 0;
+}
+
+static inline int abce_push_ip(struct abce *abce)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp].typ = T_IP;
+  abce->stackbase[abce->sp].u.d = abce->ip;
+  abce->sp++;
+  return 0;
+}
+static inline int abce_push_bp(struct abce *abce)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp].typ = T_BP;
+  abce->stackbase[abce->sp].u.d = abce->bp;
+  abce->sp++;
+  return 0;
+}
+static inline int abce_push_double(struct abce *abce, double dbl)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp].typ = T_D;
+  abce->stackbase[abce->sp].u.d = dbl;
+  abce->sp++;
+  return 0;
+}
+static inline int abce_push_fun(struct abce *abce, double fun_addr)
+{
+  if (abce->sp >= abce->stacklimit)
+  {
+    return -EOVERFLOW;
+  }
+  if ((double)(int64_t)fun_addr != fun_addr)
+  {
+    return -EINVAL;
+  }
+  abce->stackbase[abce->sp].typ = T_F;
+  abce->stackbase[abce->sp].u.d = fun_addr;
+  abce->sp++;
+  return 0;
+}
+
+static inline int abce_add_byte(struct abce *abce, unsigned char byte)
+{
+  if (abce->bytecodesz >= abce->bytecodecap)
+  {
+    return -EFAULT;
+  }
+  abce->bytecode[abce->bytecodesz++] = byte;
+  return 0;
 }
 
 static inline struct memblockarea*
@@ -828,6 +1098,698 @@ void stacktest_main(struct abce *abce)
   struct memblock *stackbase = alloc_stack(limit);
   stacktest(abce, stackbase, limit);
   free_stack(stackbase, limit);
+}
+
+static inline int
+fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz)
+{
+  const size_t guard = 100;
+  if (!((abce->ip >= 0 && abce->ip < abce->bytecodesz) ||
+        (abce->ip >= -addsz-guard && abce->ip < -guard)))
+  {
+    return -EFAULT;
+  }
+  if (abce->ip >= 0)
+  {
+    *b = abce->bytecode[abce->ip++];
+    return 0;
+  }
+  *b = addcode[abce->ip+guard+addsz];
+  abce->ip++;
+  return 0;
+}
+
+static inline int
+fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
+{
+  const size_t guard = 100;
+  if (!((abce->ip >= 0 && abce->ip+8 <= abce->bytecodesz) ||
+        (abce->ip >= -addsz-guard && abce->ip+8 <= -guard)))
+  {
+    return -EFAULT;
+  }
+  if (abce->ip >= 0)
+  {
+    memcpy(d, abce->bytecode + abce->ip, 8);
+    abce->ip += 8;
+    return 0;
+  }
+  memcpy(d, addcode + abce->ip + guard + addsz, 8);
+  abce->ip += 8;
+  return 0;
+}
+
+static inline int
+fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
+{
+  uint8_t ophi, opmid, oplo;
+  if (fetch_b(&ophi, abce, addcode, addsz) != 0)
+  {
+    return -EFAULT;
+  }
+  if (likely(ophi < 128))
+  {
+    *ins = ophi;
+    return 0;
+  }
+  else if (unlikely((ophi & 0xC0) == 0x80))
+  {
+    return -EILSEQ;
+  }
+  else if (likely((ophi & 0xE0) == 0xC0))
+  {
+    if (fetch_b(&oplo, abce, addcode, addsz) != 0)
+    {
+      return -EFAULT;
+    }
+    if (unlikely((oplo & 0xC0) != 0x80))
+    {
+      return -EILSEQ;
+    }
+    *ins = ((ophi&0x1F) << 6) | (oplo & 0x3F);
+    if (unlikely(*ins < 128))
+    {
+      return -EILSEQ;
+    }
+    return 0;
+  }
+  else if (likely((ophi & 0xF0) == 0xE0))
+  {
+    if (fetch_b(&opmid, abce, addcode, addsz) != 0)
+    {
+      return -EFAULT;
+    }
+    if (unlikely((opmid & 0xC0) != 0x80))
+    {
+      return -EILSEQ;
+    }
+    if (fetch_b(&oplo, abce, addcode, addsz) != 0)
+    {
+      return -EFAULT;
+    }
+    if (unlikely((oplo & 0xC0) != 0x80))
+    {
+      return -EILSEQ;
+    }
+    *ins = ((ophi&0xF) << 12) | ((opmid&0x3F) << 6) | (oplo & 0x3F);
+    if (unlikely(*ins <= 0x7FF))
+    {
+      return -EILSEQ;
+    }
+    return 0;
+  }
+  else
+  {
+    return -EILSEQ;
+  }
+}
+
+#define GETBOOLEAN(dbl, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getboolean((dbl), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define GETFUNADDR(dbl, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getfunaddr((dbl), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define VERIFYADDR(idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_verifyaddr(abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define GETDBL(dbl, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getdbl((dbl), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define GETBP(idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getbp(abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define GETIP(idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getip(abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define GETMB(mb, idx) \
+  if(1) { \
+    int _getdbl_rettmp = abce_getmb((mb), abce, (idx)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
+#define POP(mb) \
+  if(1) { \
+    int _getdbl_rettmp = abce_pop(abce); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      abort(); \
+    } \
+  }
+
+int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
+{
+  // code:
+  const size_t guard = 100;
+  int ret;
+  while (ret == -EAGAIN &&
+         ((abce->ip >= 0 && abce->ip < abce->bytecodesz) ||
+         (abce->ip >= -addsz-guard && abce->ip < -guard)))
+  {
+    uint16_t ins;
+    if (fetch_i(&ins, abce, addcode, addsz) != 0)
+    {
+      ret = -EFAULT;
+      break;
+    }
+    if (likely(ins < 64))
+    {
+      switch (ins)
+      {
+        case ABCE_OPCODE_NOP:
+          break;
+        case ABCE_OPCODE_PUSH_DBL:
+        {
+          double dbl;
+          if (fetch_d(&dbl, abce, addcode, addsz) != 0)
+          {
+            ret = -EFAULT;
+            break;
+          }
+          if (abce_push_double(abce, dbl) != 0)
+          {
+            ret = -EFAULT;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_PUSH_TRUE:
+        {
+          if (abce_push_boolean(abce, 1) != 0)
+          {
+            ret = -EFAULT;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_PUSH_FALSE:
+        {
+          if (abce_push_boolean(abce, 0) != 0)
+          {
+            ret = -EFAULT;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_PUSH_NIL:
+        {
+          if (abce_push_nil(abce) != 0)
+          {
+            ret = -EFAULT;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_FUNIFY:
+        {
+          double d;
+          int rettmp;
+          GETDBL(&d, -1);
+          POP(abce);
+          rettmp = abce_push_fun(abce, d);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            break;
+          }
+          break;
+        }
+        case ABCE_OPCODE_CALL:
+        {
+          const size_t guard = 100;
+          double argcnt;
+          int64_t new_ip;
+          uint16_t ins2;
+          int rettmp;
+          GETDBL(&argcnt, -1);
+          GETFUNADDR(&new_ip, -2);
+          POP(abce);
+          POP(abce);
+          // FIXME off by one?
+          if (!((new_ip >= 0 && new_ip+10 <= abce->bytecodesz) ||
+                (new_ip >= -addsz-guard && new_ip+10 <= -guard)))
+          {
+            return -EFAULT;
+          }
+          abce_push_bp(abce);
+          abce_push_ip(abce);
+          abce->ip = new_ip;
+          rettmp = fetch_i(&ins2, abce, addcode, addsz);
+          if (rettmp != 0)
+          {
+            return rettmp;
+          }
+          if (ins2 != ABCE_OPCODE_FUN_HEADER)
+          {
+            return -EINVAL;
+          }
+          double dbl;
+          rettmp = fetch_d(&dbl, abce, addcode, addsz);
+          if (rettmp != 0)
+          {
+            return rettmp;
+          }
+          if (dbl != (double)(uint64_t)argcnt)
+          {
+            return -EINVAL;
+          }
+          break;
+        }
+        case ABCE_OPCODE_RET:
+        {
+          struct memblock mb;
+          GETIP(-2);
+          GETBP(-3);
+          GETMB(&mb, -1);
+          POP(abce);
+          POP(abce);
+          POP(abce);
+          if (abce_push_mb(abce, &mb) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        /* stacktop - cntloc - cntargs - retval - locvar - ip - bp - args */
+        case ABCE_OPCODE_RETEX2:
+        {
+          struct memblock mb;
+          double cntloc, cntargs;
+          size_t i;
+          GETDBL(&cntloc, -1);
+          GETDBL(&cntargs, -2);
+          if (cntloc != (uint32_t)cntloc || cntargs != (uint32_t)cntargs)
+          {
+            ret = -EINVAL;
+            break;
+          }
+          VERIFYADDR(-5 - cntloc - cntargs);
+          GETMB(&mb, -3);
+          POP(abce); // cntloc
+          POP(abce); // cntargs
+          POP(abce); // retval
+          for (i = 0; i < cntloc; i++)
+          {
+            POP(abce);
+          }
+          POP(abce); // ip
+          POP(abce); // bp
+          for (i = 0; i < cntargs; i++)
+          {
+            POP(abce);
+          }
+          if (abce_push_mb(abce, &mb) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mb);
+          break;
+        }
+        case ABCE_OPCODE_JMP:
+        {
+          const size_t guard = 100;
+          double d;
+          int64_t new_ip;
+          GETDBL(&d, -1);
+          POP(abce);
+          new_ip = d;
+          if (!((new_ip >= 0 && new_ip <= abce->bytecodesz) ||
+                (new_ip >= -addsz-guard && new_ip <= -guard)))
+          {
+            return -EFAULT;
+          }
+          abce->ip = new_ip;
+          break;
+        }
+        case ABCE_OPCODE_IF_NOT_JMP:
+        {
+          const size_t guard = 100;
+          int b;
+          double d;
+          int64_t new_ip;
+          GETBOOLEAN(&b, -1);
+          GETDBL(&d, -2);
+          POP(abce);
+          POP(abce);
+          new_ip = d;
+          if (!((new_ip >= 0 && new_ip <= abce->bytecodesz) ||
+                (new_ip >= -addsz-guard && new_ip <= -guard)))
+          {
+            return -EFAULT;
+          }
+          if (!b)
+          {
+            abce->ip = new_ip;
+          }
+          break;
+        }
+        case ABCE_OPCODE_BOOLEANIFY:
+        {
+          int b;
+          GETBOOLEAN(&b, -1);
+          POP(abce);
+          if (abce_push_boolean(abce, b) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_EQ:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(d1 == d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_NE:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(d1 != d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_LOGICAL_AND:
+        {
+          int b1, b2;
+          GETBOOLEAN(&b2, -1);
+          GETBOOLEAN(&b1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(b1 && b2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_BITWISE_AND:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (((int64_t)d1) & ((int64_t)d2))) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_LOGICAL_OR:
+        {
+          int b1, b2;
+          GETBOOLEAN(&b2, -1);
+          GETBOOLEAN(&b1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(b1 || b2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_BITWISE_OR:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (((int64_t)d1) | ((int64_t)d2))) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_BITWISE_XOR:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (((int64_t)d1) ^ ((int64_t)d2))) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_LOGICAL_NOT:
+        {
+          int b;
+          GETBOOLEAN(&b, -1);
+          POP(abce);
+          if (abce_push_boolean(abce, !b) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_BITWISE_NOT:
+        {
+          double d;
+          GETDBL(&d, -1);
+          POP(abce);
+          if (abce_push_double(abce, ~(int64_t)d) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_LT:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(d1 < d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_GT:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(d1 > d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_LE:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(d1 <= d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_GE:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_boolean(abce, !!(d1 >= d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_SHR:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (((int64_t)d1) >> ((int64_t)d2))) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_SHL:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (((int64_t)d1) << ((int64_t)d2))) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_ADD:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (d1 + d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_SUB:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (d1 - d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_MUL:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (d1 * d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_DIV:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (d1 / d2)) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_MOD:
+        {
+          double d1, d2;
+          GETDBL(&d2, -1);
+          GETDBL(&d1, -2);
+          POP(abce);
+          POP(abce);
+          if (abce_push_double(abce, (((int64_t)d1) % ((int64_t)d2))) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_UNARY_MINUS:
+        {
+          double d;
+          GETDBL(&d, -1);
+          POP(abce);
+          if (abce_push_double(abce, -d) != 0)
+          {
+            abort();
+          }
+          break;
+        }
+      }
+    }
+    else if (likely(ins < 128))
+    {
+      printf("Trap short\n");
+      abort();
+    }
+    else if (likely(ins < 0x400))
+    {
+      printf("mid\n");
+      abort();
+    }
+    else if (likely(ins < 0x800))
+    {
+      printf("Trap mid\n");
+      abort();
+    }
+    else if (likely(ins < 0x8000))
+    {
+      printf("long\n");
+      abort();
+    }
+    else
+    {
+      printf("Trap long\n");
+      abort();
+    }
+  }
+  return ret;
 }
 
 int main(int argc, char **argv)
