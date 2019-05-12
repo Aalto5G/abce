@@ -1831,6 +1831,93 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           }
           break;
         }
+        case ABCE_OPCODE_LISTPOP:
+        {
+          struct memblock mbar;
+          GETMBAR(&mbar, -1);
+          POP();
+          if (mbar.u.area->u.ar.size == 0)
+          {
+            memblock_refdn(abce, &mbar);
+            ret = -ENOENT;
+            break;
+          }
+          memblock_refdn(abce, &mbar.u.area->u.ar.mbs[--mbar.u.area->u.ar.size]);
+          memblock_refdn(abce, &mbar);
+          break;
+        }
+        case ABCE_OPCODE_LISTLEN:
+        {
+          struct memblock mbar;
+          GETMBAR(&mbar, -1);
+          POP();
+          if (abce_push_double(abce, mbar.u.area->u.ar.size) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mbar);
+          break;
+        }
+        case ABCE_OPCODE_LISTSET:
+        {
+          struct memblock mbit;
+          struct memblock mbar;
+          double loc;
+          int64_t locint;
+          // Note the order. MBAR is the one that's most likely to fail.
+          GETDBL(&loc, -2);
+          GETMBAR(&mbar, -3);
+          GETMB(&mbit, -1);
+          POP();
+          POP();
+          POP();
+          if (loc != (double)(uint64_t)loc)
+          {
+            memblock_refdn(abce, &mbit);
+            memblock_refdn(abce, &mbar);
+            ret = -EINVAL;
+            break;
+          }
+          locint = loc;
+          if (locint < 0 || locint >= mbar.u.area->u.ar.size)
+          {
+            memblock_refdn(abce, &mbit);
+            memblock_refdn(abce, &mbar);
+            ret = -ERANGE;
+            break;
+          }
+          memblock_refdn(abce, &mbar.u.area->u.ar.mbs[locint]);
+          mbar.u.area->u.ar.mbs[locint] = mbit;
+          memblock_refdn(abce, &mbar);
+          break;
+        }
+        case ABCE_OPCODE_LISTGET:
+        {
+          struct memblock mbar;
+          double loc;
+          int64_t locint;
+          GETDBL(&loc, -1);
+          GETMBAR(&mbar, -2);
+          POP();
+          POP();
+          if (loc != (double)(uint64_t)loc)
+          {
+            ret = -EINVAL;
+            break;
+          }
+          locint = loc;
+          if (locint < 0 || locint >= mbar.u.area->u.ar.size)
+          {
+            ret = -ERANGE;
+            break;
+          }
+          if (abce_push_mb(abce, &mbar.u.area->u.ar.mbs[locint]) != 0)
+          {
+            abort();
+          }
+          memblock_refdn(abce, &mbar);
+          break;
+        }
         case ABCE_OPCODE_PUSH_STACK:
         {
           struct memblock mb;
