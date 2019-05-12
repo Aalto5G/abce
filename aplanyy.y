@@ -153,7 +153,6 @@ int aplanyywrap(yyscan_t scanner)
 %type<d> value
 %type<d> valuelistentry
 %type<d> maybeqmequals
-%type<d> maybe_rec
 
 %start st
 
@@ -424,6 +423,7 @@ expr0:
 {
   free($1.str);
 }
+| NUMBER
 | lvalue
 | lvalue OPEN_PAREN maybe_arglist CLOSE_PAREN
 | lvalue MAYBE_CALL
