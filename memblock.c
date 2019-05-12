@@ -1196,8 +1196,8 @@ static inline int
 fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   const size_t guard = 100;
-  if (!((abce->ip >= 0 && abce->ip < abce->bytecodesz) ||
-        (abce->ip >= -addsz-guard && abce->ip < -guard)))
+  if (!((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
+        (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard)))
   {
     return -EFAULT;
   }
@@ -1215,8 +1215,8 @@ static inline int
 fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   const size_t guard = 100;
-  if (!((abce->ip >= 0 && abce->ip+8 <= abce->bytecodesz) ||
-        (abce->ip >= -addsz-guard && abce->ip+8 <= -guard)))
+  if (!((abce->ip >= 0 && (size_t)abce->ip+8 <= abce->bytecodesz) ||
+        (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip+8 <= -(int64_t)guard)))
   {
     return -EFAULT;
   }
@@ -1547,8 +1547,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
   const size_t guard = 100;
   int ret = -EAGAIN;
   while (ret == -EAGAIN &&
-         ((abce->ip >= 0 && abce->ip < abce->bytecodesz) ||
-         (abce->ip >= -addsz-guard && abce->ip < -guard)))
+         ((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
+         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard)))
   {
     uint16_t ins;
     if (fetch_i(&ins, abce, addcode, addsz) != 0)
@@ -1631,8 +1631,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           POP(abce);
           POP(abce);
           // FIXME off by one?
-          if (!((new_ip >= 0 && new_ip+10 <= abce->bytecodesz) ||
-                (new_ip >= -addsz-guard && new_ip+10 <= -guard)))
+          if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
+                (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard)))
           {
             ret = -EFAULT;
             break;
@@ -1728,8 +1728,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           GETDBL(&d, -1);
           POP(abce);
           new_ip = d;
-          if (!((new_ip >= 0 && new_ip <= abce->bytecodesz) ||
-                (new_ip >= -addsz-guard && new_ip <= -guard)))
+          if (!((new_ip >= 0 && (size_t)new_ip <= abce->bytecodesz) ||
+                (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip <= -(int64_t)guard)))
           {
             ret = -EFAULT;
             break;
@@ -1748,8 +1748,8 @@ int engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           POP(abce);
           POP(abce);
           new_ip = d;
-          if (!((new_ip >= 0 && new_ip <= abce->bytecodesz) ||
-                (new_ip >= -addsz-guard && new_ip <= -guard)))
+          if (!((new_ip >= 0 && (size_t)new_ip <= abce->bytecodesz) ||
+                (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip <= -(int64_t)guard)))
           {
             ret = -EFAULT;
             break;
