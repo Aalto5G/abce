@@ -37,3 +37,21 @@ sigils ($) and so must all reserved words (@). Operators in Aplan are the
 standard C ones, so most configuration and programming language related lexer
 grammars probably can support these operators. If not, the programmer can
 create a custom variant of Aplan with different operators.
+
+Design criteria
+- A stable and extensible bytecode
+- As simple language as possible
+- Language easily modifiable
+- Userdata pointers for everything
+- JSON compatibility
+- Embeddable into Yacc grammars
+- All reserved words and variable names begin with sigil
+- Reference counting
+- Recursive scoping with support for lexical and dynamic scopes
+- mmap'd data structures allowing OS to allocate automatically pages as needed
+- Extremely high parsing and compiling performance
+
+What's not included in design criteria
+- Optimization and/or JIT compilation of compiled code
+- Coroutines
+- Garbage collector
