@@ -889,6 +889,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbneedle);
         return rettmp;
       }
+      POP();
+      POP();
+      POP();
       rettmp = abce_strgsub_mb(abce, &res, &mbhaystack, &mbneedle, &mbsub);
       if (rettmp != 0)
       {
@@ -911,6 +914,37 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       return -EACCES;
     // String functions
     case ABCE_OPCODE_STRSUB:
+    {
+      struct abce_mb res, mbbase;
+      double start, end;
+
+      GETDBL(&end, -1);
+      if (end < 0 || (double)(size_t)end != end)
+      {
+        return -ERANGE;
+      }
+      GETDBL(&start, -2);
+      if (start < 0 || (double)(size_t)start != start || end < start)
+      {
+        return -ERANGE;
+      }
+      GETMBSTR(&mbbase, -3);
+      if (end > mbbase.u.area->u.str.size)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        return -ERANGE;
+      }
+      POP();
+      POP();
+      POP();
+      res = abce_mb_create_string(abce,
+                                  mbbase.u.area->u.str.buf + (size_t)start,
+                                  end - start);
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbbase);
+      return 0;
+    }
     case ABCE_OPCODE_STR_FROMCHR:
     case ABCE_OPCODE_STRAPPEND:
     case ABCE_OPCODE_STR_CMP:
