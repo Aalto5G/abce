@@ -1446,8 +1446,14 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int b;
           double d;
           int64_t new_ip;
-          GETBOOLEAN(&b, -1);
-          GETDBL(&d, -2);
+          /* Note the clever order of arguments. This allows code within a
+           * loop to push false and do an unconditional jump to just right
+           * after the expression pushing the boolean value. Thus, the break
+           * statement doesn't need to know the jump address forwards; it can
+           * jump backwards. The compiler can be a single-pass one, updating
+           * only one jump address forwards, the main loop condition test. */
+          GETBOOLEAN(&b, -2);
+          GETDBL(&d, -1);
           POP();
           POP();
           new_ip = d;
