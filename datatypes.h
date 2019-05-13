@@ -897,7 +897,7 @@ abce_mb_array_append(struct abce *abce,
 
 void abce_mb_treedump(const struct rb_tree_node *n, int *first);
 
-void dump_str(const char *str, size_t sz);
+void abce_dump_str(const char *str, size_t sz);
 
 void abce_mb_dump_impl(const struct abce_mb *mb);
 

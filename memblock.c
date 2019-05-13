@@ -293,7 +293,7 @@ void abce_mb_treedump(const struct rb_tree_node *n, int *first)
   abce_mb_treedump(n->right, first);
 }
 
-void dump_str(const char *str, size_t sz)
+void abce_dump_str(const char *str, size_t sz)
 {
   size_t i;
   printf("\"");
@@ -399,17 +399,17 @@ void abce_mb_dump_impl(const struct abce_mb *mb)
       printf("}");
       break;
     case ABCE_T_S:
-      dump_str(mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      abce_dump_str(mb->u.area->u.str.buf, mb->u.area->u.str.size);
       break;
   }
 }
 
-struct abce_mb *alloc_stack(size_t limit)
+struct abce_mb *abce_alloc_stack(size_t limit)
 {
   return mmap(NULL, abce_topages(limit * sizeof(struct abce_mb)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 }
 
-void free_stack(struct abce_mb *stackbase, size_t limit)
+void abce_free_stack(struct abce_mb *stackbase, size_t limit)
 {
   if (munmap(stackbase, abce_topages(limit * sizeof(struct abce_mb))) != 0)
   {
@@ -417,12 +417,12 @@ void free_stack(struct abce_mb *stackbase, size_t limit)
   }
 }
 
-unsigned char *alloc_bcode(size_t limit)
+unsigned char *abce_alloc_bcode(size_t limit)
 {
   return mmap(NULL, abce_topages(limit), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 }
 
-void free_bcode(unsigned char *bcodebase, size_t limit)
+void abce_free_bcode(unsigned char *bcodebase, size_t limit)
 {
   if (munmap(bcodebase, abce_topages(limit)) != 0)
   {
@@ -438,16 +438,16 @@ void abce_init(struct abce *abce)
   abce->alloc_baton = NULL;
   abce->userdata = NULL;
   abce->stacklimit = 1024*1024;
-  abce->stackbase = alloc_stack(abce->stacklimit);
+  abce->stackbase = abce_alloc_stack(abce->stacklimit);
   abce->sp = 0;
   abce->bp = 0;
   abce->ip = 0;
   abce->bytecodecap = 32*1024*1024;
-  abce->bytecode = alloc_bcode(abce->bytecodecap);
+  abce->bytecode = abce_alloc_bcode(abce->bytecodecap);
   abce->bytecodesz = 0;
 
   abce->cachecap = 1024*1024;
-  abce->cachebase = alloc_stack(abce->cachecap);
+  abce->cachebase = abce_alloc_stack(abce->cachecap);
   abce->cachesz = 0;
 
   abce->dynscope = abce_mb_create_scope_noparent(abce, ABCE_DEFAULT_SCOPE_SIZE);
@@ -470,38 +470,15 @@ void abce_free(struct abce *abce)
       abce_mb_arearefdn(abce, &area, ABCE_T_S);
     }
   }
-  free_stack(abce->stackbase, abce->stacklimit);
+  abce_free_stack(abce->stackbase, abce->stacklimit);
   abce->stackbase = NULL;
   abce->stacklimit = 0;
-  free_bcode(abce->bytecode, abce->bytecodecap);
+  abce_free_bcode(abce->bytecode, abce->bytecodecap);
   abce->bytecode = NULL;
   abce->bytecodecap = 0;
-  free_stack(abce->cachebase, abce->cachecap);
+  abce_free_stack(abce->cachebase, abce->cachecap);
   abce->cachebase = NULL;
   abce->cachecap = 0;
-}
-
-void stacktest(struct abce *abce, struct abce_mb *stackbase, size_t limit)
-{
-  size_t sp = 0;
-  size_t i;
-  for (i = 0; i < 10000; i++)
-  {
-    stackbase[sp++] = abce_mb_create_array(abce);
-  }
-
-  while (sp > 0)
-  {
-    abce_mb_refdn(abce, &stackbase[--sp]);
-  }
-}
-
-void stacktest_main(struct abce *abce)
-{
-  size_t limit = 1024*1024;
-  struct abce_mb *stackbase = alloc_stack(limit);
-  stacktest(abce, stackbase, limit);
-  free_stack(stackbase, limit);
 }
 
 #define GETBOOLEAN(dbl, idx) \
