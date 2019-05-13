@@ -813,7 +813,7 @@ abce_sc_get_rec_str(const struct abce_mb *mb, const char *str)
   return abce_sc_get_rec_str_area(mb->u.area, str);
 }
 
-int abce_sc_put_val_mb(
+int abce_sc_replace_val_mb(
   struct abce *abce,
   const struct abce_mb *mb, const struct abce_mb *pkey, const struct abce_mb *pval);
 

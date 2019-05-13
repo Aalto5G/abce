@@ -143,7 +143,7 @@ const struct abce_mb *abce_sc_get_rec_str_area(
   return NULL;
 }
 
-int abce_sc_put_val_mb(
+int abce_sc_replace_val_mb(
   struct abce *abce,
   const struct abce_mb *mb, const struct abce_mb *pkey, const struct abce_mb *pval)
 {
@@ -152,25 +152,33 @@ int abce_sc_put_val_mb(
   struct abce_mb_rb_entry *e;
   size_t hashloc;
   int ret;
+  struct rb_tree_node *n;
+
   if (mb->typ != ABCE_T_SC || pkey->typ != ABCE_T_S)
   {
     abort();
   }
   hashval = abce_mb_str_hash(pkey);
   hashloc = hashval & (mba->u.sc.size - 1);
-  e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
-  e->key = abce_mb_refup(abce, pkey);
-  e->val = abce_mb_refup(abce, pval);
-  ret = rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
-                                      abce_str_cmp_sym, NULL, &e->n);
-  if (ret == 0)
+
+  n = RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
+  if (n == NULL)
   {
+    e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
+    e->key = abce_mb_refup(abce, pkey);
+    e->val = abce_mb_refup(abce, pval);
+    ret = rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+                                        abce_str_cmp_sym, NULL, &e->n);
+    if (ret != 0)
+    {
+      abort();
+    }
     return 0;
   }
-  abce_mb_refdn(abce, &e->key);
+  e = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   abce_mb_refdn(abce, &e->val);
-  abce->alloc(e, 0, abce->alloc_baton);
-  return ret;
+  e->val = abce_mb_refup(abce, pval);
+  return 0;
 }
 
 int abce_sc_put_val_str(
@@ -2026,6 +2034,28 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           break;
         }
         case ABCE_OPCODE_SCOPEVAR_SET:
+        {
+          struct abce_mb mbsc, mbs, mbv;
+          int rettmp;
+          VERIFYMB(-3, ABCE_T_SC);
+          VERIFYMB(-2, ABCE_T_S);
+          GETMB(&mbsc, -3);
+          GETMB(&mbs, -2);
+          GETMB(&mbv, -1);
+          POP();
+          POP();
+          POP();
+          rettmp = abce_sc_replace_val_mb(abce, &mbsc, &mbs, &mbv);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            break;
+          }
+          abce_mb_refdn(abce, &mbs);
+          abce_mb_refdn(abce, &mbv);
+          abce_mb_refdn(abce, &mbsc);
+          break;
+        }
         case ABCE_OPCODE_DICTDEL:
         case ABCE_OPCODE_DICTNEXT_SAFE:
         case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
