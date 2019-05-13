@@ -481,6 +481,143 @@ void abce_free(struct abce *abce)
   abce->cachecap = 0;
 }
 
+struct abce_strbuf {
+  char *str;
+  size_t sz;
+  size_t cap;
+  int taint;
+};
+
+static void abce_strbuf_bump(struct abce *abce, struct abce_strbuf *buf, size_t bump)
+{
+  char *newbuf;
+  size_t newcap;
+  if (buf->taint)
+  {
+    return;
+  }
+  newcap = buf->sz*2 + 1;
+  if (newcap < buf->sz + bump)
+  {
+    newcap = buf->sz + bump;
+  }
+  newbuf = abce->alloc(buf->str, newcap, abce->alloc_baton);
+  if (newbuf == NULL)
+  {
+    buf->taint = 1;
+    return;
+  }
+  buf->str = newbuf;
+  buf->cap = newcap;
+}
+
+static inline int abce_strbuf_add_nul(struct abce *abce, struct abce_strbuf *buf)
+{
+  if (buf->sz >= buf->cap)
+  {
+    abce_strbuf_bump(abce, buf, 1);
+    if (buf->taint)
+    {
+      return -ENOMEM;
+    }
+  }
+  buf->str[buf->sz] = '\0';
+  return 0;
+}
+
+static inline int abce_strbuf_add(struct abce *abce, struct abce_strbuf *buf, char ch)
+{
+  if (buf->sz >= buf->cap)
+  {
+    abce_strbuf_bump(abce, buf, 1);
+    if (buf->taint)
+    {
+      return -ENOMEM;
+    }
+  }
+  buf->str[buf->sz++] = ch;
+  return 0;
+}
+
+static inline int abce_strbuf_add_many(struct abce *abce, struct abce_strbuf *buf, const char *st, size_t sz)
+{
+  if (buf->sz + sz > buf->cap)
+  {
+    abce_strbuf_bump(abce, buf, sz);
+    if (buf->taint)
+    {
+      return -ENOMEM;
+    }
+  }
+  memcpy(&buf->str[buf->sz], st, sz);
+  buf->sz += sz;
+  return 0;
+}
+
+static int abce_strgsub(struct abce *abce,
+                        char **res, size_t *ressz,
+                        const char *haystack, size_t haystacksz,
+                        const char *needle, size_t needlesz,
+                        const char *sub, size_t subsz)
+{
+  struct abce_strbuf buf = {};
+  size_t haystackpos = 0;
+  if (needlesz == 0)
+  {
+    *res = NULL;
+    *ressz = 0;
+    return -EINVAL;
+  }
+  while (haystackpos + needlesz <= haystacksz)
+  {
+    if (memcmp(&haystack[haystackpos], needle, needlesz) == 0)
+    {
+      abce_strbuf_add_many(abce, &buf, sub, subsz);
+      haystackpos += needlesz;
+      continue;
+    }
+    abce_strbuf_add(abce, &buf, haystack[haystackpos++]);
+  }
+  abce_strbuf_add_many(abce, &buf, &haystack[haystackpos], haystacksz - haystackpos);
+  abce_strbuf_add_nul(abce, &buf);
+  if (buf.taint)
+  {
+    abce->alloc(buf.str, 0, abce->alloc_baton);
+    *res = NULL;
+    *ressz = 0;
+    return -ENOMEM;
+  }
+  *res = buf.str;
+  *ressz = buf.sz;
+  return 0;
+}
+
+static int abce_strgsub_mb(struct abce *abce,
+                           struct abce_mb *res,
+                           const struct abce_mb *haystack,
+                           const struct abce_mb *needle,
+                           const struct abce_mb *sub)
+{
+  char *resstr;
+  size_t ressz;
+  int retval;
+  if (haystack->typ != ABCE_T_S || needle->typ != ABCE_T_S || sub->typ != ABCE_T_S)
+  {
+    return -EINVAL;
+  }
+  retval = abce_strgsub(abce, &resstr, &ressz,
+                        haystack->u.area->u.str.buf, haystack->u.area->u.str.size,
+                        needle->u.area->u.str.buf, needle->u.area->u.str.size,
+                        sub->u.area->u.str.buf, sub->u.area->u.str.size);
+  if (retval != 0)
+  {
+    return retval;
+  }
+  *res = abce_mb_create_string(abce, resstr, ressz);
+  abce->alloc(resstr, 0, abce->alloc_baton);
+  return 0;
+}
+
 #define GETBOOLEAN(dbl, idx) \
   if(1) { \
     int _getdbl_rettmp = abce_getboolean((dbl), abce, (idx)); \
@@ -731,6 +868,73 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       return -EINTR;
     }
+    case ABCE_OPCODE_STRGSUB:
+    {
+      struct abce_mb res, mbhaystack, mbneedle, mbsub;
+      int rettmp = abce_getmbstr(&mbhaystack, abce, -3);
+      if (rettmp != 0)
+      {
+        return rettmp;
+      }
+      rettmp = abce_getmbstr(&mbneedle, abce, -2);
+      if (rettmp != 0)
+      {
+        abce_mb_refdn(abce, &mbhaystack);
+        return rettmp;
+      }
+      rettmp = abce_getmbstr(&mbsub, abce, -1);
+      if (rettmp != 0)
+      {
+        abce_mb_refdn(abce, &mbhaystack);
+        abce_mb_refdn(abce, &mbneedle);
+        return rettmp;
+      }
+      rettmp = abce_strgsub_mb(abce, &res, &mbhaystack, &mbneedle, &mbsub);
+      if (rettmp != 0)
+      {
+        abce_mb_refdn(abce, &mbhaystack);
+        abce_mb_refdn(abce, &mbneedle);
+        abce_mb_refdn(abce, &mbsub);
+        return rettmp;
+      }
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbsub);
+      abce_mb_refdn(abce, &mbhaystack);
+      abce_mb_refdn(abce, &mbneedle);
+      return 0;
+    }
+    case ABCE_OPCODE_IMPORT:
+      return -ENOTSUP;
+    case ABCE_OPCODE_FUN_HEADER:
+    case ABCE_OPCODE_FUN_TRAILER:
+      return -EACCES;
+    // String functions
+    case ABCE_OPCODE_STRSUB:
+    case ABCE_OPCODE_STR_FROMCHR:
+    case ABCE_OPCODE_STRAPPEND:
+    case ABCE_OPCODE_STR_CMP:
+    case ABCE_OPCODE_STRLISTJOIN:
+    case ABCE_OPCODE_STR_LOWER:
+    case ABCE_OPCODE_STR_UPPER:
+    case ABCE_OPCODE_STR_REVERSE:
+    case ABCE_OPCODE_STRSTR:
+    case ABCE_OPCODE_STRREP:
+    case ABCE_OPCODE_STRFMT:
+    case ABCE_OPCODE_STRSET:
+    case ABCE_OPCODE_STRSTRIP:
+    case ABCE_OPCODE_STRWORD:
+    case ABCE_OPCODE_STRWORDLIST:
+    case ABCE_OPCODE_STRWORDCNT:
+    // String conversion
+    case ABCE_OPCODE_TOSTRING:
+    case ABCE_OPCODE_TONUMBER:
+    // Misc
+    case ABCE_OPCODE_DUP_NONRECURSIVE:
+    case ABCE_OPCODE_ERROR:
+    case ABCE_OPCODE_OUT:
+    case ABCE_OPCODE_LISTSPLICE:
+    case ABCE_OPCODE_SCOPE_NEW:
     default:
       return -EILSEQ;
   }
