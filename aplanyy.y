@@ -22,7 +22,7 @@ typedef void *yyscan_t;
 #include "yyutils.h"
 #include "aplanyy.tab.h"
 #include "aplanyy.lex.h"
-#include "opcodesonly.h"
+#include "abceopcodes.h"
 #include <arpa/inet.h>
 
 void aplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct aplanyy *aplanyy, const char *str)
