@@ -31,6 +31,7 @@ struct abce_mb;
 
 struct abce_mb_tree {
   struct rb_tree_nocmp tree;
+  size_t sz;
 };
 struct abce_mb_scope {
   int holey;
