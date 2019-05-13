@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <endian.h>
 #include "rbtree.h"
 #include "murmur.h"
 #include "containerof.h"
@@ -115,13 +116,34 @@ struct abce {
   struct abce_mb dynscope;
 };
 
+static inline void abce_put_dbl(double dbl, void *dest)
+{
+  uint64_t u64;
+  memcpy(&u64, &dbl, sizeof(u64));
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  u64 =
+    ((u64 & 0xFF00000000000000ULL) >> 56) |
+    ((u64 & 0x00FF000000000000ULL) >> 40) |
+    ((u64 & 0x0000FF0000000000ULL) >> 24) |
+    ((u64 & 0x000000FF00000000ULL) >>  8) |
+    ((u64 & 0x00000000FF000000ULL) <<  8) |
+    ((u64 & 0x0000000000FF0000ULL) << 24) |
+    ((u64 & 0x000000000000FF00ULL) << 40) |
+    ((u64 & 0x00000000000000FFULL) << 56);
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#else
+#error "Unsupported endianess"
+#endif
+  memcpy(dest, &u64, sizeof(u64));
+}
+
 static inline int abce_add_double(struct abce *abce, double dbl)
 {
   if (abce->bytecodesz + 8 > abce->bytecodecap)
   {
     return -EFAULT;
   }
-  memcpy(&abce->bytecode[abce->bytecodesz], &dbl, 8);
+  abce_put_dbl(dbl, &abce->bytecode[abce->bytecodesz]);
   abce->bytecodesz += 8;
   return 0;
 }
@@ -964,6 +986,27 @@ abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz
   abce->ip++;
   return 0;
 }
+static inline void abce_get_dbl(double *dbl, const void *src)
+{
+  uint64_t u64;
+  memcpy(&u64, src, sizeof(u64));
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  u64 =
+    ((u64 & 0xFF00000000000000ULL) >> 56) |
+    ((u64 & 0x00FF000000000000ULL) >> 40) |
+    ((u64 & 0x0000FF0000000000ULL) >> 24) |
+    ((u64 & 0x000000FF00000000ULL) >>  8) |
+    ((u64 & 0x00000000FF000000ULL) <<  8) |
+    ((u64 & 0x0000000000FF0000ULL) << 24) |
+    ((u64 & 0x000000000000FF00ULL) << 40) |
+    ((u64 & 0x00000000000000FFULL) << 56);
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#else
+#error "Unsupported endianess"
+#endif
+  memcpy(dbl, &u64, sizeof(u64));
+}
+
 
 static inline int
 abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
@@ -976,11 +1019,11 @@ abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
   }
   if (abce->ip >= 0)
   {
-    memcpy(d, abce->bytecode + abce->ip, 8);
+    abce_get_dbl(d, abce->bytecode + abce->ip);
     abce->ip += 8;
     return 0;
   }
-  memcpy(d, addcode + abce->ip + guard + addsz, 8);
+  abce_get_dbl(d, addcode + abce->ip + guard + addsz);
   abce->ip += 8;
   return 0;
 }
