@@ -1,0 +1,58 @@
+while expr()
+  stmt
+  stmt
+end while
+outstmt
+
+foo:
+expr
+breakpoint:
+push bar
+if not then jmp
+stmt
+stmt
+jmp foo
+bar:
+outstmt
+
+continue == jmp foo
+break == push false; jmp breakpoint
+
+-------------------------
+
+if expr()
+  stmt
+  stmt
+end if
+outstmt
+
+expr
+push baz
+if not then jmp
+stmt
+stmt
+baz:
+outstmt
+
+-------------------------
+
+if expr()
+  stmt
+  stmt
+else
+  stmtalt
+  stmtalt
+end if
+outstmt
+
+expr
+push barf
+if not then jmp
+stmt
+stmt
+jmp quux
+barf:
+stmtalt
+stmtalt
+quux:
+outstmt
