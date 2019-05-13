@@ -1,0 +1,13 @@
+*.d
+*.o
+*.s
+/aplanyy.lex.c
+/aplanyy.lex.h
+/aplanyy.tab.c
+/aplanyy.tab.h
+/main
+/libabce.a
+/aplantest
+perf.data
+perf.data.old
+.*.sw?
