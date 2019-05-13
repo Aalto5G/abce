@@ -1,7 +1,7 @@
 .SUFFIXES:
 
 SRC_LIB := yyutils.c memblock.c rbtree.c
-SRC := $(SRC_LIB) aplantest.c
+SRC := $(SRC_LIB) aplantest.c main.c
 
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
@@ -47,7 +47,7 @@ DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
 .PHONY: all wc
 
-all: aplantest
+all: aplantest main
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
@@ -61,6 +61,9 @@ CC=clang
 CPP=clang++
 CFLAGS=-O3 -Wall -g #-I$(LUAINC)
 CPPFLAGS=-O3 -Wall -g #-I$(LUAINC)
+
+main: main.o libabce.a Makefile $(LUALIB)
+	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 aplantest: aplantest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
