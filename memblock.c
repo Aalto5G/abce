@@ -30,6 +30,61 @@ void *abce_std_alloc(void *old, size_t newsz, void *alloc_baton)
 
 void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mba, enum abce_type typ);
 
+static int
+abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,
+                  struct abce_mb *mbt, const struct abce_mb *mbkey)
+{
+  struct rb_tree_node *n;
+  if (mbt->typ != ABCE_T_T)
+  {
+    abort();
+  }
+  n = RB_TREE_NOCMP_FIND(&mbt->u.area->u.tree.tree, abce_str_cmp_halfsym, NULL, mbkey);
+  if (n == NULL)
+  {
+    return -ENOENT;
+  }
+  *mbres = &CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
+  return 0;
+}
+
+static int
+abce_tree_set_str(struct abce *abce,
+                  struct abce_mb *mbt,
+                  const struct abce_mb *mbkey,
+                  const struct abce_mb *mbval)
+{
+  struct abce_mb *mbres;
+  struct abce_mb_rb_entry *e;
+  if (mbt->typ != ABCE_T_T)
+  {
+    abort();
+  }
+  if (mbkey->typ != ABCE_T_S)
+  {
+    abort();
+  }
+  if (abce_tree_get_str(abce, &mbres, mbt, mbkey) == 0)
+  {
+    abce_mb_refdn(abce, mbres);
+    *mbres = abce_mb_refup(abce, mbval);
+    return 0;
+  }
+  e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
+  if (e == NULL)
+  {
+    return -ENOMEM;
+  }
+  e->key = abce_mb_refup(abce, mbkey);
+  e->val = abce_mb_refup(abce, mbval);
+  if (rb_tree_nocmp_insert_nonexist(&mbt->u.area->u.tree.tree, abce_str_cmp_sym, NULL, &e->n) != 0)
+  {
+    abort();
+  }
+  mbt->u.area->u.tree.sz += 1;
+  return 0;
+}
+
 int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
 {
   struct abce_mb mb;
@@ -617,6 +672,16 @@ static int abce_strgsub_mb(struct abce *abce,
   abce->alloc(resstr, 0, abce->alloc_baton);
   return 0;
 }
+
+#define VERIFYMB(idx, type) \
+  if(1) { \
+    int _getdbl_rettmp = abce_verifymb(abce, (idx), (type)); \
+    if (_getdbl_rettmp != 0) \
+    { \
+      ret = _getdbl_rettmp; \
+      break; \
+    } \
+  }
 
 #define GETBOOLEAN(dbl, idx) \
   if(1) { \
@@ -1813,10 +1878,74 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         }
         case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
         case ABCE_OPCODE_DICTSET_MAINTAIN:
+        {
+          struct abce_mb mbt, mbstr;
+          struct abce_mb mbval;
+          VERIFYMB(-3, ABCE_T_T);
+          VERIFYMB(-2, ABCE_T_S);
+          GETMB(&mbt, -3);
+          GETMB(&mbstr, -2);
+          GETMB(&mbval, -1);
+          POP();
+          POP();
+          if (abce_tree_set_str(abce, &mbt, &mbstr, &mbval) != 0)
+          {
+            ret = -ENOMEM;
+            // No break: we want to call all refdn statements
+          }
+          abce_mb_refdn(abce, &mbt);
+          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn(abce, &mbval);
+          break;
+        }
         case ABCE_OPCODE_DICTDEL:
         case ABCE_OPCODE_DICTGET:
+        {
+          struct abce_mb mbt, mbstr;
+          struct abce_mb *mbval;
+          VERIFYMB(-2, ABCE_T_T);
+          VERIFYMB(-1, ABCE_T_S);
+          GETMB(&mbt, -2);
+          GETMB(&mbstr, -1);
+          POP();
+          POP();
+          if (abce_tree_get_str(abce, &mbval, &mbt, &mbstr) == 0)
+          {
+            if (abce_push_mb(abce, (const struct abce_mb*)mbval) != 0)
+            {
+              abort();
+            }
+          }
+          else
+          {
+            if (abce_push_nil(abce) != 0)
+            {
+              abort();
+            }
+          }
+          abce_mb_refdn(abce, &mbt);
+          abce_mb_refdn(abce, &mbstr);
+          break;
+        }
         case ABCE_OPCODE_DICTNEXT_SAFE:
         case ABCE_OPCODE_DICTHAS:
+        {
+          struct abce_mb mbt, mbstr;
+          struct abce_mb *mbval;
+          VERIFYMB(-2, ABCE_T_T);
+          VERIFYMB(-1, ABCE_T_S);
+          GETMB(&mbt, -2);
+          GETMB(&mbstr, -1);
+          POP();
+          POP();
+          if (abce_push_double(abce, abce_tree_get_str(abce, &mbval, &mbt, &mbstr) == 0) != 0)
+          {
+            abort();
+          }
+          abce_mb_refdn(abce, &mbt);
+          abce_mb_refdn(abce, &mbstr);
+          break;
+        }
         case ABCE_OPCODE_SCOPEVAR_SET:
         case ABCE_OPCODE_CALL_IF_FUN:
         case ABCE_OPCODE_DICTLEN: // RFE should this be moved elsewhere? A complex operation.

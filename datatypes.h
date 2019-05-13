@@ -225,6 +225,22 @@ static inline int abce_getboolean(int *b, struct abce *abce, int64_t idx)
   return 0;
 }
 
+static inline int abce_verifymb(struct abce *abce, int64_t idx, enum abce_type typ)
+{
+  const struct abce_mb *mb;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mb = &abce->stackbase[addr];
+  if (mb->typ != typ)
+  {
+    return -EINVAL;
+  }
+  return 0;
+}
+
 static inline int abce_getfunaddr(int64_t *paddr, struct abce *abce, int64_t idx)
 {
   const struct abce_mb *mb;
@@ -835,6 +851,7 @@ static inline struct abce_mb abce_mb_create_tree(struct abce *abce)
   struct abce_mb mb = {};
   mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
   rb_tree_nocmp_init(&mba->u.tree.tree);
+  mba->u.tree.sz = 0;
   mba->refcnt = 1;
   mb.typ = ABCE_T_A;
   mb.u.area = mba;
