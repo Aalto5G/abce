@@ -35,7 +35,7 @@ abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,
                   struct abce_mb *mbt, const struct abce_mb *mbkey)
 {
   struct rb_tree_node *n;
-  if (mbt->typ != ABCE_T_T)
+  if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_SC)
   {
     abort();
   }
@@ -45,6 +45,28 @@ abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,
     return -ENOENT;
   }
   *mbres = &CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
+  return 0;
+}
+static int
+abce_tree_del_str(struct abce *abce,
+                  struct abce_mb *mbt, const struct abce_mb *mbkey)
+{
+  struct rb_tree_node *n;
+  struct abce_mb_rb_entry *mbe;
+  if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_SC)
+  {
+    abort();
+  }
+  n = RB_TREE_NOCMP_FIND(&mbt->u.area->u.tree.tree, abce_str_cmp_halfsym, NULL, mbkey);
+  if (n == NULL)
+  {
+    return -ENOENT;
+  }
+  mbe = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  abce_mb_refdn(abce, &mbe->key);
+  abce_mb_refdn(abce, &mbe->val);
+  rb_tree_nocmp_delete(&mbt->u.area->u.tree.tree, n);
+  abce->alloc(mbe, 0, abce->alloc_baton);
   return 0;
 }
 
@@ -2049,7 +2071,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (rettmp != 0)
           {
             ret = rettmp;
-            break;
+            // No break: we want to call all refdn statements
           }
           abce_mb_refdn(abce, &mbs);
           abce_mb_refdn(abce, &mbv);
@@ -2057,6 +2079,23 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           break;
         }
         case ABCE_OPCODE_DICTDEL:
+        {
+          struct abce_mb mbt, mbstr;
+          VERIFYMB(-2, ABCE_T_T);
+          VERIFYMB(-1, ABCE_T_S);
+          GETMB(&mbt, -2);
+          GETMB(&mbstr, -1);
+          POP();
+          POP();
+          if (abce_tree_del_str(abce, &mbt, &mbstr) != 0)
+          {
+            ret = -ENOENT;
+            // No break: we want to call all refdn statements
+          }
+          abce_mb_refdn(abce, &mbt);
+          abce_mb_refdn(abce, &mbstr);
+          break;
+        }
         case ABCE_OPCODE_DICTNEXT_SAFE:
         case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
         default:
