@@ -1882,7 +1882,6 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mb);
           break;
         }
-        case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
         case ABCE_OPCODE_DICTSET_MAINTAIN:
         {
           struct abce_mb mbt, mbstr;
@@ -1904,7 +1903,6 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbval);
           break;
         }
-        case ABCE_OPCODE_DICTDEL:
         case ABCE_OPCODE_DICTGET:
         {
           struct abce_mb mbt, mbstr;
@@ -1933,7 +1931,6 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbstr);
           break;
         }
-        case ABCE_OPCODE_DICTNEXT_SAFE:
         case ABCE_OPCODE_DICTHAS:
         {
           struct abce_mb mbt, mbstr;
@@ -1944,7 +1941,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           GETMB(&mbstr, -1);
           POP();
           POP();
-          if (abce_push_double(abce, abce_tree_get_str(abce, &mbval, &mbt, &mbstr) == 0) != 0)
+          if (abce_push_boolean(abce, abce_tree_get_str(abce, &mbval, &mbt, &mbstr) == 0) != 0)
           {
             abort();
           }
@@ -1952,9 +1949,86 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbstr);
           break;
         }
-        case ABCE_OPCODE_SCOPEVAR_SET:
         case ABCE_OPCODE_CALL_IF_FUN:
-        case ABCE_OPCODE_DICTLEN: // RFE should this be moved elsewhere? A complex operation.
+        {
+          struct abce_mb mb;
+          GETMB(&mb, -1);
+          if (mb.typ == ABCE_T_F)
+          {
+            const size_t guard = 100;
+            double argcnt = 0.0;
+            int64_t new_ip;
+            uint16_t ins2;
+            int rettmp;
+            GETFUNADDR(&new_ip, -1);
+            POP();
+            // FIXME off by one?
+            if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
+                  (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard)))
+            {
+              ret = -EFAULT;
+              break;
+            }
+            if (abce_push_bp(abce) != 0)
+            {
+              abort();
+            }
+            if (abce_push_ip(abce) != 0)
+            {
+              POP();
+              ret = -EOVERFLOW;
+              break;
+            }
+            abce->ip = new_ip;
+            rettmp = abce_fetch_i(&ins2, abce, addcode, addsz);
+            if (rettmp != 0)
+            {
+              ret = rettmp;
+              break;
+            }
+            if (ins2 != ABCE_OPCODE_FUN_HEADER)
+            {
+              ret = -EINVAL;
+              break;
+            }
+            double dbl;
+            rettmp = abce_fetch_d(&dbl, abce, addcode, addsz);
+            if (rettmp != 0)
+            {
+              ret = rettmp;
+              break;
+            }
+            if (dbl != (double)(uint64_t)argcnt)
+            {
+              ret = -EINVAL;
+              break;
+            }
+            // no refdn; functions are static data types
+            break;
+          }
+          else
+          {
+            abce_mb_refdn(abce, &mb);
+          }
+          break;
+        }
+        case ABCE_OPCODE_DICTLEN:
+        {
+          struct abce_mb mbt;
+          VERIFYMB(-1, ABCE_T_T);
+          GETMB(&mbt, -1);
+          POP();
+          if (abce_push_double(abce, mbt.u.area->u.tree.sz) != 0)
+          {
+            abort();
+          }
+          abce_mb_refdn(abce, &mbt);
+          break;
+        }
+        case ABCE_OPCODE_SCOPEVAR_SET:
+        case ABCE_OPCODE_DICTDEL:
+        case ABCE_OPCODE_DICTNEXT_SAFE:
+        case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
