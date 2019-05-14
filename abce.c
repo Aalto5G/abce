@@ -80,3 +80,80 @@ void abce_free(struct abce *abce)
   abce->cachebase = NULL;
   abce->cachecap = 0;
 }
+
+struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz + 1, abce->alloc_baton);
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.str.size = sz;
+  memcpy(mba->u.str.buf, str, sz);
+  mba->u.str.buf[sz] = '\0';
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_S;
+  mb.u.area = mba;
+  return mb;
+}
+
+struct abce_mb abce_mb_create_tree(struct abce *abce)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  rb_tree_nocmp_init(&mba->u.tree.tree);
+  mba->u.tree.sz = 0;
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_T;
+  mb.u.area = mba;
+  return mb;
+}
+
+struct abce_mb abce_mb_create_array(struct abce *abce)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.ar.size = 0;
+  mba->u.ar.capacity = 16;
+  mba->u.ar.mbs =
+    (struct abce_mb*)abce->alloc(NULL, 16*sizeof(*mba->u.ar.mbs), abce->alloc_baton);
+  if (mba->u.ar.mbs == NULL)
+  {
+    mba->u.ar.capacity = 0; // This is the simplest way forward.
+  }
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_A;
+  mb.u.area = mba;
+  return mb;
+}
+
+int abce_mb_array_append_grow(struct abce *abce, struct abce_mb *mb)
+{
+  size_t new_cap = 2*mb->u.area->u.ar.size + 1;
+  struct abce_mb *mbs2;
+  mbs2 = (struct abce_mb*)abce->alloc(mb->u.area->u.ar.mbs,
+                     sizeof(*mb->u.area->u.ar.mbs)*new_cap,
+                     abce->alloc_baton);
+  if (mbs2 == NULL)
+  {
+    return -ENOMEM;
+  }
+  mb->u.area->u.ar.capacity = new_cap;
+  mb->u.area->u.ar.mbs = mbs2;
+  return 0;
+}

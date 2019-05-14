@@ -14,6 +14,13 @@
 #include "trees.h"
 #include "scopes.h"
 
+#define POPABORTS 1
+
+static inline void maybeabort()
+{
+  abort();
+}
+
 #define VERIFYMB(idx, type) \
   if(1) { \
     int _getdbl_rettmp = abce_verifymb(abce, (idx), (type)); \
@@ -114,6 +121,7 @@
       break; \
     } \
   }
+#if POPABORTS
 #define POP() \
   if(1) { \
     int _getdbl_rettmp = abce_pop(abce); \
@@ -122,6 +130,9 @@
       abort(); \
     } \
   }
+#else
+#define POP() abce_pop(abce)
+#endif
 
 int
 abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
@@ -145,7 +156,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, fabs(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -156,7 +167,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, sqrt(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -167,7 +178,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, log(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -178,7 +189,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, exp(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -189,7 +200,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, floor(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -200,7 +211,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, ceil(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -211,7 +222,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, cos(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -222,7 +233,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, sin(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -233,7 +244,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, tan(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -244,7 +255,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, acos(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -255,7 +266,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, asin(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -266,7 +277,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, atan(dbl)) != 0)
       {
-        abort();
+        maybeabort();
       }
       return 0;
     }
@@ -608,7 +619,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, mbar.u.area->u.ar.size) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
@@ -620,7 +631,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, mbstr.u.area->u.str.size) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
@@ -680,7 +691,7 @@ calltrailer:
           }
           if (abce_push_double(abce, (unsigned char)mbstr.u.area->u.str.buf[locint]) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
@@ -707,7 +718,7 @@ calltrailer:
           }
           if (abce_push_mb(abce, &mbar.u.area->u.ar.mbs[locint]) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
@@ -726,7 +737,7 @@ calltrailer:
           GETMB(&mb, loc);
           if (abce_push_mb(abce, &mb) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -770,7 +781,7 @@ calltrailer:
           POP();
           if (abce_push_mb(abce, &mb) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -805,7 +816,7 @@ calltrailer:
           }
           if (abce_push_mb(abce, &mb) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -861,7 +872,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, b) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -874,7 +885,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(d1 == d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -887,7 +898,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(d1 != d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -900,7 +911,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(b1 && b2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -913,7 +924,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) & ((int64_t)d2))) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -926,7 +937,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(b1 || b2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -939,7 +950,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) | ((int64_t)d2))) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -952,7 +963,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) ^ ((int64_t)d2))) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -963,7 +974,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !b) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -974,7 +985,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, ~(int64_t)d) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -987,7 +998,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(d1 < d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1000,7 +1011,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(d1 > d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1013,7 +1024,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(d1 <= d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1026,7 +1037,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, !!(d1 >= d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1039,7 +1050,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) >> ((int64_t)d2))) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1052,7 +1063,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) << ((int64_t)d2))) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1065,7 +1076,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (d1 + d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1078,7 +1089,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (d1 - d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1091,7 +1102,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (d1 * d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1104,7 +1115,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (d1 / d2)) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1117,7 +1128,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) % ((int64_t)d2))) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1128,7 +1139,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, -d) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1204,7 +1215,7 @@ calltrailer:
           }
           if (abce_push_mb(abce, &abce->cachebase[i64]) != 0)
           {
-            abort();
+            maybeabort();
           }
           break;
         }
@@ -1231,7 +1242,7 @@ calltrailer:
           }
           if (abce_push_mb(abce, ptr) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
           abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -1255,7 +1266,7 @@ calltrailer:
           ptr = abce_sc_get_rec_mb(&mbsc, &mbit);
           if (abce_push_boolean(abce, ptr != NULL) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
           abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -1277,7 +1288,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, mb.typ) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -1317,14 +1328,14 @@ calltrailer:
           {
             if (abce_push_mb(abce, (const struct abce_mb*)mbval) != 0)
             {
-              abort();
+              maybeabort();
             }
           }
           else
           {
             if (abce_push_nil(abce) != 0)
             {
-              abort();
+              maybeabort();
             }
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
@@ -1343,7 +1354,7 @@ calltrailer:
           POP();
           if (abce_push_boolean(abce, abce_tree_get_str(abce, &mbval, &mbt, &mbstr) == 0) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
@@ -1427,7 +1438,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, mbt.u.area->u.tree.sz) != 0)
           {
-            abort();
+            maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           break;
@@ -1576,17 +1587,17 @@ calltrailer:
           }
           if (abce_getmb(&mbt, abce, (int64_t)dictidx) != 0)
           {
-            abort();
+            maybeabort();
           }
           if (abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey) != 0)
           {
             if (abce_push_nil(abce) != 0)
             {
-              abort();
+              maybeabort();
             }
             if (abce_push_nil(abce) != 0)
             {
-              abort();
+              maybeabort();
             }
             abce_mb_refdn(abce, &mboldkey);
             abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
