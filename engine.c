@@ -1504,6 +1504,53 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
          * getnext # stack after: (b) - newkey - newval - (t)
          * pop # stack after: (b) - newkey - (t)
          */
+        {
+          struct abce_mb mboldkey, mbt;
+          const struct abce_mb *mbreskey, *mbresval;
+          double dictidx;
+          int rettmp;
+          VERIFYMB(-1, ABCE_T_D);
+          GETDBL(&dictidx, -1);
+          GETMB(&mboldkey, -2);
+          if (mboldkey.typ != ABCE_T_N && mboldkey.typ != ABCE_T_S)
+          {
+            abce_mb_refdn(abce, &mboldkey);
+            ret = -EINVAL;
+            break;
+          }
+          POP();
+          POP();
+          rettmp = abce_verifymb(abce, (int64_t)dictidx, ABCE_T_T);
+          if (rettmp != 0)
+          {
+            abce_mb_refdn(abce, &mboldkey);
+            ret = rettmp;
+            break;
+          }
+          if (abce_getmb(&mbt, abce, (int64_t)dictidx) != 0)
+          {
+            abort();
+          }
+          if (abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey) != 0)
+          {
+            if (abce_push_nil(abce) != 0)
+            {
+              abort();
+            }
+            if (abce_push_nil(abce) != 0)
+            {
+              abort();
+            }
+            abce_mb_refdn(abce, &mboldkey);
+            abce_mb_refdn(abce, &mbt);
+            break;
+          }
+          abce_push_mb(abce, mbreskey);
+          abce_push_mb(abce, mbresval);
+          abce_mb_refdn(abce, &mboldkey);
+          abce_mb_refdn(abce, &mbt);
+          break;
+        }
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
