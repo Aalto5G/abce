@@ -9,6 +9,7 @@
 /locvartest
 /libabce.a
 /aplantest
+/treetest
 perf.data
 perf.data.old
 .*.sw?

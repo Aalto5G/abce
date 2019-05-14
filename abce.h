@@ -774,7 +774,7 @@ static inline struct abce_mb abce_mb_create_tree(struct abce *abce)
   rb_tree_nocmp_init(&mba->u.tree.tree);
   mba->u.tree.sz = 0;
   mba->refcnt = 1;
-  mb.typ = ABCE_T_A;
+  mb.typ = ABCE_T_T;
   mb.u.area = mba;
   return mb;
 }

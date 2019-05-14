@@ -9,7 +9,7 @@ abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,
                   struct abce_mb *mbt, const struct abce_mb *mbkey)
 {
   struct rb_tree_node *n;
-  if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_SC)
+  if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_S)
   {
     abort();
   }
@@ -27,7 +27,7 @@ abce_tree_del_str(struct abce *abce,
 {
   struct rb_tree_node *n;
   struct abce_mb_rb_entry *mbe;
-  if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_SC)
+  if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_S)
   {
     abort();
   }
@@ -78,6 +78,68 @@ abce_tree_set_str(struct abce *abce,
     abort();
   }
   mbt->u.area->u.tree.sz += 1;
+  return 0;
+}
+
+static inline int
+abce_tree_get_next(struct abce *abce,
+                   const struct abce_mb **mbreskey,
+                   const struct abce_mb **mbresval,
+                   const struct abce_mb *mbt,
+                   const struct abce_mb *mbkey)
+{
+  struct rb_tree_node *node;
+  struct abce_mb_rb_entry *mbe;
+  if (mbt->typ != ABCE_T_T)
+  {
+    abort();
+  }
+  node = mbt->u.area->u.tree.tree.root;
+  while (node != NULL)
+  {
+    int res = abce_str_cmp_halfsym(mbkey, node, NULL);
+    if (res < 0)
+    {
+      if (node->left == NULL)
+      {
+        break;
+      }
+      node = node->left;
+    }
+    else if (res >= 0)
+    {
+      if (node->right != NULL)
+      {
+        node = node->right;
+        for (;;)
+        {
+          if (node->left == NULL)
+          {
+            break;
+          }
+          node = node->left;
+        }
+      }
+      else if (node->parent->left == node)
+      {
+        node = node->parent;
+      }
+      else
+      {
+        node = NULL;
+      }
+      break;
+    }
+  }
+  if (node == NULL)
+  {
+    *mbreskey = NULL;
+    *mbresval = NULL;
+    return -ENOENT;
+  }
+  mbe = CONTAINER_OF(node, struct abce_mb_rb_entry, n);
+  *mbreskey = &mbe->key;
+  *mbresval = &mbe->val;
   return 0;
 }
 

@@ -1,7 +1,7 @@
 .SUFFIXES:
 
 SRC_LIB := yyutils.c memblock.c rbtree.c locvarctx.c engine.c string.c trees.c scopes.c abce.c
-SRC := $(SRC_LIB) aplantest.c main.c locvartest.c
+SRC := $(SRC_LIB) aplantest.c main.c locvartest.c treetest.c
 
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
@@ -47,7 +47,7 @@ DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
 .PHONY: all wc
 
-all: aplantest main locvartest
+all: aplantest main locvartest treetest
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
@@ -66,6 +66,9 @@ main: main.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 locvartest: locvartest.o libabce.a Makefile $(LUALIB)
+	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
+
+treetest: treetest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 aplantest: aplantest.o libabce.a Makefile $(LUALIB)
@@ -115,6 +118,6 @@ aplanyy.tab.h: aplanyy.y Makefile
 clean:
 	rm -f $(OBJ) $(DEP) $(ASM) $(ASMGEN) $(DEPGEN) $(OBJGEN)
 distclean: clean
-	rm -f aplantest main locvartest
+	rm -f aplantest main locvartest treetest
 
 -include *.d
