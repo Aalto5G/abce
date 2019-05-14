@@ -191,6 +191,10 @@ static int abce_sc_replace_val_mb(
   if (n == NULL)
   {
     e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
+    if (e == NULL)
+    {
+      return -ENOMEM;
+    }
     e->key = abce_mb_refup(abce, pkey);
     e->val = abce_mb_refup(abce, pval);
     ret = rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
@@ -223,6 +227,10 @@ int abce_sc_put_val_str(
   hashval = abce_str_hash(str);
   hashloc = hashval & (mba->u.sc.size - 1);
   e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
+  if (e == NULL)
+  {
+    return -ENOMEM;
+  }
   e->key = abce_mb_create_string(abce, str, strlen(str));
   if (e->key.typ == ABCE_T_N)
   {
