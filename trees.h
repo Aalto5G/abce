@@ -119,7 +119,8 @@ abce_tree_get_next(struct abce *abce,
     {
       if (node->left == NULL)
       {
-        break;
+        goto out;
+        //break;
       }
       node = node->left;
     }
@@ -136,36 +137,25 @@ abce_tree_get_next(struct abce *abce,
       break;
     }
   }
-  if (1)
+  if (node->right != NULL)
   {
-    if (node->right != NULL)
+    node = node->right;
+    for (;;)
     {
-      node = node->right;
-      for (;;)
+      if (node->left == NULL)
       {
-        if (node->left == NULL)
-        {
-          break;
-        }
-        node = node->left;
+        break;
       }
+      node = node->left;
     }
-    else
+  }
+  else
+  {
+    while (node->parent && node->parent->right == node)
     {
-      if (node->parent->left == node)
-      {
-        node = node->parent;
-      }
-      else
-      {
-        while (node->parent && node->parent->right == node)
-        {
-          node = node->parent;
-        }
-        node = node->parent;
-      }
+      node = node->parent;
     }
-    //break;
+    node = node->parent;
   }
 out:
   if (node == NULL)
