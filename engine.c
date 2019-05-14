@@ -744,6 +744,31 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       return 0;
     }
     case ABCE_OPCODE_STRSTR:
+    {
+      struct abce_mb mbhaystack, mbneedle;
+      const char *pos;
+
+      VERIFYMB(-1, ABCE_T_S);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBSTR(&mbneedle, -1);
+      GETMBSTR(&mbhaystack, -2);
+      POP();
+      POP();
+      pos = abce_strstr(mbhaystack.u.area->u.str.buf, mbhaystack.u.area->u.str.size,
+                        mbneedle.u.area->u.str.buf, mbneedle.u.area->u.str.size);
+
+      if (pos == NULL)
+      {
+        abce_push_nil(abce);
+      }
+      else
+      {
+        abce_push_double(abce, pos - mbhaystack.u.area->u.str.buf);
+      }
+      abce_mb_refdn(abce, &mbneedle);
+      abce_mb_refdn(abce, &mbhaystack);
+      return 0;
+    }
     case ABCE_OPCODE_STRLISTJOIN:
     case ABCE_OPCODE_STRFMT:
     case ABCE_OPCODE_STRSTRIP:
