@@ -41,7 +41,20 @@ static inline int abce_add_double(struct abce *abce, double dbl)
   return 0;
 }
 
-void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mba, enum abce_type typ);
+void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ);
+
+static inline void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ)
+{
+  struct abce_mb_area *mba = *mbap;
+  if (mba == NULL)
+  {
+    return;
+  }
+  if (!--mba->refcnt)
+  {
+    abce_mb_do_arearefdn(abce, mbap, typ);
+  }
+}
 
 static inline void abce_mb_refdn(struct abce *abce, struct abce_mb *mb)
 {

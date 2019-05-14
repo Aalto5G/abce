@@ -28,7 +28,7 @@ void *abce_std_alloc(void *old, size_t newsz, void *alloc_baton)
   }
 }
 
-void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mba, enum abce_type typ);
+void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mba, enum abce_type typ);
 
 int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
 {
@@ -109,7 +109,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   return mb;
 }
 
-void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ)
+void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ)
 {
   size_t i;
   struct abce_mb_area *mba = *mbap;
@@ -117,10 +117,14 @@ void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_
   {
     return;
   }
+  if (mba->refcnt != 0)
+  {
+    abort();
+  }
   switch (typ)
   {
     case ABCE_T_T:
-      if (!--mba->refcnt)
+      if (1)
       {
         while (mba->u.tree.tree.root != NULL)
         {
@@ -137,14 +141,14 @@ void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_
       }
       break;
     case ABCE_T_IOS:
-      if (!--mba->refcnt)
+      if (1)
       {
         fclose(mba->u.ios.f);
         abce->alloc(mba, 0, abce->alloc_baton);
       }
       break;
     case ABCE_T_A:
-      if (!--mba->refcnt)
+      if (1)
       {
         for (i = 0; i < mba->u.ar.size; i++)
         {
@@ -155,13 +159,13 @@ void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_
       }
       break;
     case ABCE_T_S:
-      if (!--mba->refcnt)
+      if (1)
       {
         abce->alloc(mba, 0, abce->alloc_baton);
       }
       break;
     case ABCE_T_SC:
-      if (!--mba->refcnt)
+      if (1)
       {
         abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC);
         for (i = 0; i < mba->u.sc.size; i++)
