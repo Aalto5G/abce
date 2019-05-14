@@ -815,15 +815,51 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_refdn(abce, &mbjoiner);
       return 0;
     }
-    case ABCE_OPCODE_STRFMT:
-    case ABCE_OPCODE_STRSTRIP:
-    // String conversion
     case ABCE_OPCODE_TOSTRING:
+    {
+      char buf[64] = {0};
+      double dbl;
+      struct abce_mb mbres;
+      GETDBL(&dbl, -1);
+      POP();
+      if (snprintf(buf, sizeof(buf), "%g", dbl) >= sizeof(buf))
+      {
+        abort();
+      }
+      mbres = abce_mb_create_string(abce, buf, strlen(buf));
+      if (mbres.typ == ABCE_T_N)
+      {
+        return -ENOMEM;
+      }
+      abce_push_mb(abce, &mbres);
+      abce_mb_refdn(abce, &mbres);
+      return 0;
+    }
     case ABCE_OPCODE_TONUMBER:
-    // Misc
-    case ABCE_OPCODE_DUP_NONRECURSIVE:
-    case ABCE_OPCODE_LISTSPLICE:
+    {
+      struct abce_mb str;
+      char *endptr;
+      double dbl;
+      GETMBSTR(&str, -1);
+      POP();
+      if (   str.u.area->u.str.size == 0
+          || str.u.area->u.str.size != strlen(str.u.area->u.str.buf))
+      {
+        return -ENOMEM;
+      }
+      dbl = strtod(str.u.area->u.str.buf, &endptr);
+      if (*endptr != '\0')
+      {
+        return -EINVAL;
+      }
+      abce_push_double(abce, dbl);
+      return 0;
+    }
     case ABCE_OPCODE_SCOPE_NEW:
+    case ABCE_OPCODE_LISTSPLICE:
+    case ABCE_OPCODE_DUP_NONRECURSIVE:
+    case ABCE_OPCODE_STRSTRIP:
+    case ABCE_OPCODE_STRFMT:
     default:
       return -EILSEQ;
   }

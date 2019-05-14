@@ -96,4 +96,68 @@ abce_word_iter_at_end(struct abce_word_iter *it)
   return it->start == it->stringsz;
 }
 
+static inline const char *
+abce_strstr(const char *haystack, size_t haystacklen,
+            const char *needle, size_t needlelen)
+{
+  size_t i;
+  for (i = 0; i < haystacklen - needlelen; i++)
+  {
+    if (memcmp(&haystack[i], needle, needlelen) == 0)
+    {
+      return &haystack[i];
+    }
+  }
+  return NULL;
+}
+
+struct abce_str_buf {
+  char *buf;
+  size_t sz;
+  size_t capacity;
+};
+
+static inline int abce_str_buf_grow(struct abce *abce,
+                                    struct abce_str_buf *buf,
+                                    size_t addlen)
+{
+  char *new_buf;
+  size_t new_capacity = 2*buf->capacity+1;
+  if (new_capacity < buf->sz + addlen)
+  {
+    new_capacity = buf->sz + addlen;
+  }
+  new_buf = abce->alloc(buf->buf, new_capacity, abce->alloc_baton);
+  if (new_buf == NULL)
+  {
+    return -ENOMEM;
+  }
+  buf->buf = new_buf;
+  buf->capacity = new_capacity;
+  return 0;
+}
+
+static inline int abce_str_buf_add(struct abce *abce,
+                                   struct abce_str_buf *buf,
+                                   const char *str, size_t len)
+{
+  if (buf->sz + len >= buf->capacity)
+  {
+    if (abce_str_buf_grow(abce, buf, len) != 0)
+    {
+      return -ENOMEM;
+    }
+  }
+  memcpy(buf->buf+buf->sz, str, len);
+  buf->sz += len;
+  buf->buf[buf->sz] = '\0';
+  return 0;
+}
+
+static inline void abce_str_buf_free(struct abce *abce,
+                                     struct abce_str_buf *buf)
+{
+  abce->alloc(buf->buf, 0, abce->alloc_baton);
+}
+
 #endif
