@@ -81,6 +81,27 @@ void abce_free(struct abce *abce)
   abce->cachecap = 0;
 }
 
+struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
+                                     const char *str2, size_t sz2)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz1 + sz2 + 1, abce->alloc_baton);
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.str.size = sz1 + sz2;
+  memcpy(mba->u.str.buf, str1, sz1);
+  memcpy(mba->u.str.buf + sz1, str2, sz2);
+  mba->u.str.buf[sz1 + sz2] = '\0';
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_S;
+  mb.u.area = mba;
+  return mb;
+}
+
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
 {
   struct abce_mb_area *mba;

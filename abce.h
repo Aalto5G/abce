@@ -483,6 +483,9 @@ abce_mb_arearefup(struct abce *abce, const struct abce_mb *mb)
 
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz);
 
+struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
+                                     const char *str2, size_t sz2);
+
 static inline struct abce_mb
 abce_mb_create_string_nul(struct abce *abce, const char *str)
 {
@@ -623,22 +626,20 @@ static inline int abce_str_cache_cmp_sym(
   return 0;
 }
 
-static inline int abce_str_cmp_sym(
-  struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
+static inline int abce_str_cmp_sym_mb(
+  const struct abce_mb *mb1, const struct abce_mb *mb2)
 {
-  struct abce_mb_rb_entry *e1 = CONTAINER_OF(n1, struct abce_mb_rb_entry, n);
-  struct abce_mb_rb_entry *e2 = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
   size_t len1, len2, lenmin;
   int ret;
-  char *str1, *str2;
-  if (e1->key.typ != ABCE_T_S || e2->key.typ != ABCE_T_S)
+  const char *str1, *str2;
+  if (mb1->typ != ABCE_T_S || mb2->typ != ABCE_T_S)
   {
     abort();
   }
-  len1 = e1->key.u.area->u.str.size;
-  str1 = e1->key.u.area->u.str.buf;
-  len2 = e2->key.u.area->u.str.size;
-  str2 = e2->key.u.area->u.str.buf;
+  len1 = mb1->u.area->u.str.size;
+  str1 = mb1->u.area->u.str.buf;
+  len2 = mb2->u.area->u.str.size;
+  str2 = mb2->u.area->u.str.buf;
   lenmin = (len1 < len2) ? len1 : len2;
   ret = memcmp(str1, str2, lenmin);
   if (ret != 0)
@@ -654,6 +655,18 @@ static inline int abce_str_cmp_sym(
     return -1;
   }
   return 0;
+}
+
+static inline int abce_str_cmp_sym(
+  struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
+{
+  struct abce_mb_rb_entry *e1 = CONTAINER_OF(n1, struct abce_mb_rb_entry, n);
+  struct abce_mb_rb_entry *e2 = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
+  if (e1->key.typ != ABCE_T_S || e2->key.typ != ABCE_T_S)
+  {
+    abort();
+  }
+  return abce_str_cmp_sym_mb(&e1->key, &e2->key);
 }
 
 int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len);

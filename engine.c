@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "rbtree.h"
 #include "murmur.h"
 #include "containerof.h"
@@ -367,16 +368,158 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       return 0;
     }
     case ABCE_OPCODE_STR_FROMCHR:
+    {
+      double ch;
+      char chch;
+      struct abce_mb res;
+      GETDBL(&ch, -1);
+      if ((uint64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
+      {
+        return -EINVAL;
+      }
+      POP();
+      chch = (char)(unsigned char)ch;
+      res = abce_mb_create_string(abce, &chch, 1);
+      if (res.typ == ABCE_T_N)
+      {
+        return -ENOMEM;
+      }
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      return 0;
+    }
     case ABCE_OPCODE_STRAPPEND:
+    {
+      struct abce_mb res, mbbase, mbextend;
+
+      VERIFYMB(-1, ABCE_T_S);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBSTR(&mbextend, -1);
+      GETMBSTR(&mbbase, -2);
+      POP();
+      POP();
+      res = abce_mb_concat_string(abce,
+                                  mbbase.u.area->u.str.buf,
+                                  mbbase.u.area->u.str.size,
+                                  mbextend.u.area->u.str.buf,
+                                  mbextend.u.area->u.str.size);
+      if (res.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        abce_mb_refdn(abce, &mbextend);
+        return -ENOMEM;
+      }
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbbase);
+      abce_mb_refdn(abce, &mbextend);
+      return 0;
+    }
     case ABCE_OPCODE_STR_CMP:
-    case ABCE_OPCODE_STRLISTJOIN:
+    {
+      struct abce_mb mb1, mb2;
+
+      VERIFYMB(-1, ABCE_T_S);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBSTR(&mb2, -1);
+      GETMBSTR(&mb1, -2);
+      POP();
+      POP();
+      if (abce_push_double(abce, abce_str_cmp_sym_mb(&mb1, &mb2)) != 0)
+      {
+        abort();
+      }
+      abce_mb_refdn(abce, &mb1);
+      abce_mb_refdn(abce, &mb2);
+      return 0;
+    }
     case ABCE_OPCODE_STR_LOWER:
+    {
+      struct abce_mb res, mbbase;
+      size_t i;
+
+      VERIFYMB(-1, ABCE_T_S);
+      GETMBSTR(&mbbase, -1);
+      POP();
+      res = abce_mb_create_string(abce,
+                                  mbbase.u.area->u.str.buf,
+                                  mbbase.u.area->u.str.size);
+      if (res.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        return -ENOMEM;
+      }
+      for (i = 0; i < res.u.area->u.str.size; i++)
+      {
+        res.u.area->u.str.buf[i] = tolower((unsigned char)res.u.area->u.str.buf[i]);
+      }
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbbase);
+      return 0;
+    }
     case ABCE_OPCODE_STR_UPPER:
-    case ABCE_OPCODE_STR_REVERSE:
-    case ABCE_OPCODE_STRSTR:
-    case ABCE_OPCODE_STRREP:
-    case ABCE_OPCODE_STRFMT:
+    {
+      struct abce_mb res, mbbase;
+      size_t i;
+
+      VERIFYMB(-1, ABCE_T_S);
+      GETMBSTR(&mbbase, -1);
+      POP();
+      res = abce_mb_create_string(abce,
+                                  mbbase.u.area->u.str.buf,
+                                  mbbase.u.area->u.str.size);
+      if (res.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        return -ENOMEM;
+      }
+      for (i = 0; i < res.u.area->u.str.size; i++)
+      {
+        res.u.area->u.str.buf[i] = toupper((unsigned char)res.u.area->u.str.buf[i]);
+      }
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbbase);
+      return 0;
+    }
     case ABCE_OPCODE_STRSET:
+    {
+      double loc, ch;
+      struct abce_mb res, mbbase;
+      GETDBL(&ch, -1);
+      GETDBL(&loc, -2);
+      VERIFYMB(-3, ABCE_T_S);
+      if ((uint64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
+      {
+        return -EINVAL;
+      }
+      GETMBSTR(&mbbase, -1);
+      if ((uint64_t)loc < 0 || (uint64_t)loc >= mbbase.u.area->u.str.size || (double)(uint64_t)loc != loc)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        return -EINVAL;
+      }
+      POP();
+      res = abce_mb_create_string(abce,
+                                  mbbase.u.area->u.str.buf,
+                                  mbbase.u.area->u.str.size);
+      if (res.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        return -ENOMEM;
+      }
+      res.u.area->u.str.buf[(uint64_t)loc] = (char)(unsigned char)ch;
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbbase);
+      return 0;
+    }
+    case ABCE_OPCODE_STRREP:
+    case ABCE_OPCODE_STRSTR:
+    case ABCE_OPCODE_STR_REVERSE:
+    case ABCE_OPCODE_STRLISTJOIN:
+    case ABCE_OPCODE_STRFMT:
     case ABCE_OPCODE_STRSTRIP:
     case ABCE_OPCODE_STRWORD:
     case ABCE_OPCODE_STRWORDLIST:
