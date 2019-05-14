@@ -126,6 +126,10 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
     return -EOVERFLOW;
   }
   mb = abce_mb_create_string(abce, str, len);
+  if (mb.typ == ABCE_T_N)
+  {
+    return -ENOMEM;
+  }
   mb.u.area->u.str.locidx = abce->cachesz;
   abce->cachebase[abce->cachesz++] = mb;
   if (rb_tree_nocmp_insert_nonexist(&abce->strcache[hashloc], abce_str_cache_cmp_sym, NULL, &mb.u.area->u.str.node) != 0)
@@ -220,6 +224,10 @@ int abce_sc_put_val_str(
   hashloc = hashval & (mba->u.sc.size - 1);
   e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
   e->key = abce_mb_create_string(abce, str, strlen(str));
+  if (e->key.typ == ABCE_T_N)
+  {
+    return -ENOMEM;
+  }
   e->val = abce_mb_refup(abce, pval);
   ret = rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
                                       abce_str_cmp_sym, NULL, &e->n);
@@ -245,6 +253,11 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
 
   mba = abce->alloc(NULL, sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads),
                     abce->alloc_baton);
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
   mba->u.sc.size = capacity;
   mba->u.sc.holey = holey;
   if (parent)
@@ -536,6 +549,10 @@ void abce_init(struct abce *abce)
   abce->cachesz = 0;
 
   abce->dynscope = abce_mb_create_scope_noparent(abce, ABCE_DEFAULT_SCOPE_SIZE);
+  if (abce->dynscope.typ == ABCE_T_N)
+  {
+    abort();
+  }
 }
 
 void abce_free(struct abce *abce)
@@ -699,6 +716,10 @@ static int abce_strgsub_mb(struct abce *abce,
     return retval;
   }
   *res = abce_mb_create_string(abce, resstr, ressz);
+  if (res->typ == ABCE_T_N)
+  {
+    return -ENOMEM;
+  }
   abce->alloc(resstr, 0, abce->alloc_baton);
   return 0;
 }
@@ -1035,6 +1056,10 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       res = abce_mb_create_string(abce,
                                   mbbase.u.area->u.str.buf + (size_t)start,
                                   end - start);
+      if (res.typ == ABCE_T_N)
+      {
+        return -ENOMEM;
+      }
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -1781,7 +1806,12 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           struct abce_mb mb;
           int rettmp;
-          mb = abce_mb_create_array(abce); // FIXME errors
+          mb = abce_mb_create_array(abce);
+          if (mb.typ == ABCE_T_N)
+          {
+            ret = -ENOMEM;
+            break;
+          }
           rettmp = abce_push_mb(abce, &mb);
           if (rettmp != 0)
           {
@@ -1799,7 +1829,10 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           GETMBAR(&mbar, -2);
           GETMB(&mb, -1); // can't fail if GETMBAR succeeded
           POP();
-          abce_mb_array_append(abce, &mbar, &mb); // FIXME errors
+          if (abce_mb_array_append(abce, &mbar, &mb) != 0)
+          {
+            ret = -ENOMEM;
+          }
           abce_mb_refdn(abce, &mbar);
           abce_mb_refdn(abce, &mb);
           break;
@@ -1808,7 +1841,12 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           struct abce_mb mb;
           int rettmp;
-          mb = abce_mb_create_tree(abce); // FIXME errors
+          mb = abce_mb_create_tree(abce);
+          if (mb.typ == ABCE_T_N)
+          {
+            ret = -ENOMEM;
+            break;
+          }
           rettmp = abce_push_mb(abce, &mb);
           if (rettmp != 0)
           {
@@ -2096,8 +2134,29 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbstr);
           break;
         }
-        case ABCE_OPCODE_DICTNEXT_SAFE:
         case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
+        {
+          struct abce_mb mbar2;
+          struct abce_mb mbar;
+          size_t i;
+          VERIFYMB(-2, ABCE_T_A);
+          VERIFYMB(-1, ABCE_T_A);
+          GETMBAR(&mbar, -2);
+          GETMBAR(&mbar2, -1);
+          POP();
+          for (i = 0; i < mbar.u.area->u.ar.size; i++)
+          {
+            if (abce_mb_array_append(abce, &mbar, &mbar.u.area->u.ar.mbs[i]) != 0)
+            {
+              ret = -ENOMEM;
+              break;
+            }
+          }
+          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn(abce, &mbar2);
+          break;
+        }
+        case ABCE_OPCODE_DICTNEXT_SAFE:
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
