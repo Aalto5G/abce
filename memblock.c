@@ -2165,6 +2165,61 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           break;
         }
         case ABCE_OPCODE_DICTNEXT_SAFE:
+        /*
+         * stack before: (bottom) - oldkey - dictloc - (top)
+         * stack after: (bottom) - newkey - newval - (top)
+         *
+         * How to use in loops (except this doesn't support "break"):
+         *   push nil
+         * iter:
+         *   push -1 # dict location after popping both
+         *   getnext # pushes new key and val
+         *   push -2
+         *   push_stack
+         *   ABCE_OPCODE_TYPE
+         *   push ABCE_T_N
+         *   ne
+         *   push addressof(iterend)
+         *   if_not_jmp_fwd
+         *     stmt1
+         *     stmt2
+         *     stmt3
+         *   pop
+         *   push addressof(iter)
+         *   jmp
+         * iterend:
+         *
+         * How to use in loops with break:
+         *   push nil
+         *   push addressof(iter)
+         *   jmp
+         * break:
+         *   push addresof(iterend)
+         *   jmp
+         * iter:
+         *   push -1 # dict location after popping both
+         *   getnext # pushes new key and val
+         *   push -2
+         *   push_stack
+         *   ABCE_OPCODE_TYPE
+         *   push ABCE_T_N
+         *   ne
+         *   push addressof(iterend)
+         *   if_not_jmp_fwd
+         *     stmt1
+         *     stmt2
+         *     stmt3
+         *   pop
+         *   push addressof(iter)
+         *   jmp
+         * iterend:
+         *
+         * How to use to get just the next key:
+         * push oldkey
+         * push dictloc
+         * getnext # stack after: (b) - newkey - newval - (t)
+         * pop # stack after: (b) - newkey - (t)
+         */
         default:
         {
           printf("Invalid instruction %d\n", (int)ins);
