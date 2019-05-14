@@ -106,6 +106,11 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   mba->refcnt = 1;
   mb.typ = ABCE_T_SC;
   mb.u.area = mba;
+
+  // Add it to cache
+  mb.u.area->u.sc.locidx = abce->cachesz;
+  abce->cachebase[abce->cachesz++] = abce_mb_refup(abce, &mb);
+
   return mb;
 }
 

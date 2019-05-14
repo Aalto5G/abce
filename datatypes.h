@@ -36,6 +36,7 @@ struct abce_mb_scope {
   int holey;
   struct abce_mb_area *parent;
   size_t size;
+  size_t locidx;
   struct rb_tree_nocmp heads[0];
 };
 struct abce_mb_array {

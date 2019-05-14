@@ -57,18 +57,32 @@ void abce_free(struct abce *abce)
 {
   size_t i;
   abce_mb_refdn(abce, &abce->dynscope);
+#if 0
   for (i = 0; i < sizeof(abce->strcache)/sizeof(*abce->strcache); i++)
   {
     while (abce->strcache[i].root != NULL)
     {
+#if 0
       struct abce_mb_string *mbe =
         CONTAINER_OF(abce->strcache[i].root,
                      struct abce_mb_string, node);
       struct abce_mb_area *area = CONTAINER_OF(mbe, struct abce_mb_area, u.str);
+#endif
       rb_tree_nocmp_delete(&abce->strcache[i],
                            abce->strcache[i].root);
+#if 0
       abce_mb_arearefdn(abce, &area, ABCE_T_S);
+#endif
     }
+  }
+#endif
+  for (i = 0; i < abce->cachesz; i++)
+  {
+    abce_mb_refdn(abce, &abce->cachebase[i]);
+  }
+  for (i = 0; i < abce->sp; i++)
+  {
+    abce_mb_refdn(abce, &abce->stackbase[i]);
   }
   abce_free_stack(abce->stackbase, abce->stacklimit);
   abce->stackbase = NULL;
