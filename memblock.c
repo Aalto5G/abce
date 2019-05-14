@@ -1210,6 +1210,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           abce_push_bp(abce);
           abce_push_ip(abce);
           abce->ip = new_ip;
+          abce->bp = abce->sp - 2 - (uint64_t)argcnt;
           rettmp = abce_fetch_i(&ins2, abce, addcode, addsz);
           if (rettmp != 0)
           {
@@ -2056,6 +2057,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
               break;
             }
             abce->ip = new_ip;
+            abce->bp = abce->sp - 2 - 0;
             rettmp = abce_fetch_i(&ins2, abce, addcode, addsz);
             if (rettmp != 0)
             {
