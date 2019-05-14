@@ -1,4 +1,5 @@
 #include "scopes.h"
+#include "abce.h"
 
 const struct abce_mb *abce_sc_get_rec_mb_area(
   const struct abce_mb_area *mba, const struct abce_mb *it)

@@ -2,7 +2,7 @@
 #define _TREES_H_
 
 #include <stddef.h>
-#include "datatypes.h"
+#include "abce.h"
 
 static inline int
 abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,

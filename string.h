@@ -1,7 +1,7 @@
 #ifndef _ABCE_STRING_H_
 #define _ABCE_STRING_H_
 
-#include "string.h"
+#include "abce.h"
 
 int abce_strgsub(struct abce *abce,
                  char **res, size_t *ressz,
