@@ -980,6 +980,16 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       abort();
     }
+    case ABCE_OPCODE_FP_CLASSIFY:
+    case ABCE_OPCODE_FILE_OPEN:
+    case ABCE_OPCODE_FILE_CLOSE:
+    case ABCE_OPCODE_FILE_GET:
+    case ABCE_OPCODE_FILE_SEEK_TELL:
+    case ABCE_OPCODE_FILE_FLUSH:
+    case ABCE_OPCODE_FILE_WRITE:
+    case ABCE_OPCODE_MEMFILE_IOPEN:
+    case ABCE_OPCODE_JSON_ENCODE:
+    case ABCE_OPCODE_JSON_DECODE:
     case ABCE_OPCODE_LISTSPLICE:
     case ABCE_OPCODE_STRFMT:
     default:
