@@ -729,7 +729,7 @@ static inline int abce_str_cmp_sym(
     abort();
   }
   len1 = e1->key.u.area->u.str.size;
-  str1 = e2->key.u.area->u.str.buf;
+  str1 = e1->key.u.area->u.str.buf;
   len2 = e2->key.u.area->u.str.size;
   str2 = e2->key.u.area->u.str.buf;
   lenmin = (len1 < len2) ? len1 : len2;
