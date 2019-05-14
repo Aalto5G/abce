@@ -390,6 +390,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
   // code:
   const size_t guard = 100;
   int ret = -EAGAIN;
+  double argcnt;
+  int64_t new_ip;
   if (addcode != NULL)
   {
     abce->ip = -(int64_t)addsz-(int64_t)guard;
@@ -474,14 +476,13 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         case ABCE_OPCODE_CALL:
         {
           const size_t guard = 100;
-          double argcnt;
-          int64_t new_ip;
           uint16_t ins2;
           int rettmp;
           GETDBL(&argcnt, -1);
           GETFUNADDR(&new_ip, -2);
           POP();
           POP();
+calltrailer:
           // FIXME off by one?
           if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
                 (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard)))
@@ -773,7 +774,6 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         {
           const size_t guard = 100;
           double d;
-          int64_t new_ip;
           GETDBL(&d, -1);
           POP();
           new_ip = d;
@@ -791,7 +791,6 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           const size_t guard = 100;
           int b;
           double d;
-          int64_t new_ip;
           /* Note the clever order of arguments. This allows code within a
            * loop to push false and do an unconditional jump to just right
            * after the expression pushing the boolean value. Thus, the break
@@ -1316,13 +1315,18 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           GETMB(&mb, -1);
           if (mb.typ == ABCE_T_F)
           {
+#if 0
             const size_t guard = 100;
             double argcnt = 0.0;
             int64_t new_ip;
             uint16_t ins2;
             int rettmp;
+#endif
             GETFUNADDR(&new_ip, -1);
             POP();
+            argcnt = 0.0;
+            goto calltrailer;
+#if 0
             // FIXME off by one?
             if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
                   (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard)))
@@ -1367,6 +1371,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
             }
             // no refdn; functions are static data types
             break;
+#endif
           }
           else
           {
