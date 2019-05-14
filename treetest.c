@@ -108,5 +108,10 @@ int main(int argc, char **argv)
   abce_mb_refdn(abce, &mb13);
   abce_mb_refdn(abce, &mb14);
 
+  for (i = 0; i < 20; i++)
+  {
+    abce_mb_refdn(abce, &mbs[i]);
+  }
+
   return 0;
 }
