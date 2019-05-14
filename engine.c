@@ -855,10 +855,41 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_push_double(abce, dbl);
       return 0;
     }
+    case ABCE_OPCODE_STRSTRIP:
+    {
+      struct abce_mb res, mbbase, mbsep;
+      size_t start, end;
+      VERIFYMB(-1, ABCE_T_S);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBSTR(&mbsep, -1);
+      GETMBSTR(&mbbase, -2);
+      POP();
+      POP();
+      abce_strip(mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
+                 mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size,
+                 &start, &end);
+      if (end < start)
+      {
+        abort();
+      }
+      res = abce_mb_create_string(abce,
+                                  mbbase.u.area->u.str.buf + start,
+                                  end - start);
+      if (res.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        abce_mb_refdn(abce, &mbsep);
+        return -ENOMEM;
+      }
+      abce_push_mb(abce, &res);
+      abce_mb_refdn(abce, &res);
+      abce_mb_refdn(abce, &mbbase);
+      abce_mb_refdn(abce, &mbsep);
+      return 0;
+    }
     case ABCE_OPCODE_SCOPE_NEW:
     case ABCE_OPCODE_LISTSPLICE:
     case ABCE_OPCODE_DUP_NONRECURSIVE:
-    case ABCE_OPCODE_STRSTRIP:
     case ABCE_OPCODE_STRFMT:
     default:
       return -EILSEQ;

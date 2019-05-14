@@ -41,6 +41,37 @@ static inline size_t abce_memcspn_impl(const char *s, size_t ssz, uint64_t bm[4]
   return i;
 }
 
+static inline void abce_strip(const char *s, size_t ssz, const char *sep, size_t sepsz, size_t *pstart, size_t *pend)
+{
+  uint64_t bm[4] = {};
+  size_t i;
+  size_t start;
+  for (i = 0; i < sepsz; i++)
+  {
+    uint8_t u8 = (unsigned char)sep[i];
+    bm[u8/64] |= 1ULL<<(u8%64);
+  }
+  for (i = 0; i < ssz; i++)
+  {
+    uint8_t u8 = (unsigned char)s[i];
+    if (!(bm[u8/64] & (1ULL<<(u8%64))))
+    {
+      break;
+    }
+  }
+  start = i;
+  for (i = ssz; i > start; i--)
+  {
+    uint8_t u8 = (unsigned char)s[i - 1];
+    if (!(bm[u8/64] & (1ULL<<(u8%64))))
+    {
+      break;
+    }
+  }
+  *pstart = start;
+  *pend = i - 1;
+}
+
 static inline size_t abce_memspn(const char *s, size_t ssz, const char *accept, size_t asz)
 {
   uint64_t bm[4] = {};
