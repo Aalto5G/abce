@@ -240,7 +240,7 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
   mb = &abce->stackbase[addr];
   if (mb->typ != ABCE_T_IP)
   {
-    printf("invalid typ: %d\n", mb->typ);
+    //printf("invalid typ: %d\n", mb->typ);
     return -EINVAL;
   }
   trial = mb->u.d;
@@ -331,7 +331,7 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
   {
     return -EOVERFLOW;
   }
-  printf("addr %d\n", (int)addr);
+  //printf("addr %d\n", (int)addr);
   mb = &abce->stackbase[addr];
   if (mb->typ != ABCE_T_D && mb->typ != ABCE_T_B)
   {
@@ -927,7 +927,7 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
   }
   else if (unlikely((ophi & 0xC0) == 0x80))
   {
-    printf("EILSEQ 1\n");
+    //printf("EILSEQ 1\n");
     return -EILSEQ;
   }
   else if (likely((ophi & 0xE0) == 0xC0))
@@ -938,13 +938,13 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     }
     if (unlikely((oplo & 0xC0) != 0x80))
     {
-      printf("EILSEQ 2\n");
+      //printf("EILSEQ 2\n");
       return -EILSEQ;
     }
     *ins = ((ophi&0x1F) << 6) | (oplo & 0x3F);
     if (unlikely(*ins < 128))
     {
-      printf("EILSEQ 3\n");
+      //printf("EILSEQ 3\n");
       return -EILSEQ;
     }
     return 0;
@@ -957,7 +957,7 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     }
     if (unlikely((opmid & 0xC0) != 0x80))
     {
-      printf("EILSEQ 4\n");
+      //printf("EILSEQ 4\n");
       return -EILSEQ;
     }
     if (abce_fetch_b(&oplo, abce, addcode, addsz) != 0)
@@ -966,20 +966,20 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     }
     if (unlikely((oplo & 0xC0) != 0x80))
     {
-      printf("EILSEQ 5\n");
+      //printf("EILSEQ 5\n");
       return -EILSEQ;
     }
     *ins = ((ophi&0xF) << 12) | ((opmid&0x3F) << 6) | (oplo & 0x3F);
     if (unlikely(*ins <= 0x7FF))
     {
-      printf("EILSEQ 6\n");
+      //printf("EILSEQ 6\n");
       return -EILSEQ;
     }
     return 0;
   }
   else
   {
-    printf("EILSEQ 7\n");
+    //printf("EILSEQ 7\n");
     return -EILSEQ;
   }
 }
