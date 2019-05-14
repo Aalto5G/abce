@@ -888,6 +888,28 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       return 0;
     }
     case ABCE_OPCODE_SCOPE_NEW:
+    {
+      int holey;
+      double locidx;
+      struct abce_mb mbscnew;
+      struct abce_mb mbscparent;
+      GETBOOLEAN(&holey, -1);
+      GETMBSC(&mbscparent, -2);
+      POP();
+      POP();
+      mbscnew =
+        abce_mb_create_scope(abce, ABCE_DEFAULT_SCOPE_SIZE, &mbscparent, holey);
+      if (mbscnew.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbscparent);
+        return -ENOMEM;
+      }
+      locidx = mbscnew.u.area->u.sc.locidx;
+      abce_push_double(abce, locidx);
+      abce_mb_refdn(abce, &mbscnew);
+      abce_mb_refdn(abce, &mbscparent);
+      return 0;
+    }
     case ABCE_OPCODE_LISTSPLICE:
     case ABCE_OPCODE_DUP_NONRECURSIVE:
     case ABCE_OPCODE_STRFMT:
