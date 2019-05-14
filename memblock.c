@@ -161,9 +161,9 @@ void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_
       }
       break;
     case ABCE_T_SC:
-      abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC);
       if (!--mba->refcnt)
       {
+        abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC);
         for (i = 0; i < mba->u.sc.size; i++)
         {
           while (mba->u.sc.heads[i].root != NULL)
