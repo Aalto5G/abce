@@ -552,12 +552,12 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           POP();
           if (mbar.u.area->u.ar.size == 0)
           {
-            abce_mb_refdn(abce, &mbar);
             ret = -ENOENT;
+            abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
             break;
           }
           abce_mb_refdn(abce, &mbar.u.area->u.ar.mbs[--mbar.u.area->u.ar.size]);
-          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
         }
         case ABCE_OPCODE_LISTLEN:
@@ -569,7 +569,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
         }
         case ABCE_OPCODE_STRLEN:
@@ -581,7 +581,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
         }
         case ABCE_OPCODE_LISTSET:
@@ -600,7 +600,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (loc != (double)(uint64_t)loc)
           {
             abce_mb_refdn(abce, &mbit);
-            abce_mb_refdn(abce, &mbar);
+            abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
             ret = -EINVAL;
             break;
           }
@@ -608,13 +608,13 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (locint < 0 || locint >= mbar.u.area->u.ar.size)
           {
             abce_mb_refdn(abce, &mbit);
-            abce_mb_refdn(abce, &mbar);
+            abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
             ret = -ERANGE;
             break;
           }
           abce_mb_refdn(abce, &mbar.u.area->u.ar.mbs[locint]);
           mbar.u.area->u.ar.mbs[locint] = mbit;
-          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
         }
         case ABCE_OPCODE_STRGET:
@@ -641,7 +641,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
         }
         case ABCE_OPCODE_LISTGET:
@@ -668,7 +668,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
         }
         case ABCE_OPCODE_PUSH_STACK:
@@ -1107,10 +1107,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           if (rettmp != 0)
           {
             ret = rettmp;
-            abce_mb_refdn(abce, &mb);
-            break;
           }
-          abce_mb_refdn(abce, &mb);
+          abce_mb_refdn_typ(abce, &mb, ABCE_T_A);
           break;
         }
         case ABCE_OPCODE_APPEND_MAINTAIN:
@@ -1124,7 +1122,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             ret = -ENOMEM;
           }
-          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_T);
           abce_mb_refdn(abce, &mb);
           break;
         }
@@ -1145,7 +1143,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
             abce_mb_refdn(abce, &mb);
             break;
           }
-          abce_mb_refdn(abce, &mb);
+          abce_mb_refdn_typ(abce, &mb, ABCE_T_T);
           break;
         }
         case ABCE_OPCODE_PUSH_FROM_CACHE:
@@ -1179,8 +1177,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           GETMB(&mbit, -2);
           if (mbit.typ != ABCE_T_S)
           {
-            abce_mb_refdn(abce, &mbsc);
             abce_mb_refdn(abce, &mbit);
+            abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
             ret = -EINVAL;
             break;
           }
@@ -1196,6 +1194,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
+          abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
+          abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
           break;
         }
         case ABCE_OPCODE_SCOPE_HAS:
@@ -1206,9 +1206,9 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           GETMB(&mbit, -2);
           if (mbit.typ != ABCE_T_S)
           {
-            abce_mb_refdn(abce, &mbsc);
-            abce_mb_refdn(abce, &mbit);
             ret = -EINVAL;
+            abce_mb_refdn(abce, &mbit);
+            abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
             break;
           }
           POP();
@@ -1218,6 +1218,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
+          abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
+          abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
           break;
         }
         case ABCE_OPCODE_GETSCOPE_DYN:
@@ -1257,8 +1259,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
             ret = -ENOMEM;
             // No break: we want to call all refdn statements
           }
-          abce_mb_refdn(abce, &mbt);
-          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
+          abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           abce_mb_refdn(abce, &mbval);
           break;
         }
@@ -1286,8 +1288,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
               abort();
             }
           }
-          abce_mb_refdn(abce, &mbt);
-          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
+          abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
         }
         case ABCE_OPCODE_DICTHAS:
@@ -1304,8 +1306,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbt);
-          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
+          abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
         }
         case ABCE_OPCODE_CALL_IF_FUN:
@@ -1382,7 +1384,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbt);
+          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           break;
         }
         case ABCE_OPCODE_SCOPEVAR_SET:
@@ -1403,9 +1405,9 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
             ret = rettmp;
             // No break: we want to call all refdn statements
           }
-          abce_mb_refdn(abce, &mbs);
+          abce_mb_refdn_typ(abce, &mbs, ABCE_T_S);
           abce_mb_refdn(abce, &mbv);
-          abce_mb_refdn(abce, &mbsc);
+          abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
           break;
         }
         case ABCE_OPCODE_DICTDEL:
@@ -1422,8 +1424,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
             ret = -ENOENT;
             // No break: we want to call all refdn statements
           }
-          abce_mb_refdn(abce, &mbt);
-          abce_mb_refdn(abce, &mbstr);
+          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
+          abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
         }
         case ABCE_OPCODE_APPENDALL_MAINTAIN: // RFE should this be moved elsewhere? A complex operation.
@@ -1444,8 +1446,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
               break;
             }
           }
-          abce_mb_refdn(abce, &mbar);
-          abce_mb_refdn(abce, &mbar2);
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
+          abce_mb_refdn_typ(abce, &mbar2, ABCE_T_A);
           break;
         }
         case ABCE_OPCODE_DICTNEXT_SAFE:
@@ -1542,13 +1544,13 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
               abort();
             }
             abce_mb_refdn(abce, &mboldkey);
-            abce_mb_refdn(abce, &mbt);
+            abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
             break;
           }
           abce_push_mb(abce, mbreskey);
           abce_push_mb(abce, mbresval);
           abce_mb_refdn(abce, &mboldkey);
-          abce_mb_refdn(abce, &mbt);
+          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           break;
         }
         default:
