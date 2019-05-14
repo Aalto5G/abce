@@ -14,6 +14,8 @@ int main(int argc, char **argv)
   printf("%d\n", (int)abce_locvarctx_search_rec(ctx2, "ctx2"));
   printf("break %d\n", (int)abce_locvarctx_break(ctx2, 1));
   printf("break %d\n", (int)abce_locvarctx_break(ctx2, 2));
+  printf("sz %d\n", (int)abce_locvarctx_sz(ctx2));
+  printf("recursive sz %d\n", (int)abce_locvarctx_recursive_sz(ctx2));
   abce_locvarctx_free(ctx2);
   abce_locvarctx_free(ctx1);
   abce_locvarctx_free(ctx0);

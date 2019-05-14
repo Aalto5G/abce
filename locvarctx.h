@@ -33,6 +33,17 @@ static inline size_t abce_locvarctx_sz(struct abce_locvarctx *ctx)
   return ctx->sz;
 }
 
+static inline size_t abce_locvarctx_recursive_sz(struct abce_locvarctx *ctx)
+{
+  size_t result = ctx->sz + ctx->startidx;
+  while (ctx->parent != NULL)
+  {
+    ctx = ctx->parent;
+  }
+  result -= ctx->startidx; // argument and register cunt
+  return result;
+}
+
 static inline int abce_locvarctx_is_loop(struct abce_locvarctx *ctx)
 {
   return ctx->jmpaddr_break != (size_t)-1;
