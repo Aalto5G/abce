@@ -56,6 +56,25 @@ static inline void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mb
   }
 }
 
+static inline void abce_mb_refdn_typ(struct abce *abce, struct abce_mb *mb, enum abce_type typ)
+{
+  switch (typ)
+  {
+    case ABCE_T_T:
+    case ABCE_T_IOS:
+    case ABCE_T_A:
+    case ABCE_T_S:
+    case ABCE_T_SC:
+      abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
+      break;
+    default:
+      break;
+  }
+  mb->typ = ABCE_T_N;
+  mb->u.d = 0.0;
+  mb->u.area = NULL;
+}
+
 static inline void abce_mb_refdn(struct abce *abce, struct abce_mb *mb)
 {
   switch (mb->typ)
