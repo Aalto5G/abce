@@ -770,6 +770,51 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       return 0;
     }
     case ABCE_OPCODE_STRLISTJOIN:
+    {
+      struct abce_mb mbar, mbjoiner;
+      struct abce_mb mbres;
+      struct abce_str_buf buf = {};
+      size_t i;
+
+      VERIFYMB(-1, ABCE_T_A);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBAR(&mbar, -1);
+      GETMBSTR(&mbjoiner, -2);
+      POP();
+      POP();
+      for (i = 0; i < mbar.u.area->u.ar.size; i++)
+      {
+        const struct abce_mb *mb = &mbar.u.area->u.ar.mbs[i];
+        if (mb->typ != ABCE_T_S)
+        {
+          abce_str_buf_free(abce, &buf);
+          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn(abce, &mbjoiner);
+          return -EINVAL;
+        }
+        if (abce_str_buf_add(abce, &buf, mbar.u.area->u.str.buf, mbar.u.area->u.str.size)
+            != 0)
+        {
+          abce_str_buf_free(abce, &buf);
+          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn(abce, &mbjoiner);
+          return -ENOMEM;
+        }
+      }
+      mbres = abce_mb_create_string(abce, buf.buf, buf.sz);
+      abce_str_buf_free(abce, &buf);
+      if (mbres.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbar);
+        abce_mb_refdn(abce, &mbjoiner);
+        return -ENOMEM;
+      }
+      abce_push_mb(abce, &mbres);
+      abce_mb_refdn(abce, &mbres);
+      abce_mb_refdn(abce, &mbar);
+      abce_mb_refdn(abce, &mbjoiner);
+      return 0;
+    }
     case ABCE_OPCODE_STRFMT:
     case ABCE_OPCODE_STRSTRIP:
     // String conversion
