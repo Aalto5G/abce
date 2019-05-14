@@ -476,7 +476,9 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         case ABCE_OPCODE_CALL:
         {
           const size_t guard = 100;
-          uint16_t ins2;
+          //uint16_t ins2;
+          uint8_t inshi;
+          //uint8_t inslo;
           int rettmp;
           GETDBL(&argcnt, -1);
           GETFUNADDR(&new_ip, -2);
@@ -494,6 +496,43 @@ calltrailer:
           abce_push_ip(abce);
           abce->ip = new_ip;
           abce->bp = abce->sp - 2 - (uint64_t)argcnt;
+#if 1
+          rettmp = abce_fetch_b(&inshi, abce, addcode, addsz);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            break;
+          }
+          if (inshi != ABCE_OPCODE_FUN_HEADER)
+          {
+            ret = -EINVAL;
+            break;
+          }
+#else
+          rettmp = abce_fetch_b(&inshi, abce, addcode, addsz);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            break;
+          }
+          if (inshi != ((ABCE_OPCODE_FUN_HEADER>>6) | 0xC0))
+          {
+            ret = -EINVAL;
+            break;
+          }
+          rettmp = abce_fetch_b(&inslo, abce, addcode, addsz);
+          if (rettmp != 0)
+          {
+            ret = rettmp;
+            break;
+          }
+          if (inslo != ((ABCE_OPCODE_FUN_HEADER&0x3F) | 0x80))
+          {
+            ret = -EINVAL;
+            break;
+          }
+#endif
+#if 0
           rettmp = abce_fetch_i(&ins2, abce, addcode, addsz);
           if (rettmp != 0)
           {
@@ -505,6 +544,7 @@ calltrailer:
             ret = -EINVAL;
             break;
           }
+#endif
           double dbl;
           rettmp = abce_fetch_d(&dbl, abce, addcode, addsz);
           if (rettmp != 0)
