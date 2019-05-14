@@ -910,8 +910,77 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_refdn(abce, &mbscparent);
       return 0;
     }
-    case ABCE_OPCODE_LISTSPLICE:
     case ABCE_OPCODE_DUP_NONRECURSIVE:
+    {
+      struct abce_mb mbold;
+      struct abce_mb mbnew;
+      size_t i;
+      GETMB(&mbold, -1);
+      POP();
+      if (mbold.typ != ABCE_T_A && mbold.typ != ABCE_T_T) // FIXME T_PB
+      {
+        abce_mb_refdn(abce, &mbold);
+        return -EINVAL;
+      }
+      if (mbold.typ == ABCE_T_A)
+      {
+        mbnew = abce_mb_create_array(abce);
+        if (mbnew.typ == ABCE_T_N)
+        {
+          abce_mb_refdn(abce, &mbold);
+          return -ENOMEM;
+        }
+        for (i = 0; i < mbold.u.area->u.ar.size; i++)
+        {
+          if (abce_mb_array_append(abce, &mbnew, &mbold.u.area->u.ar.mbs[i]) != 0)
+          {
+            abce_mb_refdn(abce, &mbold);
+            abce_mb_refdn(abce, &mbnew);
+            return -ENOMEM;
+          }
+        }
+        if (abce_push_mb(abce, &mbnew) != 0)
+        {
+          abort();
+        }
+        abce_mb_refdn(abce, &mbold);
+        abce_mb_refdn(abce, &mbnew);
+        return 0;
+      }
+      else if (mbold.typ == ABCE_T_T)
+      {
+        const struct abce_mb *key, *val;
+        const struct abce_mb nil = {.typ = ABCE_T_N};
+        mbnew = abce_mb_create_tree(abce);
+        if (mbnew.typ == ABCE_T_N)
+        {
+          abce_mb_refdn(abce, &mbold);
+          return -ENOMEM;
+        }
+        key = &nil;
+        while (abce_tree_get_next(abce, &key, &val, &mbold, key) == 0)
+        {
+          if (abce_tree_set_str(abce, &mbold, key, val) != 0)
+          {
+            abce_mb_refdn(abce, &mbnew);
+            abce_mb_refdn(abce, &mbold);
+            return -ENOMEM;
+          }
+        }
+        if (abce_push_mb(abce, &mbnew) != 0)
+        {
+          abort();
+        }
+        abce_mb_refdn(abce, &mbold);
+        abce_mb_refdn(abce, &mbnew);
+      }
+      else
+      {
+        abort();
+      }
+      abort();
+    }
+    case ABCE_OPCODE_LISTSPLICE:
     case ABCE_OPCODE_STRFMT:
     default:
       return -EILSEQ;
