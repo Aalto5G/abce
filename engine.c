@@ -14,6 +14,7 @@
 #include "string.h"
 #include "trees.h"
 #include "scopes.h"
+#include "worditer.h"
 
 #define POPABORTS 1
 
@@ -515,15 +516,144 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_refdn(abce, &mbbase);
       return 0;
     }
+    case ABCE_OPCODE_STRWORDCNT:
+    {
+      struct abce_word_iter it = {};
+      struct abce_mb mbbase;
+      struct abce_mb mbsep;
+      size_t i = 0;
+      VERIFYMB(-1, ABCE_T_S);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBSTR(&mbsep, -1);
+      GETMBSTR(&mbbase, -2);
+      POP();
+      POP();
+      abce_word_iter_init(&it, mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
+                          mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size);
+      while (!abce_word_iter_at_end(&it))
+      {
+        i++;
+        abce_word_iter_next(&it);
+      }
+      if (abce_push_double(abce, i) != 0)
+      {
+        abort();
+      }
+      abce_mb_refdn(abce, &mbbase);
+      abce_mb_refdn(abce, &mbsep);
+      return 0;
+    }
+    case ABCE_OPCODE_STRWORDLIST:
+    {
+      struct abce_word_iter it = {};
+      struct abce_mb mbbase;
+      struct abce_mb mbsep;
+      struct abce_mb mbar;
+      struct abce_mb mbit;
+      VERIFYMB(-1, ABCE_T_S);
+      VERIFYMB(-2, ABCE_T_S);
+      GETMBSTR(&mbsep, -1);
+      GETMBSTR(&mbbase, -2);
+      POP();
+      POP();
+      mbar = abce_mb_create_array(abce);
+      if (mbar.typ == ABCE_T_N)
+      {
+        abce_mb_refdn(abce, &mbbase);
+        abce_mb_refdn(abce, &mbsep);
+        return -ENOMEM;
+      }
+      abce_word_iter_init(&it, mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
+                          mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size);
+      while (!abce_word_iter_at_end(&it))
+      {
+        mbit = abce_mb_create_string(abce, 
+                                     mbbase.u.area->u.str.buf + it.start,
+                                     it.end - it.start);
+        if (mbit.typ == ABCE_T_N)
+        {
+          abce_mb_refdn(abce, &mbbase);
+          abce_mb_refdn(abce, &mbsep);
+          abce_mb_refdn(abce, &mbar);
+          return -ENOMEM;
+        }
+        if (abce_mb_array_append(abce, &mbar, &mbit) != 0)
+        {
+          abce_mb_refdn(abce, &mbbase);
+          abce_mb_refdn(abce, &mbsep);
+          abce_mb_refdn(abce, &mbar);
+          abce_mb_refdn(abce, &mbit);
+          return -ENOMEM;
+        }
+        abce_mb_refdn(abce, &mbit);
+        abce_word_iter_next(&it);
+      }
+      if (abce_push_mb(abce, &mbar) != 0)
+      {
+        abort();
+      }
+      abce_mb_refdn(abce, &mbbase);
+      abce_mb_refdn(abce, &mbsep);
+      abce_mb_refdn(abce, &mbar);
+      return 0;
+    }
+    case ABCE_OPCODE_STRWORD:
+    {
+      struct abce_word_iter it = {};
+      struct abce_mb mbbase;
+      struct abce_mb mbsep;
+      struct abce_mb mbit;
+      double wordidx;
+      size_t i = 0;
+      VERIFYMB(-2, ABCE_T_S);
+      VERIFYMB(-3, ABCE_T_S);
+      GETDBL(&wordidx, -1);
+      if (wordidx < 0 || (double)(uint64_t)wordidx != wordidx)
+      {
+        return -EINVAL;
+      }
+      GETMBSTR(&mbsep, -2);
+      GETMBSTR(&mbbase, -3);
+      POP();
+      POP();
+      POP();
+      abce_word_iter_init(&it, mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
+                          mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size);
+      while (!abce_word_iter_at_end(&it))
+      {
+        if (i == (size_t)wordidx)
+        {
+          mbit = abce_mb_create_string(abce, 
+                                       mbbase.u.area->u.str.buf + it.start,
+                                       it.end - it.start);
+          if (mbit.typ == ABCE_T_N)
+          {
+            abce_mb_refdn(abce, &mbbase);
+            abce_mb_refdn(abce, &mbsep);
+            return -ENOMEM;
+          }
+          if (abce_push_mb(abce, &mbit) != 0)
+          {
+            abort();
+          }
+          abce_mb_refdn(abce, &mbit);
+          abce_mb_refdn(abce, &mbbase);
+          abce_mb_refdn(abce, &mbsep);
+          return 0;
+        }
+        i++;
+        abce_word_iter_next(&it);
+      }
+      abce_mb_refdn(abce, &mbbase);
+      abce_mb_refdn(abce, &mbsep);
+      return -ERANGE;
+    }
     case ABCE_OPCODE_STRREP:
     case ABCE_OPCODE_STRSTR:
     case ABCE_OPCODE_STR_REVERSE:
     case ABCE_OPCODE_STRLISTJOIN:
     case ABCE_OPCODE_STRFMT:
     case ABCE_OPCODE_STRSTRIP:
-    case ABCE_OPCODE_STRWORD:
-    case ABCE_OPCODE_STRWORDLIST:
-    case ABCE_OPCODE_STRWORDCNT:
     // String conversion
     case ABCE_OPCODE_TOSTRING:
     case ABCE_OPCODE_TONUMBER:
