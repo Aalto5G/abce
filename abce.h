@@ -486,6 +486,9 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
 struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
                                      const char *str2, size_t sz2);
 
+struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str1, size_t sz1,
+                                  size_t cnt);
+
 static inline struct abce_mb
 abce_mb_create_string_nul(struct abce *abce, const char *str)
 {

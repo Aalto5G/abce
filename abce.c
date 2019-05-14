@@ -116,6 +116,29 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
   return mb;
 }
 
+struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz, size_t rep)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  size_t i;
+  mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz*rep + 1, abce->alloc_baton);
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.str.size = sz;
+  for (i = 0; i < rep; i++)
+  {
+    memcpy(mba->u.str.buf + i*sz, str, sz);
+  }
+  mba->u.str.buf[rep*sz] = '\0';
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_S;
+  mb.u.area = mba;
+  return mb;
+}
+
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
 {
   struct abce_mb_area *mba;
