@@ -81,6 +81,7 @@ abce_tree_set_str(struct abce *abce,
   return 0;
 }
 
+// FIXME verify if algorithm correct
 static inline int
 abce_tree_get_next(struct abce *abce,
                    const struct abce_mb **mbreskey,
@@ -94,7 +95,23 @@ abce_tree_get_next(struct abce *abce,
   {
     abort();
   }
+  if (mbkey->typ != ABCE_T_S && mbkey->typ != ABCE_T_N)
+  {
+    abort();
+  }
   node = mbt->u.area->u.tree.tree.root;
+  if (mbkey->typ == ABCE_T_N)
+  {
+    for (;;)
+    {
+      if (node->left == NULL)
+      {
+        break;
+      }
+      node = node->left;
+    }
+    goto out;
+  }
   while (node != NULL)
   {
     int res = abce_str_cmp_halfsym(mbkey, node, NULL);
@@ -106,31 +123,51 @@ abce_tree_get_next(struct abce *abce,
       }
       node = node->left;
     }
-    else if (res >= 0)
+    else if (res > 0)
     {
-      if (node->right != NULL)
+      if (node->right == NULL)
       {
-        node = node->right;
-        for (;;)
-        {
-          if (node->left == NULL)
-          {
-            break;
-          }
-          node = node->left;
-        }
+        break;
       }
-      else if (node->parent->left == node)
+      node = node->right;
+    }
+    else if (res == 0)
+    {
+      break;
+    }
+  }
+  if (1)
+  {
+    if (node->right != NULL)
+    {
+      node = node->right;
+      for (;;)
+      {
+        if (node->left == NULL)
+        {
+          break;
+        }
+        node = node->left;
+      }
+    }
+    else
+    {
+      if (node->parent->left == node)
       {
         node = node->parent;
       }
       else
       {
-        node = NULL;
+        while (node->parent && node->parent->right == node)
+        {
+          node = node->parent;
+        }
+        node = node->parent;
       }
-      break;
     }
+    //break;
   }
+out:
   if (node == NULL)
   {
     *mbreskey = NULL;
