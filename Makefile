@@ -110,4 +110,11 @@ aplanyy.tab.h: aplanyy.y Makefile
 	rm .tmph.aplanyy.tab.c
 	mv .tmph.aplanyy.tab.h aplanyy.tab.h
 
+.PHONY: clean distclean
+
+clean:
+	rm -f $(OBJ) $(DEP) $(ASM) $(ASMGEN) $(DEPGEN) $(OBJGEN)
+distclean: clean
+	rm -f aplantest main locvartest
+
 -include *.d
