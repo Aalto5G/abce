@@ -243,4 +243,5 @@ int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t n
   memset(&mbpb->u.area->u.pb.buf[mbpb->u.area->u.pb.size], 0,
          newsz - mbpb->u.area->u.pb.size);
   mbpb->u.area->u.pb.size = newsz;
+  return 0;
 }
