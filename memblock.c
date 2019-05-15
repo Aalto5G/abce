@@ -169,6 +169,13 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
         abce->alloc(mba, 0, abce->alloc_baton);
       }
       break;
+    case ABCE_T_PB:
+      if (1)
+      {
+        abce->alloc(mba->u.pb.buf, 0, abce->alloc_baton);
+        abce->alloc(mba, 0, abce->alloc_baton);
+      }
+      break;
     case ABCE_T_SC:
       if (1)
       {

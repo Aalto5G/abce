@@ -44,6 +44,11 @@ struct abce_mb_array {
   size_t capacity;
   size_t size;
 };
+struct abce_mb_pb {
+  size_t size;
+  size_t capacity;
+  char *buf;
+};
 struct abce_mb_string {
   struct rb_tree_node node;
   size_t size;
@@ -61,6 +66,7 @@ struct abce_mb_area {
     struct abce_mb_scope sc;
     struct abce_mb_tree tree;
     struct abce_mb_string str;
+    struct abce_mb_pb pb;
   } u;
 };
 enum abce_type {

@@ -215,3 +215,32 @@ int abce_mb_array_append_grow(struct abce *abce, struct abce_mb *mb)
   mb->u.area->u.ar.mbs = mbs2;
   return 0;
 }
+
+int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t newsz)
+{
+  size_t new_capacity;
+  char *new_buf;
+  if (mbpb->typ != ABCE_T_PB)
+  {
+    abort();
+  }
+  if (newsz <= mbpb->u.area->u.pb.capacity)
+  {
+    abort();
+  }
+  new_capacity = 2*mbpb->u.area->u.pb.capacity + 1;
+  if (new_capacity < newsz)
+  {
+    new_capacity = newsz;
+  }
+  new_buf = (char*)abce->alloc(mbpb->u.area->u.pb.buf, new_capacity, abce->alloc_baton);
+  if (new_buf == NULL)
+  {
+    return -ENOMEM;
+  }
+  mbpb->u.area->u.pb.buf = new_buf;
+  mbpb->u.area->u.pb.capacity = new_capacity;
+  memset(&mbpb->u.area->u.pb.buf[mbpb->u.area->u.pb.size], 0,
+         newsz - mbpb->u.area->u.pb.size);
+  mbpb->u.area->u.pb.size = newsz;
+}

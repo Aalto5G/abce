@@ -9,6 +9,24 @@ extern "C" {
 
 void *abce_std_alloc(void *old, size_t newsz, void *alloc_baton);
 
+static inline uint16_t abce_bswap16(uint16_t u16)
+{
+  u16 =
+    ((u16 & 0xFF00U) >>  8) |
+    ((u16 & 0x00FFU) <<  8);
+  return u16;
+}
+
+static inline uint32_t abce_bswap32(uint32_t u32)
+{
+  u32 =
+    ((u32 & 0xFF000000U) >> 24) |
+    ((u32 & 0x00FF0000U) >>  8) |
+    ((u32 & 0x0000FF00U) <<  8) |
+    ((u32 & 0x000000FFU) << 24);
+  return u32;
+}
+
 static inline void abce_put_dbl(double dbl, void *dest)
 {
   uint64_t u64;
@@ -64,6 +82,7 @@ static inline void abce_mb_refdn_typ(struct abce *abce, struct abce_mb *mb, enum
     case ABCE_T_IOS:
     case ABCE_T_A:
     case ABCE_T_S:
+    case ABCE_T_PB:
     case ABCE_T_SC:
       abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
       break;
@@ -83,6 +102,7 @@ static inline void abce_mb_refdn(struct abce *abce, struct abce_mb *mb)
     case ABCE_T_IOS:
     case ABCE_T_A:
     case ABCE_T_S:
+    case ABCE_T_PB:
     case ABCE_T_SC:
       abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
       break;
@@ -100,7 +120,8 @@ abce_mb_refup(struct abce *abce, const struct abce_mb *mb)
 {
   switch (mb->typ)
   {
-    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS: case ABCE_T_A: case ABCE_T_SC:
+    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS:
+    case ABCE_T_A: case ABCE_T_SC: case ABCE_T_PB:
       mb->u.area->refcnt++;
       break;
     default:
@@ -296,6 +317,22 @@ static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t id
   *mb = abce_mb_refup(abce, mbptr);
   return 0;
 }
+static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t idx)
+{
+  const struct abce_mb *mbptr;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mbptr = &abce->stackbase[addr];
+  if (mbptr->typ != ABCE_T_PB)
+  {
+    return -EINVAL;
+  }
+  *mb = abce_mb_refup(abce, mbptr);
+  return 0;
+}
 static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   const struct abce_mb *mbptr;
@@ -473,7 +510,8 @@ abce_mb_arearefup(struct abce *abce, const struct abce_mb *mb)
 {
   switch (mb->typ)
   {
-    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS: case ABCE_T_A: case ABCE_T_SC:
+    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS:
+    case ABCE_T_A: case ABCE_T_SC: case ABCE_T_PB:
       mb->u.area->refcnt++;
       return mb->u.area;
     default:
@@ -1008,6 +1046,30 @@ int
 abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz);
 
 int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz);
+
+int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t newsz);
+
+static inline int abce_mb_pb_resize(struct abce *abce, const struct abce_mb *mbpb,
+                                    size_t newsz)
+{
+  if (mbpb->typ != ABCE_T_PB)
+  {
+    abort();
+  }
+  if (newsz <= mbpb->u.area->u.pb.size)
+  {
+    mbpb->u.area->u.pb.size = newsz;
+    return 0;
+  }
+  if (newsz <= mbpb->u.area->u.pb.capacity)
+  {
+    memset(&mbpb->u.area->u.pb.buf[mbpb->u.area->u.pb.size], 0,
+           newsz - mbpb->u.area->u.pb.size);
+    mbpb->u.area->u.pb.size = newsz;
+    return 0;
+  }
+  return abce_mb_pb_do_resize(abce, mbpb, newsz);
+}
 
 #ifdef __cplusplus
 };
