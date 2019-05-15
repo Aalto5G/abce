@@ -79,7 +79,7 @@ enum abce_type {
   ABCE_T_IOS,
   ABCE_T_BP,
   ABCE_T_IP,
-  ABCE_T_LP,
+  //ABCE_T_LP,
   ABCE_T_A,
   ABCE_T_SC,
   ABCE_T_N,
