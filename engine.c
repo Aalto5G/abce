@@ -1822,6 +1822,7 @@ outpbset:
           {
             POP();
           }
+          // FIXME get ip and bp
           POP(); // ip
           POP(); // bp
           for (i = 0; i < cntargs; i++)
