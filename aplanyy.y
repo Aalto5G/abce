@@ -106,17 +106,12 @@ int aplanyywrap(yyscan_t scanner)
 %token FUNCTION
 %token ENDFUNCTION
 %token LOCVAR
-%token RECDEP
 
+/*
 %token DELAYVAR
 %token DELAYEXPR
 %token DELAYLISTEXPAND
-%token PHONYRULE
-%token DISTRULE
-%token PATRULE
-%token FILEINCLUDE
-%token DIRINCLUDE
-%token CDEPINCLUDESCURDIR
+*/
 %token DYNO
 %token LEXO
 %token IMMO
@@ -373,6 +368,7 @@ expr NEWLINE
 ;
 
 value:
+/*
   STRING_LITERAL
 {
   int64_t symid = abce_cache_add_str(&aplanyy->abce, $1.str, $1.sz);
@@ -398,11 +394,11 @@ value:
 {
   $$ = 0;
 }
-| DELAYLISTEXPAND OPEN_PAREN expr CLOSE_PAREN
+|*/ AT /* DELAYLISTEXPAND */ /* OPEN_PAREN */ expr /* CLOSE_PAREN */
 {
   $$ = 1;
 }
-| DELAYEXPR OPEN_PAREN expr CLOSE_PAREN
+| /* DELAYEXPR */ /* OPEN_PAREN */ expr /* CLOSE_PAREN */ /* FIXME! */
 {
   $$ = 0;
 }
@@ -809,7 +805,9 @@ dictlist:
 ;
 
 dictentry:
-  STRING_LITERAL
+  value
+/*
+STRING_LITERAL
 {
   int64_t idx = abce_cache_add_str(&aplanyy->abce, $1.str, $1.sz);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
@@ -817,6 +815,7 @@ dictentry:
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($1.str);
 }
+*/
 COLON value
 {
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_DICTSET_MAINTAIN);
@@ -854,11 +853,14 @@ valuelist:
 ;
 
 valuelistentry:
+/*
   AT varref
 {
   $$ = 0;
 }
-| value
+|
+*/
+value
 {
   $$ = $1;
 };
