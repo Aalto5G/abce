@@ -55,6 +55,8 @@ int abce_sc_replace_val_mb(
     e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
     if (e == NULL)
     {
+      abce->err.code = ABCE_E_NO_MEM;
+      abce->err.val2 = sizeof(*e);
       return -ENOMEM;
     }
     e->key = abce_mb_refup(abce, pkey);
@@ -91,11 +93,15 @@ int abce_sc_put_val_str(
   e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
   if (e == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*e);
     return -ENOMEM;
   }
   e->key = abce_mb_create_string(abce, str, strlen(str));
   if (e->key.typ == ABCE_T_N)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = strlen(str);
     return -ENOMEM;
   }
   e->val = abce_mb_refup(abce, pval);

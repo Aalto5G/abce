@@ -103,6 +103,8 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
   mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz1 + sz2 + 1, abce->alloc_baton);
   if (mba == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba) + sz1 + sz2 + 1;
     mb.typ = ABCE_T_N;
     return mb;
   }
@@ -124,6 +126,8 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
   mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz*rep + 1, abce->alloc_baton);
   if (mba == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba) + sz*rep + 1;
     mb.typ = ABCE_T_N;
     return mb;
   }
@@ -168,6 +172,8 @@ struct abce_mb abce_mb_create_tree(struct abce *abce)
   mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
   if (mba == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba);
     mb.typ = ABCE_T_N;
     return mb;
   }
@@ -186,6 +192,8 @@ struct abce_mb abce_mb_create_array(struct abce *abce)
   mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba), abce->alloc_baton);
   if (mba == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba);
     mb.typ = ABCE_T_N;
     return mb;
   }
@@ -212,6 +220,9 @@ int abce_mb_array_append_grow(struct abce *abce, struct abce_mb *mb)
                      abce->alloc_baton);
   if (mbs2 == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = new_cap*sizeof(*mb->u.area->u.ar.mbs);
     return -ENOMEM;
   }
   mb->u.area->u.ar.capacity = new_cap;
@@ -239,6 +250,8 @@ int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t n
   new_buf = (char*)abce->alloc(mbpb->u.area->u.pb.buf, new_capacity, abce->alloc_baton);
   if (new_buf == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = new_capacity;
     return -ENOMEM;
   }
   mbpb->u.area->u.pb.buf = new_buf;

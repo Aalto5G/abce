@@ -75,6 +75,8 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
                     abce->alloc_baton);
   if (mba == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads);
     mb.typ = ABCE_T_N;
     return mb;
   }

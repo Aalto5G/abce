@@ -69,6 +69,9 @@ abce_tree_set_str(struct abce *abce,
   e = abce->alloc(NULL, sizeof(*e), abce->alloc_baton);
   if (e == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb = abce_mb_refup(abce, mbkey);
+    abce->err.val2 = sizeof(*e);
     return -ENOMEM;
   }
   e->key = abce_mb_refup(abce, mbkey);

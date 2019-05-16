@@ -926,8 +926,6 @@ abce_mb_array_append(struct abce *abce,
   {
     if (abce_mb_array_append_grow(abce, mb) != 0)
     {
-      abce->err.code = ABCE_E_NO_MEM;
-      abce->err.mb = abce_mb_refup(abce, it);
       return -ENOMEM;
     }
   }

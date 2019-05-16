@@ -161,6 +161,8 @@ static inline int abce_str_buf_grow(struct abce *abce,
   new_buf = abce->alloc(buf->buf, new_capacity, abce->alloc_baton);
   if (new_buf == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = new_capacity;
     return -ENOMEM;
   }
   buf->buf = new_buf;
