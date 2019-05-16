@@ -161,6 +161,9 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
     addr = abce->sp + idx;
     if (addr >= abce->sp || addr < abce->bp)
     {
+      abce->err.code = ABCE_E_STACK_IDX_OOB;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = idx;
       return -EOVERFLOW;
     }
   }
@@ -169,6 +172,9 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
     addr = abce->bp + idx;
     if (addr >= abce->sp || addr < abce->bp)
     {
+      abce->err.code = ABCE_E_STACK_IDX_OOB;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = idx;
       return -EOVERFLOW;
     }
   }
@@ -187,6 +193,9 @@ static inline int abce_getboolean(int *b, struct abce *abce, int64_t idx)
   mb = &abce->stackbase[addr];
   if (mb->typ != ABCE_T_D || mb->typ != ABCE_T_B)
   {
+    abce->err.code = ABCE_E_EXPECT_BOOL;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *b = !!mb->u.d;
@@ -204,6 +213,9 @@ static inline int abce_verifymb(struct abce *abce, int64_t idx, enum abce_type t
   mb = &abce->stackbase[addr];
   if (mb->typ != typ)
   {
+    abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   return 0;
@@ -220,6 +232,9 @@ static inline int abce_getfunaddr(int64_t *paddr, struct abce *abce, int64_t idx
   mb = &abce->stackbase[addr];
   if (mb->typ != ABCE_T_F)
   {
+    abce->err.code = ABCE_E_EXPECT_FUNC;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *paddr = mb->u.d;
@@ -238,11 +253,17 @@ static inline int abce_getbp(struct abce *abce, int64_t idx)
   mb = &abce->stackbase[addr];
   if (mb->typ != ABCE_T_BP)
   {
+    abce->err.code = ABCE_E_EXPECT_BP;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   trial = mb->u.d;
   if (trial != mb->u.d)
   {
+    abce->err.code = ABCE_E_REG_NOT_INT;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   abce->bp = trial;
@@ -253,7 +274,7 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
 {
   const struct abce_mb *mb;
   size_t addr;
-  size_t trial;
+  int64_t trial;
   if (abce_calc_addr(&addr, abce, idx) != 0)
   {
     return -EOVERFLOW;
@@ -262,11 +283,17 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
   if (mb->typ != ABCE_T_IP)
   {
     //printf("invalid typ: %d\n", mb->typ);
+    abce->err.code = ABCE_E_EXPECT_IP;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   trial = mb->u.d;
   if (trial != mb->u.d)
   {
+    abce->err.code = ABCE_E_REG_NOT_INT;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   abce->ip = trial;
@@ -296,6 +323,9 @@ static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t id
   mbptr = &abce->stackbase[addr];
   if (mbptr->typ != ABCE_T_SC)
   {
+    abce->err.code = ABCE_E_EXPECT_SCOPE;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *mb = abce_mb_refup(abce, mbptr);
@@ -312,6 +342,9 @@ static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t id
   mbptr = &abce->stackbase[addr];
   if (mbptr->typ != ABCE_T_A)
   {
+    abce->err.code = ABCE_E_EXPECT_ARRAY;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *mb = abce_mb_refup(abce, mbptr);
@@ -328,6 +361,9 @@ static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t id
   mbptr = &abce->stackbase[addr];
   if (mbptr->typ != ABCE_T_PB)
   {
+    abce->err.code = ABCE_E_EXPECT_PB;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *mb = abce_mb_refup(abce, mbptr);
@@ -344,6 +380,9 @@ static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t i
   mbptr = &abce->stackbase[addr];
   if (mbptr->typ != ABCE_T_S)
   {
+    abce->err.code = ABCE_E_EXPECT_STR;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *mb = abce_mb_refup(abce, mbptr);
@@ -372,6 +411,9 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
   mb = &abce->stackbase[addr];
   if (mb->typ != ABCE_T_D && mb->typ != ABCE_T_B)
   {
+    abce->err.code = ABCE_E_EXPECT_DBL;
+    abce->err.mb = abce_mb_refup(abce, mb);
+    abce->err.val2 = idx;
     return -EINVAL;
   }
   *d = mb->u.d;
@@ -382,6 +424,8 @@ static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb = abce_mb_refup(abce, mb);
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp] = abce_mb_refup(abce, mb);
@@ -393,6 +437,9 @@ static inline int abce_push_boolean(struct abce *abce, int boolean)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_B;
+    abce->err.mb.u.d = boolean;
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp].typ = ABCE_T_D;
@@ -405,6 +452,8 @@ static inline int abce_push_nil(struct abce *abce)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_N;
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp].typ = ABCE_T_N;
@@ -416,6 +465,9 @@ static inline int abce_push_ip(struct abce *abce)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_IP;
+    abce->err.mb.u.d = abce->ip;
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp].typ = ABCE_T_IP;
@@ -427,6 +479,9 @@ static inline int abce_push_bp(struct abce *abce)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_BP;
+    abce->err.mb.u.d = abce->bp;
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp].typ = ABCE_T_BP;
@@ -438,6 +493,9 @@ static inline int abce_push_double(struct abce *abce, double dbl)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = dbl;
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp].typ = ABCE_T_D;
@@ -449,10 +507,16 @@ static inline int abce_push_fun(struct abce *abce, double fun_addr)
 {
   if (abce->sp >= abce->stacklimit)
   {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_F;
+    abce->err.mb.u.d = fun_addr;
     return -EOVERFLOW;
   }
   if ((double)(int64_t)fun_addr != fun_addr)
   {
+    abce->err.code = ABCE_E_FUNADDR_NOT_INT;
+    abce->err.mb.typ = ABCE_T_F;
+    abce->err.mb.u.d = fun_addr;
     return -EINVAL;
   }
   abce->stackbase[abce->sp].typ = ABCE_T_F;
@@ -862,6 +926,8 @@ abce_mb_array_append(struct abce *abce,
   {
     if (abce_mb_array_append_grow(abce, mb) != 0)
     {
+      abce->err.code = ABCE_E_NO_MEM;
+      abce->err.mb = abce_mb_refup(abce, it);
       return -ENOMEM;
     }
   }
@@ -913,6 +979,9 @@ abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz
   if (!((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard)))
   {
+    abce->err.code = ABCE_E_BYTECODE_FAULT;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = abce->ip;
     return -EFAULT;
   }
   if (abce->ip >= 0)
@@ -953,6 +1022,9 @@ abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
   if (!((abce->ip >= 0 && (size_t)abce->ip+8 <= abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip+8 <= -(int64_t)guard)))
   {
+    abce->err.code = ABCE_E_BYTECODE_FAULT;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = abce->ip;
     return -EFAULT;
   }
   if (abce->ip >= 0)
@@ -982,6 +1054,9 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
   else if (unlikely((ophi & 0xC0) == 0x80))
   {
     //printf("EILSEQ 1\n");
+    abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = (1<<16) | ophi;
     return -EILSEQ;
   }
   else if (likely((ophi & 0xE0) == 0xC0))
@@ -993,12 +1068,18 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     if (unlikely((oplo & 0xC0) != 0x80))
     {
       //printf("EILSEQ 2\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (2<<16) | ophi;
       return -EILSEQ;
     }
     *ins = ((ophi&0x1F) << 6) | (oplo & 0x3F);
     if (unlikely(*ins < 128))
     {
       //printf("EILSEQ 3\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (3<<16) | *ins;
       return -EILSEQ;
     }
     return 0;
@@ -1012,6 +1093,9 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     if (unlikely((opmid & 0xC0) != 0x80))
     {
       //printf("EILSEQ 4\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (4<<16) | opmid;
       return -EILSEQ;
     }
     if (abce_fetch_b(&oplo, abce, addcode, addsz) != 0)
@@ -1021,12 +1105,18 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     if (unlikely((oplo & 0xC0) != 0x80))
     {
       //printf("EILSEQ 5\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (5<<16) | opmid;
       return -EILSEQ;
     }
     *ins = ((ophi&0xF) << 12) | ((opmid&0x3F) << 6) | (oplo & 0x3F);
     if (unlikely(*ins <= 0x7FF))
     {
       //printf("EILSEQ 6\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (6<<16) | *ins;
       return -EILSEQ;
     }
     return 0;
@@ -1034,6 +1124,9 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
   else
   {
     //printf("EILSEQ 7\n");
+    abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = (7<<16) | ophi;
     return -EILSEQ;
   }
 }
@@ -1069,6 +1162,21 @@ static inline int abce_mb_pb_resize(struct abce *abce, const struct abce_mb *mbp
     return 0;
   }
   return abce_mb_pb_do_resize(abce, mbpb, newsz);
+}
+
+static inline void abce_err_init(struct abce_err *err)
+{
+  err->code = ABCE_E_NONE;
+  err->opcode = ABCE_OPCODE_NOP;
+  err->mb.typ = ABCE_T_N;
+}
+
+static inline void abce_err_free(struct abce *abce, struct abce_err *err)
+{
+  abce_mb_refdn(abce, &err->mb);
+  err->code = ABCE_E_NONE;
+  err->opcode = ABCE_OPCODE_NOP;
+  err->mb.typ = ABCE_T_N;
 }
 
 #ifdef __cplusplus

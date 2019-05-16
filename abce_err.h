@@ -1,39 +1,11 @@
 #ifndef _ABCE_ERR_H_
 #define _ABCE_ERR_H_
 
-#include "abce.h"
-
-struct abce_err {
-  enum abce_err code;
-  uint16_t opcode;
-  struct memblock mb;
-  struct memblock mb2;
-};
-
-static inline void abce_err_init(struct abce_err *err)
-{
-  e->code = ABCE_E_NONE;
-  e->opcode = ABCE_OPCODE_NOP;
-  e->mb->typ = ABCE_T_N;
-  e->mb2->typ = ABCE_T_N;
-}
-
-
-static inline void abce_err_free(struct abce_err *err)
-{
-  abce_mb_refdn(&e->mb);
-  abce_mb_refdn(&e->mb2);
-  e->code = ABCE_E_NONE;
-  e->opcode = ABCE_OPCODE_NOP;
-  e->mb->typ = ABCE_T_N;
-  e->mb2->typ = ABCE_T_N;
-}
-
-enum abce_err {
+enum abce_errcode {
   ABCE_E_NONE = 0,
   ABCE_E_EXIT = 1, // value: unused
   ABCE_E_NOTSUP_INSTRUCTION = 2, // value: opcode
-  ABCE_E_RUN_INTO_FUNC = 3, // value: ip address
+  ABCE_E_RUN_INTO_FUNC = 3,
   ABCE_E_INDEX_OOB = 4, // value: index, value2: sz
   ABCE_E_INDEX_NOT_INT = 5, // value: index
   ABCE_E_NO_MEM = 6, // value: unused (FIXME or alloc size?)
@@ -46,11 +18,11 @@ enum abce_err {
   ABCE_E_EXPECT_ARRAY_OR_TREE = 13, // FIXME split, value: mb
   ABCE_E_UNKNOWN_INSTRUCTION = 14, // value: opcode
   ABCE_E_ILLEGAL_INSTRUCTION = 15, // value: opcode
-  ABCE_E_BYTECODE_FAULT = 16, // value: ip address
-  ABCE_E_EXPECT_FUN_HEADER = 17, // value: ip address
+  ABCE_E_BYTECODE_FAULT = 16,
+  ABCE_E_EXPECT_FUN_HEADER = 17,
   ABCE_E_INVALID_ARG_CNT = 18, // value: actual, value2: expected
-  ABCE_E_STACK_UNDERFLOW = 19, // value: sp
-  ABCE_E_STACK_OVERFLOW = 20, // value: sp
+  ABCE_E_STACK_UNDERFLOW = 19, // value: unused
+  ABCE_E_STACK_OVERFLOW = 20, // value: mb
   ABCE_E_ARRAY_UNDERFLOW = 21, // value: unused
   ABCE_E_PB_NEW_LEN_NOT_UINT = 22, // value: value
   ABCE_E_PB_VAL_OOB = 23, // value: value
@@ -60,7 +32,7 @@ enum abce_err {
   ABCE_E_PB_SET_OOB = 27, // value: index
   ABCE_E_RET_LOCVARCNT_NOT_UINT = 28, // value: argument
   ABCE_E_STACK_IDX_NOT_UINT = 29, // value: idx
-  ABCE_E_STACK_IDX_OOB = 30, // value: idx, value2: sp
+  ABCE_E_STACK_IDX_OOB = 30, // value: idx
   ABCE_E_RET_ARGCNT_NOT_UINT = 31, // value: argument
   ABCE_E_CACHE_IDX_NOT_INT = 32, // value: value
   ABCE_E_CACHE_IDX_OOB = 33, // value: idx
@@ -81,6 +53,8 @@ enum abce_err {
   ABCE_E_EXPECT_BOOL = 48, // value: mb, value2: idx
   ABCE_E_EXPECT_NIL = 49, // value: mb, value2: idx
   ABCE_E_EXPECT_SCOPE = 50, // value: mb, value2: idx
+  ABCE_E_FUNADDR_NOT_INT = 51, // value: fun addr
+  ABCE_E_REG_NOT_INT = 52, // value: mb, value2: idx
 };
 
 #endif

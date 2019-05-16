@@ -13,6 +13,7 @@
 #include "containerof.h"
 #include "likely.h"
 #include "abceopcodes.h"
+#include "abce_err.h"
 
 #define ABCE_DEFAULT_SCOPE_SIZE 8192
 #define ABCE_DEFAULT_CACHE_SIZE 8192
@@ -98,7 +99,16 @@ struct abce_mb_rb_entry {
   struct abce_mb val;
 };
 
+struct abce_err {
+  enum abce_errcode code;
+  uint16_t opcode;
+  struct abce_mb mb;
+  double val2;
+  //struct memblock mb2;
+};
+
 struct abce {
+  struct abce_err err;
   void *(*alloc)(void *old, size_t newsz, void *alloc_baton);
   int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
   void *alloc_baton;

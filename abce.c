@@ -146,6 +146,9 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
   mba = (struct abce_mb_area*)abce->alloc(NULL, sizeof(*mba) + sz + 1, abce->alloc_baton);
   if (mba == NULL)
   {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = sz;
     mb.typ = ABCE_T_N;
     return mb;
   }
