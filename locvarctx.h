@@ -22,6 +22,7 @@ struct abce_locvarctx {
   struct abce_locvarctx *parent;
   size_t startidx;
   size_t sz;
+  size_t args;
   size_t capacity;
   size_t jmpaddr_break; // NB: remember to push false before jumping!
   size_t jmpaddr_continue;
@@ -33,6 +34,15 @@ static inline size_t abce_locvarctx_sz(struct abce_locvarctx *ctx)
   return ctx->sz;
 }
 
+static inline size_t abce_locvarctx_arg_sz(struct abce_locvarctx *ctx)
+{
+  while (ctx->parent != NULL)
+  {
+    ctx = ctx->parent;
+  }
+  return ctx->args; // argument count
+}
+
 static inline size_t abce_locvarctx_recursive_sz(struct abce_locvarctx *ctx)
 {
   size_t result = ctx->sz + ctx->startidx;
@@ -40,7 +50,8 @@ static inline size_t abce_locvarctx_recursive_sz(struct abce_locvarctx *ctx)
   {
     ctx = ctx->parent;
   }
-  result -= ctx->startidx; // argument and register cunt
+  result -= ctx->startidx; // register count
+  result -= ctx->args; // argument count
   return result;
 }
 
@@ -81,5 +92,7 @@ void abce_locvarctx_free(struct abce_locvarctx *ctx);
 int64_t abce_locvarctx_search_rec(struct abce_locvarctx *ctx, const char *name);
 
 int abce_locvarctx_add(struct abce_locvarctx *ctx, const char *name);
+
+int abce_locvarctx_add_param(struct abce_locvarctx *ctx, const char *name);
 
 #endif

@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include "abce.h"
+#include "locvarctx.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,6 +74,7 @@ struct aplanyyrule {
 struct aplanyy {
   void *baton;
   struct abce abce;
+  struct abce_locvarctx *ctx;
 /*
   uint8_t *bytecode;
   size_t bytecapacity;
@@ -83,6 +85,7 @@ struct aplanyy {
 static inline void aplanyy_init(struct aplanyy *yy)
 {
   abce_init(&yy->abce);
+  yy->ctx = NULL;
 }
 
 static inline size_t symbol_add(struct aplanyy *aplanyy, const char *symbol, size_t symlen)
@@ -106,6 +109,11 @@ static inline void aplanyy_add_byte(struct aplanyy *aplanyy, uint16_t ins)
 static inline void aplanyy_add_double(struct aplanyy *aplanyy, double dbl)
 {
   abce_add_double(&aplanyy->abce, dbl);
+}
+
+static inline void aplanyy_set_double(struct aplanyy *aplanyy, size_t i, double dbl)
+{
+  abce_set_double(&aplanyy->abce, i, dbl);
 }
 
 static inline void aplanyy_free(struct aplanyy *aplanyy)

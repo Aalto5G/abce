@@ -23,6 +23,7 @@ typedef void *yyscan_t;
 #include "aplanyy.tab.h"
 #include "aplanyy.lex.h"
 #include "abceopcodes.h"
+#include "locvarctx.h"
 #include <arpa/inet.h>
 
 void aplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct aplanyy *aplanyy, const char *str)
@@ -47,6 +48,10 @@ int aplanyywrap(yyscan_t scanner)
 
 %union {
   int i;
+  struct {
+    double d1;
+    double d2;
+  } d2;
   double d;
   char *s;
   struct escaped_string str;
@@ -106,9 +111,6 @@ int aplanyywrap(yyscan_t scanner)
 %token DELAYVAR
 %token DELAYEXPR
 %token DELAYLISTEXPAND
-%token SUFFILTER
-%token SUFSUBONE
-%token SUFSUB
 %token PHONYRULE
 %token DISTRULE
 %token PATRULE
@@ -131,10 +133,6 @@ int aplanyywrap(yyscan_t scanner)
 %token APPEND
 %token APPEND_LIST
 %token RETURN
-%token ADD_RULE
-%token RULE_DIST
-%token RULE_PHONY
-%token RULE_ORDINARY
 %token PRINT
 
 
@@ -151,7 +149,10 @@ int aplanyywrap(yyscan_t scanner)
 %token ERROR_TOK
 
 %type<d> value
+%type<d> lvalue
+%type<d> arglist
 %type<d> valuelistentry
+%type<d> maybe_arglist
 %type<d> maybeqmequals
 
 %start st
@@ -163,12 +164,16 @@ st: aplanrules;
 aplanrules:
 | aplanrules NEWLINE
 | aplanrules assignrule
-| aplanrules FUNCTION VARREF_LITERAL OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
+| aplanrules FUNCTION VARREF_LITERAL
+{
+  aplanyy->ctx = abce_locvarctx_alloc(NULL, 2, (size_t)-1, (size_t)-1);
+}
+OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
 {
   size_t funloc = aplanyy->abce.bytecodesz;
   aplanyy_add_fun_sym(aplanyy, $3, 0, funloc);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_FUN_HEADER);
-  aplanyy_add_double(aplanyy, 0);
+  aplanyy_add_double(aplanyy, aplanyy->ctx->args);
 }
   funlines
   ENDFUNCTION NEWLINE
@@ -178,6 +183,8 @@ aplanrules:
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_FUN_TRAILER);
   aplanyy_add_double(aplanyy, symbol_add(aplanyy, $3, strlen($3)));
   free($3);
+  abce_locvarctx_free(aplanyy->ctx);
+  aplanyy->ctx = NULL;
 }
 ;
 
@@ -187,9 +194,15 @@ maybe_parlist:
 
 parlist:
 VARREF_LITERAL
-{ free($1); abort(); /* not supported yet */}
+{
+  abce_locvarctx_add_param(aplanyy->ctx, $1);
+  free($1);
+}
 | parlist COMMA VARREF_LITERAL
-{ free($3); abort(); /* not supported yet */}
+{
+  abce_locvarctx_add_param(aplanyy->ctx, $3);
+  free($3);
+}
 ;
 
 funlines:
@@ -200,6 +213,7 @@ funlines:
 locvarlines:
 | locvarlines LOCVAR VARREF_LITERAL EQUALS expr NEWLINE
 {
+  abce_locvarctx_add(aplanyy->ctx, $3);
   free($3);
 }
 ;
@@ -210,34 +224,98 @@ bodylines:
 
 statement:
   lvalue EQUALS expr NEWLINE
+{
+  aplanyy_add_byte(aplanyy, $1);
+  if ($1 == ABCE_OPCODE_DICTSET_MAINTAIN)
+  {
+    aplanyy_add_byte(aplanyy, ABCE_OPCODE_POP);
+  }
+}
 | RETURN expr NEWLINE
 {
-  aplanyy_add_byte(aplanyy, ABCE_OPCODE_RET);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_byte(aplanyy, abce_locvarctx_arg_sz(aplanyy->ctx)); // arg
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_byte(aplanyy, abce_locvarctx_recursive_sz(aplanyy->ctx)); // loc
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_RETEX2);
 }
 | BREAK NEWLINE
+{
+  abort(); // not supported yet, FIXME!
+}
 | CONTINUE NEWLINE
-| ADD_RULE OPEN_PAREN expr CLOSE_PAREN NEWLINE
+{
+  abort(); // not supported yet, FIXME!
+}
 | expr NEWLINE
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_POP); // called for side effects only
+}
 | IF OPEN_PAREN expr CLOSE_PAREN NEWLINE
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  $<d>$ = aplanyy->abce.bytecodesz;
+  aplanyy_add_double(aplanyy, -50); // to be overwritten
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_IF_NOT_JMP);
+}
   bodylines
   ENDIF NEWLINE
+{
+  aplanyy_set_double(aplanyy, $<d>6, aplanyy->abce.bytecodesz);
+}
 | WHILE OPEN_PAREN expr CLOSE_PAREN NEWLINE
+{
+  $<d>$ = aplanyy->abce.bytecodesz;
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, -50); // to be overwritten
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_IF_NOT_JMP);
+}
   bodylines
   ENDWHILE NEWLINE
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, $<d>6);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_JMP);
+  aplanyy_set_double(aplanyy, $<d>6 + 1, aplanyy->abce.bytecodesz);
+}
 ;
 
 lvalue:
   varref
+{
+  $$ = ABCE_OPCODE_SET_STACK;
+}
 | varref maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_LISTSET;
+}
 | DYN OPEN_BRACKET expr CLOSE_BRACKET
+{
+  abort(); // FIXME not supported yet
+}
 | DYN OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+{
+  abort(); // FIXME not supported yet
+}
 | LEX OPEN_BRACKET expr CLOSE_BRACKET
+{
+  abort(); // FIXME not supported yet
+}
 | LEX OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+{
+  abort(); // FIXME not supported yet
+}
 | OPEN_PAREN expr CLOSE_PAREN maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_LISTSET;
+}
 ;
 
 maybe_bracketexprlist:
 | maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_LISTGET);
+}
 ;
 
 maybeqmequals: EQUALS {$$ = 0;} /* | QMEQUALS {$$ = 1;} */;
@@ -297,7 +375,7 @@ expr NEWLINE
 value:
   STRING_LITERAL
 {
-  size_t symid = symbol_add(aplanyy, $1.str, $1.sz);
+  int64_t symid = abce_cache_add_str(&aplanyy->abce, $1.str, $1.sz);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
   aplanyy_add_double(aplanyy, symid);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -333,31 +411,49 @@ value:
 varref:
   VARREF_LITERAL
 {
+  int64_t locvar;
+  locvar = abce_locvarctx_search_rec(aplanyy->ctx, $1);
+  if (locvar >= 0)
+  {
+    aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+    aplanyy_add_double(aplanyy, locvar);
+  }
+  else
+  {
+    printf("var %s not found\n", $1);
+    abort();
+  }
   free($1);
 }
 | DO VARREF_LITERAL
 {
   free($2);
+  abort();
 }
 | LO VARREF_LITERAL
 {
   free($2);
+  abort();
 }
 | IO VARREF_LITERAL
 {
   free($2);
+  abort();
 }
 | D VARREF_LITERAL
 {
   free($2);
+  abort();
 }
 | L VARREF_LITERAL
 {
   free($2);
+  abort();
 }
 | I VARREF_LITERAL
 {
   free($2);
+  abort();
 }
 ;
 
@@ -366,76 +462,156 @@ expr: expr11;
 expr1:
   expr0
 | LOGICAL_NOT expr1
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_LOGICAL_NOT);
+}
 | BITWISE_NOT expr1
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_BITWISE_NOT);
+}
 | ADD expr1
 | SUB expr1
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_UNARY_MINUS);
+}
 ;
 
 expr2:
   expr1
 | expr2 MUL expr1
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_MUL);
+}
 | expr2 DIV expr1
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_DIV);
+}
 | expr2 MOD expr1
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_MOD);
+}
 ;
 
 expr3:
   expr2
 | expr3 ADD expr2
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_ADD);
+}
 | expr3 SUB expr2
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_SUB);
+}
 ;
 
 expr4:
   expr3
 | expr4 SHL expr3
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_SHL);
+}
 | expr4 SHR expr3
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_SHR);
+}
 ;
 
 expr5:
   expr4
 | expr5 LT expr4
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_LT);
+}
 | expr5 LE expr4
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_LE);
+}
 | expr5 GT expr4
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_GT);
+}
 | expr5 GE expr4
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_GE);
+}
 ;
 
 expr6:
   expr5
 | expr6 EQ expr5
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_EQ);
+}
 | expr6 NE expr5
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_NE);
+}
 ;
 
 expr7:
   expr6
 | expr7 BITWISE_AND expr6
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_BITWISE_AND);
+}
 ;
 
 expr8:
   expr7
 | expr8 BITWISE_XOR expr7
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_BITWISE_XOR);
+}
 ;
 
 expr9:
   expr8
 | expr9 BITWISE_OR expr8
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_BITWISE_OR);
+}
 ;
 
 expr10:
   expr9
 | expr10 LOGICAL_AND expr9
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_LOGICAL_AND);
+}
+;
 
 expr11:
   expr10
 | expr11 LOGICAL_OR expr10
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_LOGICAL_OR);
+}
+;
 
 
 expr0:
   OPEN_PAREN expr CLOSE_PAREN
 | OPEN_PAREN expr CLOSE_PAREN OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
+  // push new_ip, argcnt
+  // FIXME new_ip is before args on stack
+  abort();
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, $5);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_CALL);
+}
 | OPEN_PAREN expr CLOSE_PAREN MAYBE_CALL
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_CALL_IF_FUN);
+}
 | dict maybe_bracketexprlist
 | list maybe_bracketexprlist
 | STRING_LITERAL
 {
+  int64_t idx = abce_cache_add_str(&aplanyy->abce, $1.str, $1.sz);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, idx);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($1.str);
 }
 | NUMBER
@@ -444,49 +620,166 @@ expr0:
   aplanyy_add_double(aplanyy, $1);
 }
 | lvalue
+{
+  switch ((int)$1)
+  {
+    case ABCE_OPCODE_SET_STACK:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_STACK);
+      break;
+    case ABCE_OPCODE_LISTSET:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_LISTGET);
+      break;
+    case ABCE_OPCODE_DICTSET_MAINTAIN:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_DICTGET);
+      break;
+    case ABCE_OPCODE_PBSET:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_PBGET);
+      break;
+    default:
+      abort();
+  }
+}
 | lvalue OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
+  switch ((int)$1)
+  {
+    case ABCE_OPCODE_SET_STACK:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_STACK);
+      break;
+    case ABCE_OPCODE_LISTSET:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_LISTGET);
+      break;
+    case ABCE_OPCODE_DICTSET_MAINTAIN:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_DICTGET);
+      break;
+    case ABCE_OPCODE_PBSET:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_PBGET);
+      break;
+    default:
+      abort();
+  }
+  // push new_ip, argcnt
+  // FIXME new_ip is before args on stack
+  abort();
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, $3);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_CALL);
+}
 | lvalue MAYBE_CALL
+{
+  switch ((int)$1)
+  {
+    case ABCE_OPCODE_SET_STACK:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_STACK);
+      break;
+    case ABCE_OPCODE_LISTSET:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_LISTGET);
+      break;
+    case ABCE_OPCODE_DICTSET_MAINTAIN:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_DICTGET);
+      break;
+    case ABCE_OPCODE_PBSET:
+      aplanyy_add_byte(aplanyy, ABCE_OPCODE_PBGET);
+      break;
+    default:
+      abort();
+  }
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_CALL_IF_FUN);
+}
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
+{
+  abort();
+}
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
+  abort();
+}
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
+{
+  abort();
+}
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
+{
+  abort();
+}
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
+  abort();
+}
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
+{
+  abort();
+}
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
+{
+  abort();
+}
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
+  abort();
+}
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
+{
+  abort();
+}
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
+{
+  abort();
+}
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
+  abort();
+}
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
+{
+  abort();
+}
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist
 {
   free($3.str);
+  abort();
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
   free($3.str);
+  abort();
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
   free($3.str);
+  abort();
 }
-| SUFSUBONE OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
-| SUFSUB OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
-| SUFFILTER OPEN_PAREN expr COMMA expr CLOSE_PAREN
 | APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_APPEND_MAINTAIN);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_POP);
+}
 | APPEND_LIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
-| RULE_DIST
-| RULE_PHONY
-| RULE_ORDINARY
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_POP);
+}
 ;
 
 maybe_arglist:
+{
+  $$ = 0;
+}
 | arglist
+{
+  $$ = $1;
+}
 ;
 
 arglist:
 expr
+{
+  $$ = 1;
+}
 | arglist COMMA expr
+{
+  $$ = $1 + 1;
+}
 ;
 
 list:
@@ -499,7 +792,11 @@ CLOSE_BRACKET
 ;
 
 dict:
-OPEN_BRACE maybe_dictlist CLOSE_BRACE
+OPEN_BRACE
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_NEW_DICT);
+}
+maybe_dictlist CLOSE_BRACE
 ;
 
 maybe_dictlist:
@@ -512,9 +809,17 @@ dictlist:
 ;
 
 dictentry:
-  STRING_LITERAL COLON value
+  STRING_LITERAL
 {
+  int64_t idx = abce_cache_add_str(&aplanyy->abce, $1.str, $1.sz);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, idx);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($1.str);
+}
+COLON value
+{
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_DICTSET_MAINTAIN);
 }
 ;
 

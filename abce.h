@@ -48,6 +48,16 @@ static inline void abce_put_dbl(double dbl, void *dest)
   memcpy(dest, &u64, sizeof(u64));
 }
 
+static inline int abce_set_double(struct abce *abce, size_t idx, double dbl)
+{
+  if (idx + 8 > abce->bytecodesz)
+  {
+    return -EFAULT;
+  }
+  abce_put_dbl(dbl, &abce->bytecode[idx]);
+  return 0;
+}
+
 static inline int abce_add_double(struct abce *abce, double dbl)
 {
   if (abce->bytecodesz + 8 > abce->bytecodecap)

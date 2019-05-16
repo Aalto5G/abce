@@ -48,6 +48,7 @@ struct abce_locvarctx *abce_locvarctx_alloc(struct abce_locvarctx *parent,
   ctx0->jmpaddr_continue = jmpaddr_continue;
   ctx0->parent = parent;
   ctx0->sz = 0;
+  ctx0->args = 0;
   ctx0->capacity = ABCE_DEFAULT_LOCVARCTX_SIZE;
   ctx0->startidx = init_startidx;
   if (parent)
@@ -155,6 +156,39 @@ int64_t abce_locvarctx_search_rec(struct abce_locvarctx *ctx, const char *name)
     return -ENOENT;
   }
   return abce_locvarctx_search_rec(ctx->parent, name);
+}
+
+int abce_locvarctx_add_param(struct abce_locvarctx *ctx, const char *name)
+{
+  int64_t loc;
+  size_t namelen = strlen(name);
+  struct abce_locvar *locvar;
+  uint32_t hashval;
+  size_t hashloc;
+  if (ctx->parent != NULL)
+  {
+    abort();
+  }
+  hashval = abce_str_hash(name);
+  hashloc = hashval & (ctx->capacity - 1);
+  loc = abce_locvarctx_search_rec(ctx, name);
+  if (loc >= 0)
+  {
+    return -EEXIST;
+  }
+  locvar = malloc(sizeof(*locvar) + namelen + 1);
+  if (locvar == NULL)
+  {
+    return -ENOMEM;
+  }
+  locvar->idx = ctx->sz++;
+  ctx->args++;
+  memcpy(locvar->name, name, namelen + 1);
+  if (rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
+  {
+    abort();
+  }
+  return 0;
 }
 
 int abce_locvarctx_add(struct abce_locvarctx *ctx, const char *name)
