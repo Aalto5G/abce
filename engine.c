@@ -2631,8 +2631,10 @@ outpbset:
     }
     else if (likely(ins < 0x8000))
     {
-      printf("long\n");
-      abort();
+      abce->err.code = ABCE_E_UNKNOWN_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = ins;
+      ret = -EILSEQ;
     }
     else
     {
