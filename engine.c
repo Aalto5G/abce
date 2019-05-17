@@ -1156,7 +1156,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
   return ret;
 }
 
-int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
+int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz,
+                uint64_t ins_budget)
 {
   // code:
   const size_t guard = 100;
@@ -1180,6 +1181,15 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
     {
       ret = -EFAULT;
       break;
+    }
+    if (ins_budget == 0)
+    {
+      abce->err.code = ABCE_E_TIME_BUDGET_EXCEEDED;
+      ret = -EDQUOT;
+    }
+    else if (ins_budget != UINT64_MAX)
+    {
+      ins_budget--;
     }
     //printf("fetched ins %d\n", (int)ins); 
     if (likely(ins < 64))

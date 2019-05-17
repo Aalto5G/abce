@@ -58,6 +58,7 @@ enum abce_errcode {
   ABCE_E_CALL_ARGCNT_NOT_UINT = 53, // value: argument
   ABCE_E_INTCONVERT_SZ_NOT_UINT = 54, // value: sz
   ABCE_E_INTCONVERT_SZ_NOTSUP = 55, // value: sz
+  ABCE_E_TIME_BUDGET_EXCEEDED = 56,
 };
 
 #endif

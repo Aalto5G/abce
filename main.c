@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
   abce_add_ins(&abce, ABCE_OPCODE_RET);
 
-  printf("%d\n", abce_engine(&abce, NULL, 0));
+  printf("%d\n", abce_engine(&abce, NULL, 0, UINT64_MAX));
 
   abce_free(&abce);
 /*
