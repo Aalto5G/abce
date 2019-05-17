@@ -55,6 +55,7 @@ enum abce_errcode {
   ABCE_E_EXPECT_SCOPE = 50, // value: mb, value2: idx
   ABCE_E_FUNADDR_NOT_INT = 51, // value: fun addr
   ABCE_E_REG_NOT_INT = 52, // value: mb, value2: idx
+  ABCE_E_CALL_ARGCNT_NOT_UINT = 53, // value: argument
 };
 
 #endif
