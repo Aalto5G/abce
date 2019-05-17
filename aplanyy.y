@@ -173,8 +173,12 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   funlines
   ENDFUNCTION NEWLINE
 {
-  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_NIL);
-  aplanyy_add_byte(aplanyy, ABCE_OPCODE_RET);
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_NIL); // retval
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, aplanyy->ctx->args); // argcnt
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
+  aplanyy_add_double(aplanyy, aplanyy->ctx->sz - aplanyy->ctx->args); // locvarcnt
+  aplanyy_add_byte(aplanyy, ABCE_OPCODE_RETEX2);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_FUN_TRAILER);
   aplanyy_add_double(aplanyy, symbol_add(aplanyy, $3, strlen($3)));
   free($3);
@@ -589,9 +593,6 @@ expr0:
   OPEN_PAREN expr CLOSE_PAREN
 | OPEN_PAREN expr CLOSE_PAREN OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  // push new_ip, argcnt
-  // FIXME new_ip is before args on stack
-  abort();
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_PUSH_DBL);
   aplanyy_add_double(aplanyy, $5);
   aplanyy_add_byte(aplanyy, ABCE_OPCODE_CALL);
