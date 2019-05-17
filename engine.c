@@ -18,7 +18,7 @@
 
 #define POPABORTS 1
 
-static inline void maybeabort()
+static inline void abce_maybeabort()
 {
   abort();
 }
@@ -167,7 +167,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, fabs(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -178,7 +178,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, sqrt(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -189,7 +189,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, log(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -200,7 +200,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, exp(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -211,7 +211,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, floor(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -222,7 +222,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, ceil(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -233,7 +233,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, cos(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -244,7 +244,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, sin(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -255,7 +255,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, tan(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -266,7 +266,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, acos(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -277,7 +277,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, asin(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -288,7 +288,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       if (abce_push_double(abce, atan(dbl)) != 0)
       {
-        maybeabort();
+        abce_maybeabort();
       }
       return 0;
     }
@@ -1181,7 +1181,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       ret = -EFAULT;
       break;
     }
-    printf("fetched ins %d\n", (int)ins); 
+    //printf("fetched ins %d\n", (int)ins); 
     if (likely(ins < 64))
     {
       switch (ins)
@@ -1404,7 +1404,7 @@ calltrailer:
           POP();
           if (abce_push_double(abce, mbar.u.area->u.ar.size) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
@@ -1600,7 +1600,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, val) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbpb, ABCE_T_PB);
           break;
@@ -1612,7 +1612,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, mbpb.u.area->u.pb.size) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbpb, ABCE_T_PB);
           break;
@@ -1624,7 +1624,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, mbstr.u.area->u.str.size) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
@@ -1696,7 +1696,7 @@ outpbset:
           }
           if (abce_push_double(abce, (unsigned char)mbstr.u.area->u.str.buf[locint]) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
@@ -1729,7 +1729,7 @@ outpbset:
           }
           if (abce_push_mb(abce, &mbar.u.area->u.ar.mbs[locint]) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
           break;
@@ -1751,7 +1751,7 @@ outpbset:
           GETMB(&mb, loc);
           if (abce_push_mb(abce, &mb) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -1786,20 +1786,20 @@ outpbset:
         case ABCE_OPCODE_RET:
         {
           struct abce_mb mb;
-          printf("ret, stack size %d\n", (int)abce->sp);
+          //printf("ret, stack size %d\n", (int)abce->sp);
           GETIP(-2);
-          printf("gotten ip\n");
+          //printf("gotten ip\n");
           GETBP(-3);
-          printf("gotten bp\n");
+          //printf("gotten bp\n");
           GETMB(&mb, -1);
-          printf("gotten mb\n");
+          //printf("gotten mb\n");
           POP(); // retval
           POP(); // ip
           POP(); // bp
           POP(); // funcall address
           if (abce_push_mb(abce, &mb) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -1848,7 +1848,7 @@ outpbset:
           POP(); // funcall address
           if (abce_push_mb(abce, &mb) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -1910,7 +1910,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, b) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -1923,7 +1923,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(d1 == d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -1936,7 +1936,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(d1 != d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -1949,7 +1949,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(b1 && b2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -1962,7 +1962,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) & ((int64_t)d2))) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -1975,7 +1975,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(b1 || b2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -1988,7 +1988,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) | ((int64_t)d2))) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2001,7 +2001,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) ^ ((int64_t)d2))) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2012,7 +2012,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !b) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2023,7 +2023,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, ~(int64_t)d) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2036,7 +2036,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(d1 < d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2049,7 +2049,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(d1 > d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2062,7 +2062,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(d1 <= d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2075,7 +2075,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, !!(d1 >= d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2088,7 +2088,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) >> ((int64_t)d2))) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2101,7 +2101,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) << ((int64_t)d2))) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2114,7 +2114,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (d1 + d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2127,7 +2127,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (d1 - d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2140,7 +2140,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (d1 * d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2153,7 +2153,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (d1 / d2)) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2166,7 +2166,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, (((int64_t)d1) % ((int64_t)d2))) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2177,7 +2177,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, -d) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2211,23 +2211,23 @@ outpbset:
             case 1:
               if (abce_push_double(abce, (uint8_t)(int8_t)d) != 0)
               {
-                maybeabort();
+                abce_maybeabort();
               }
               break;
             case 2:
               if (abce_push_double(abce, (uint16_t)(int16_t)d) != 0)
               {
-                maybeabort();
+                abce_maybeabort();
               }
               break;
             case 4:
               if (abce_push_double(abce, (uint32_t)(int32_t)d) != 0)
               {
-                maybeabort();
+                abce_maybeabort();
               }
               break;
             default:
-              maybeabort();
+              abce_maybeabort();
           }
           break;
         }
@@ -2261,23 +2261,23 @@ outpbset:
             case 1:
               if (abce_push_double(abce, (int8_t)(uint8_t)d) != 0)
               {
-                maybeabort();
+                abce_maybeabort();
               }
               break;
             case 2:
               if (abce_push_double(abce, (int16_t)(uint16_t)d) != 0)
               {
-                maybeabort();
+                abce_maybeabort();
               }
               break;
             case 4:
               if (abce_push_double(abce, (int32_t)(uint32_t)d) != 0)
               {
-                maybeabort();
+                abce_maybeabort();
               }
               break;
             default:
-              maybeabort();
+              abce_maybeabort();
           }
           break;
         }
@@ -2321,7 +2321,7 @@ outpbset:
           }
           if (abce_push_mb(abce, &abce->cachebase[i64]) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           break;
         }
@@ -2355,7 +2355,7 @@ outpbset:
           }
           if (abce_push_mb(abce, ptr) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
           abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -2382,7 +2382,7 @@ outpbset:
           ptr = abce_sc_get_rec_mb(&mbsc, &mbit);
           if (abce_push_boolean(abce, ptr != NULL) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
           abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -2406,7 +2406,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, mb.typ) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn(abce, &mb);
           break;
@@ -2446,14 +2446,14 @@ outpbset:
           {
             if (abce_push_mb(abce, (const struct abce_mb*)mbval) != 0)
             {
-              maybeabort();
+              abce_maybeabort();
             }
           }
           else
           {
             if (abce_push_nil(abce) != 0)
             {
-              maybeabort();
+              abce_maybeabort();
             }
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
@@ -2472,7 +2472,7 @@ outpbset:
           POP();
           if (abce_push_boolean(abce, abce_tree_get_str(abce, &mbval, &mbt, &mbstr) == 0) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
@@ -2556,7 +2556,7 @@ outpbset:
           POP();
           if (abce_push_double(abce, mbt.u.area->u.tree.sz) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           break;
@@ -2687,17 +2687,17 @@ outpbset:
           }
           if (abce_getmb(&mbt, abce, (int64_t)dictidx) != 0)
           {
-            maybeabort();
+            abce_maybeabort();
           }
           if (abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey) != 0)
           {
             if (abce_push_nil(abce) != 0)
             {
-              maybeabort();
+              abce_maybeabort();
             }
             if (abce_push_nil(abce) != 0)
             {
-              maybeabort();
+              abce_maybeabort();
             }
             abce_mb_refdn(abce, &mboldkey);
             abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
@@ -2711,7 +2711,7 @@ outpbset:
         }
         default:
         {
-          printf("Invalid instruction %d\n", (int)ins);
+          //printf("Invalid instruction %d\n", (int)ins);
           abce->err.code = ABCE_E_UNKNOWN_INSTRUCTION;
           abce->err.mb.typ = ABCE_T_D;
           abce->err.mb.u.d = ins;
