@@ -62,7 +62,7 @@ struct dep {
   int rec;
 };
 
-struct aplanyyrule {
+struct amyplanyyrule {
   struct dep *deps;
   size_t depsz;
   size_t depcapacity;
@@ -71,7 +71,7 @@ struct aplanyyrule {
   size_t targetcapacity;
 };
 
-struct aplanyy {
+struct amyplanyy {
   void *baton;
   struct abce abce;
   struct abce_locvarctx *ctx;
@@ -82,45 +82,45 @@ struct aplanyy {
 */
 };
 
-static inline void aplanyy_init(struct aplanyy *yy)
+static inline void amyplanyy_init(struct amyplanyy *yy)
 {
   abce_init(&yy->abce);
   yy->ctx = NULL;
 }
 
-static inline size_t symbol_add(struct aplanyy *aplanyy, const char *symbol, size_t symlen)
+static inline size_t symbol_add(struct amyplanyy *amyplanyy, const char *symbol, size_t symlen)
 {
-  return abce_cache_add_str(&aplanyy->abce, symbol, symlen);
+  return abce_cache_add_str(&amyplanyy->abce, symbol, symlen);
 }
-static inline size_t aplanyy_add_fun_sym(struct aplanyy *aplanyy, const char *symbol, int maybe, size_t loc)
+static inline size_t amyplanyy_add_fun_sym(struct amyplanyy *amyplanyy, const char *symbol, int maybe, size_t loc)
 {
   struct abce_mb mb;
   mb.typ = ABCE_T_F;
   mb.u.d = loc;
-  abce_sc_put_val_str(&aplanyy->abce, &aplanyy->abce.dynscope, symbol, &mb);
+  abce_sc_put_val_str(&amyplanyy->abce, &amyplanyy->abce.dynscope, symbol, &mb);
   return (size_t)-1;
 }
 
-static inline void aplanyy_add_byte(struct aplanyy *aplanyy, uint16_t ins)
+static inline void amyplanyy_add_byte(struct amyplanyy *amyplanyy, uint16_t ins)
 {
-  abce_add_ins(&aplanyy->abce, ins);
+  abce_add_ins(&amyplanyy->abce, ins);
 }
 
-static inline void aplanyy_add_double(struct aplanyy *aplanyy, double dbl)
+static inline void amyplanyy_add_double(struct amyplanyy *amyplanyy, double dbl)
 {
-  abce_add_double(&aplanyy->abce, dbl);
+  abce_add_double(&amyplanyy->abce, dbl);
 }
 
-static inline void aplanyy_set_double(struct aplanyy *aplanyy, size_t i, double dbl)
+static inline void amyplanyy_set_double(struct amyplanyy *amyplanyy, size_t i, double dbl)
 {
-  abce_set_double(&aplanyy->abce, i, dbl);
+  abce_set_double(&amyplanyy->abce, i, dbl);
 }
 
-static inline void aplanyy_free(struct aplanyy *aplanyy)
+static inline void amyplanyy_free(struct amyplanyy *amyplanyy)
 {
-  abce_free(&aplanyy->abce);
-  //free(aplanyy->bytecode);
-  memset(aplanyy, 0, sizeof(*aplanyy));
+  abce_free(&amyplanyy->abce);
+  //free(amyplanyy->bytecode);
+  memset(amyplanyy, 0, sizeof(*amyplanyy));
 }
 
 #ifdef __cplusplus

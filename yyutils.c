@@ -4,34 +4,34 @@
 #include <limits.h>
 #include <libgen.h>
 #include <arpa/inet.h>
-#include "aplanyy.h"
+#include "amyplanyy.h"
 #include "yyutils.h"
 
 typedef void *yyscan_t;
-extern int aplanyyparse(yyscan_t scanner, struct aplanyy *aplanyy);
-extern int aplanyylex_init(yyscan_t *scanner);
-extern void aplanyyset_in(FILE *in_str, yyscan_t yyscanner);
-extern int aplanyylex_destroy(yyscan_t yyscanner);
+extern int amyplanyyparse(yyscan_t scanner, struct amyplanyy *amyplanyy);
+extern int amyplanyylex_init(yyscan_t *scanner);
+extern void amyplanyyset_in(FILE *in_str, yyscan_t yyscanner);
+extern int amyplanyylex_destroy(yyscan_t yyscanner);
 
-void aplanyydoparse(FILE *filein, struct aplanyy *aplanyy)
+void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy)
 {
   yyscan_t scanner;
-  aplanyylex_init(&scanner);
-  aplanyyset_in(filein, scanner);
-  if (aplanyyparse(scanner, aplanyy) != 0)
+  amyplanyylex_init(&scanner);
+  amyplanyyset_in(filein, scanner);
+  if (amyplanyyparse(scanner, amyplanyy) != 0)
   {
     fprintf(stderr, "parsing failed\n");
     exit(1);
   }
-  aplanyylex_destroy(scanner);
+  amyplanyylex_destroy(scanner);
   if (!feof(filein))
   {
-    fprintf(stderr, "error: additional data at end of aplanyy data\n");
+    fprintf(stderr, "error: additional data at end of amyplanyy data\n");
     exit(1);
   }
 }
 
-void aplanyydomemparse(char *filedata, size_t filesize, struct aplanyy *aplanyy)
+void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyplanyy)
 {
   FILE *myfile;
   myfile = fmemopen(filedata, filesize, "r");
@@ -40,7 +40,7 @@ void aplanyydomemparse(char *filedata, size_t filesize, struct aplanyy *aplanyy)
     fprintf(stderr, "can't open memory file\n");
     exit(1);
   }
-  aplanyydoparse(myfile, aplanyy);
+  amyplanyydoparse(myfile, amyplanyy);
   if (fclose(myfile) != 0)
   {
     fprintf(stderr, "can't close memory file\n");
@@ -224,11 +224,11 @@ uint32_t yy_get_ip(char *orig)
   return ntohl(addr.s_addr);
 }
 
-void aplanyynameparse(const char *fname, struct aplanyy *aplanyy, int require)
+void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int require)
 {
-  FILE *aplanyyfile;
-  aplanyyfile = fopen(fname, "r");
-  if (aplanyyfile == NULL)
+  FILE *amyplanyyfile;
+  amyplanyyfile = fopen(fname, "r");
+  if (amyplanyyfile == NULL)
   {
     if (require)
     {
@@ -236,25 +236,25 @@ void aplanyynameparse(const char *fname, struct aplanyy *aplanyy, int require)
       exit(1);
     }
 #if 0
-    if (aplanyy_postprocess(aplanyy) != 0)
+    if (amyplanyy_postprocess(amyplanyy) != 0)
     {
       exit(1);
     }
 #endif
     return;
   }
-  aplanyydoparse(aplanyyfile, aplanyy);
+  amyplanyydoparse(amyplanyyfile, amyplanyy);
 #if 0
-  if (aplanyy_postprocess(aplanyy) != 0)
+  if (amyplanyy_postprocess(amyplanyy) != 0)
   {
     exit(1);
   }
 #endif
-  fclose(aplanyyfile);
+  fclose(amyplanyyfile);
 }
 
-void aplanyydirparse(
-  const char *argv0, const char *fname, struct aplanyy *aplanyy, int require)
+void amyplanyydirparse(
+  const char *argv0, const char *fname, struct amyplanyy *amyplanyy, int require)
 {
   const char *dir;
   char *copy = strdup(argv0);
@@ -262,5 +262,5 @@ void aplanyydirparse(
   dir = dirname(copy); // NB: not for multi-threaded operation!
   snprintf(pathbuf, sizeof(pathbuf), "%s/%s", dir, fname);
   free(copy);
-  aplanyynameparse(pathbuf, aplanyy, require);
+  amyplanyynameparse(pathbuf, amyplanyy, require);
 }

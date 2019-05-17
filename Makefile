@@ -1,15 +1,15 @@
 .SUFFIXES:
 
 SRC_LIB := yyutils.c memblock.c rbtree.c locvarctx.c engine.c string.c trees.c scopes.c abce.c
-SRC := $(SRC_LIB) aplantest.c main.c locvartest.c treetest.c
+SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c
 
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
 
-LEX_LIB := aplanyy.l
+LEX_LIB := amyplanyy.l
 LEX := $(LEX_LIB)
 
-YACC_LIB := aplanyy.y
+YACC_LIB := amyplanyy.y
 YACC := $(YACC_LIB)
 
 LEXGEN_LIB := $(patsubst %.l,%.lex.c,$(LEX_LIB))
@@ -47,7 +47,7 @@ DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
 .PHONY: all wc
 
-all: aplantest main locvartest treetest
+all: amyplantest main locvartest treetest
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
@@ -71,7 +71,7 @@ locvartest: locvartest.o libabce.a Makefile $(LUALIB)
 treetest: treetest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
-aplantest: aplantest.o libabce.a Makefile $(LUALIB)
+amyplantest: amyplantest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 libabce.a: $(OBJ_LIB) $(OBJGEN_LIB) $(OBJ_CPP_LIB) Makefile
@@ -95,29 +95,29 @@ $(DEP_CPP): %.d: %.cc Makefile
 $(DEPGEN): %.d: %.c %.h Makefile
 	$(CC) $(CFLAGS) -MM -MP -MT "$*.d $*.o" -o $*.d $*.c
 
-aplanyy.lex.d: aplanyy.tab.h aplanyy.lex.h
-aplanyy.lex.o: aplanyy.tab.h aplanyy.lex.h
-aplanyy.tab.d: aplanyy.tab.h aplanyy.lex.h
-aplanyy.tab.o: aplanyy.tab.h aplanyy.lex.h
+amyplanyy.lex.d: amyplanyy.tab.h amyplanyy.lex.h
+amyplanyy.lex.o: amyplanyy.tab.h amyplanyy.lex.h
+amyplanyy.tab.d: amyplanyy.tab.h amyplanyy.lex.h
+amyplanyy.tab.o: amyplanyy.tab.h amyplanyy.lex.h
 
-aplanyy.lex.c: aplanyy.l Makefile
-	flex --outfile=aplanyy.lex.c --header-file=/dev/null aplanyy.l
-aplanyy.lex.h: aplanyy.l Makefile
-	flex --outfile=/dev/null --header-file=aplanyy.lex.h aplanyy.l
-aplanyy.tab.c: aplanyy.y Makefile
-	byacc -d -p aplanyy -o .tmpc.aplanyy.tab.c aplanyy.y
-	rm .tmpc.aplanyy.tab.h
-	mv .tmpc.aplanyy.tab.c aplanyy.tab.c
-aplanyy.tab.h: aplanyy.y Makefile
-	byacc -d -p aplanyy -o .tmph.aplanyy.tab.c aplanyy.y
-	rm .tmph.aplanyy.tab.c
-	mv .tmph.aplanyy.tab.h aplanyy.tab.h
+amyplanyy.lex.c: amyplanyy.l Makefile
+	flex --outfile=amyplanyy.lex.c --header-file=/dev/null amyplanyy.l
+amyplanyy.lex.h: amyplanyy.l Makefile
+	flex --outfile=/dev/null --header-file=amyplanyy.lex.h amyplanyy.l
+amyplanyy.tab.c: amyplanyy.y Makefile
+	byacc -d -p amyplanyy -o .tmpc.amyplanyy.tab.c amyplanyy.y
+	rm .tmpc.amyplanyy.tab.h
+	mv .tmpc.amyplanyy.tab.c amyplanyy.tab.c
+amyplanyy.tab.h: amyplanyy.y Makefile
+	byacc -d -p amyplanyy -o .tmph.amyplanyy.tab.c amyplanyy.y
+	rm .tmph.amyplanyy.tab.c
+	mv .tmph.amyplanyy.tab.h amyplanyy.tab.h
 
 .PHONY: clean distclean
 
 clean:
 	rm -f $(OBJ) $(DEP) $(ASM) $(ASMGEN) $(DEPGEN) $(OBJGEN)
 distclean: clean
-	rm -f aplantest main locvartest treetest
+	rm -f amyplantest main locvartest treetest
 
 -include *.d

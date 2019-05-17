@@ -3,21 +3,21 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "aplanyy.h"
+#include "amyplanyy.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-void aplanyydoparse(FILE *filein, struct aplanyy *aplanyy);
+void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy);
 
-void aplanyydomemparse(char *filedata, size_t filesize, struct aplanyy *aplanyy);
+void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyplanyy);
 
-void aplanyynameparse(const char *fname, struct aplanyy *aplanyy, int require);
+void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int require);
 
-void aplanyydirparse(
-  const char *argv0, const char *fname, struct aplanyy *aplanyy, int require);
+void amyplanyydirparse(
+  const char *argv0, const char *fname, struct amyplanyy *amyplanyy, int require);
 
 struct escaped_string yy_escape_string(char *orig);
 

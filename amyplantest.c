@@ -4,18 +4,18 @@
 int main(int argc, char **argv)
 {
   FILE *f = fopen("perf/test.amy", "r");
-  struct aplanyy aplanyy = {};
+  struct amyplanyy amyplanyy = {};
 
-  aplanyy_init(&aplanyy);
+  amyplanyy_init(&amyplanyy);
 
   if (!f)
   {
     abort();
   }
-  aplanyydoparse(f, &aplanyy);
+  amyplanyydoparse(f, &amyplanyy);
   fclose(f);
 
-  aplanyy_free(&aplanyy);
+  amyplanyy_free(&amyplanyy);
 
   return 0;
 }

@@ -1,5 +1,5 @@
 %option nounput noinput
-%option prefix="aplanyy"
+%option prefix="amyplanyy"
 
 %{
 #define _GNU_SOURCE
@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include "yyutils.h"
-#include "aplanyy.tab.h"
+#include "amyplanyy.tab.h"
 
 /*
 #define YYSTYPE APLANYYSTYPE
