@@ -2181,6 +2181,106 @@ outpbset:
           }
           break;
         }
+        case ABCE_OPCODE_INT_TO_UINT:
+        {
+          double d, sz;
+          uint8_t i;
+          GETDBL(&d, -1);
+          GETDBL(&sz, -2);
+          i = sz;
+          if (i != sz)
+          {
+            abce->err.code = ABCE_E_INTCONVERT_SZ_NOT_UINT;
+            abce->err.mb.typ = ABCE_T_D;
+            abce->err.mb.u.d = sz;
+            ret = -EINVAL;
+            break;
+          }
+          if (i != 1 && i != 2 && i != 4)
+          {
+            abce->err.code = ABCE_E_INTCONVERT_SZ_NOTSUP;
+            abce->err.mb.typ = ABCE_T_D;
+            abce->err.mb.u.d = i;
+            ret = -EINVAL;
+            break;
+          }
+          POP();
+          POP();
+          switch (i)
+          {
+            case 1:
+              if (abce_push_double(abce, (uint8_t)(int8_t)d) != 0)
+              {
+                maybeabort();
+              }
+              break;
+            case 2:
+              if (abce_push_double(abce, (uint16_t)(int16_t)d) != 0)
+              {
+                maybeabort();
+              }
+              break;
+            case 4:
+              if (abce_push_double(abce, (uint32_t)(int32_t)d) != 0)
+              {
+                maybeabort();
+              }
+              break;
+            default:
+              maybeabort();
+          }
+          break;
+        }
+        case ABCE_OPCODE_UINT_TO_INT:
+        {
+          double d, sz;
+          uint8_t i;
+          GETDBL(&d, -1);
+          GETDBL(&sz, -2);
+          i = sz;
+          if (i != sz)
+          {
+            abce->err.code = ABCE_E_INTCONVERT_SZ_NOT_UINT;
+            abce->err.mb.typ = ABCE_T_D;
+            abce->err.mb.u.d = sz;
+            ret = -EINVAL;
+            break;
+          }
+          if (i != 1 && i != 2 && i != 4)
+          {
+            abce->err.code = ABCE_E_INTCONVERT_SZ_NOTSUP;
+            abce->err.mb.typ = ABCE_T_D;
+            abce->err.mb.u.d = i;
+            ret = -EINVAL;
+            break;
+          }
+          POP();
+          POP();
+          switch (i)
+          {
+            case 1:
+              if (abce_push_double(abce, (int8_t)(uint8_t)d) != 0)
+              {
+                maybeabort();
+              }
+              break;
+            case 2:
+              if (abce_push_double(abce, (int16_t)(uint16_t)d) != 0)
+              {
+                maybeabort();
+              }
+              break;
+            case 4:
+              if (abce_push_double(abce, (int32_t)(uint32_t)d) != 0)
+              {
+                maybeabort();
+              }
+              break;
+            default:
+              maybeabort();
+          }
+          break;
+        }
         case ABCE_OPCODE_APPEND_MAINTAIN:
         {
           struct abce_mb mb;
