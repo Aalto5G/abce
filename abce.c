@@ -29,6 +29,7 @@ void abce_free_bcode(unsigned char *bcodebase, size_t limit)
 void abce_init(struct abce *abce)
 {
   memset(abce, 0, sizeof(*abce));
+  abce->trusted = 1;
   abce->alloc = abce_std_alloc;
   abce->trap = NULL;
   abce->alloc_baton = NULL;

@@ -114,6 +114,7 @@ struct abce {
   int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
   void *alloc_baton;
   void *userdata;
+  int trusted;
   // Stack and registers
   struct abce_mb *stackbase;
   size_t stacklimit;
