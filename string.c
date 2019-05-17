@@ -32,7 +32,7 @@ static void abce_strbuf_bump(struct abce *abce, struct abce_strbuf *buf, size_t 
   {
     newcap = buf->sz + bump;
   }
-  newbuf = abce->alloc(buf->str, newcap, abce->alloc_baton);
+  newbuf = abce->alloc(buf->str, buf->cap, newcap, abce);
   if (newbuf == NULL)
   {
     buf->taint = 1;
@@ -86,7 +86,7 @@ static inline int abce_strbuf_add_many(struct abce *abce, struct abce_strbuf *bu
 }
 
 int abce_strgsub(struct abce *abce,
-                 char **res, size_t *ressz,
+                 char **res, size_t *ressz, size_t *rescap,
                  const char *haystack, size_t haystacksz,
                  const char *needle, size_t needlesz,
                  const char *sub, size_t subsz)
@@ -113,12 +113,14 @@ int abce_strgsub(struct abce *abce,
   abce_strbuf_add_nul(abce, &buf);
   if (buf.taint)
   {
-    abce->alloc(buf.str, 0, abce->alloc_baton);
+    abce->alloc(buf.str, buf.cap, 0, abce);
     *res = NULL;
     *ressz = 0;
+    *rescap = 0;
     return -ENOMEM;
   }
   *res = buf.str;
   *ressz = buf.sz;
+  *rescap = buf.cap;
   return 0;
 }

@@ -4,7 +4,7 @@
 #include "abce.h"
 
 int abce_strgsub(struct abce *abce,
-                 char **res, size_t *ressz,
+                 char **res, size_t *ressz, size_t *rescap,
                  const char *haystack, size_t haystacksz,
                  const char *needle, size_t needlesz,
                  const char *sub, size_t subsz);
@@ -18,12 +18,13 @@ int abce_strgsub_mb(struct abce *abce,
 {
   char *resstr;
   size_t ressz;
+  size_t rescap;
   int retval;
   if (haystack->typ != ABCE_T_S || needle->typ != ABCE_T_S || sub->typ != ABCE_T_S)
   {
     return -EINVAL;
   }
-  retval = abce_strgsub(abce, &resstr, &ressz,
+  retval = abce_strgsub(abce, &resstr, &ressz, &rescap,
                         haystack->u.area->u.str.buf, haystack->u.area->u.str.size,
                         needle->u.area->u.str.buf, needle->u.area->u.str.size,
                         sub->u.area->u.str.buf, sub->u.area->u.str.size);
@@ -36,7 +37,7 @@ int abce_strgsub_mb(struct abce *abce,
   {
     return -ENOMEM;
   }
-  abce->alloc(resstr, 0, abce->alloc_baton);
+  abce->alloc(resstr, rescap, 0, abce);
   return 0;
 }
 

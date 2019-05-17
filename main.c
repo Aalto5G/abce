@@ -54,6 +54,8 @@ int main(int argc, char **argv)
   printf("%d\n", abce_engine(&abce, NULL, 0, UINT64_MAX));
 
   abce_free(&abce);
+
+  printf("alloced after free %zu\n", abce.bytes_alloced);
 /*
   struct abce real_abce = {.alloc = std_alloc};
   struct abce *abce = &real_abce;

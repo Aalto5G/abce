@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void *abce_std_alloc(void *old, size_t newsz, void *alloc_baton);
+void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, struct abce *abce);
 
 static inline uint16_t abce_bswap16(uint16_t u16)
 {
