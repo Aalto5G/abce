@@ -261,3 +261,9 @@ int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t n
   mbpb->u.area->u.pb.size = newsz;
   return 0;
 }
+
+struct abce_mb
+abce_mb_refup_noinline(struct abce *abce, const struct abce_mb *mb)
+{
+  return abce_mb_refup(abce, mb);
+}
