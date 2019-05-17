@@ -1252,9 +1252,16 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           //uint8_t inslo;
           int rettmp;
           GETDBL(&argcnt, -1);
-          GETFUNADDR(&new_ip, -2);
-          POP();
-          POP();
+          if ((double)(size_t)argcnt != argcnt)
+          {
+            abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
+            abce->err.mb.typ = ABCE_T_D;
+            abce->err.mb.u.d = argcnt;
+            ret = -EINVAL;
+            break;
+          }
+          GETFUNADDR(&new_ip, -2-(size_t)argcnt);
+          POP(); // argcnt
 calltrailer:
           // FIXME off by one?
           if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
@@ -1266,8 +1273,15 @@ calltrailer:
             ret = -EFAULT;
             break;
           }
-          abce_push_bp(abce);
-          abce_push_ip(abce);
+          if (abce_push_bp(abce) != 0)
+          {
+            abort(); // Can't fail, we just popped one value
+          }
+          if (abce_push_ip(abce) != 0)
+          {
+            ret = -EOVERFLOW;
+            break;
+          }
           abce->ip = new_ip;
           abce->bp = abce->sp - 2 - (uint64_t)argcnt;
 #if 1
@@ -1779,9 +1793,10 @@ outpbset:
           printf("gotten bp\n");
           GETMB(&mb, -1);
           printf("gotten mb\n");
-          POP();
-          POP();
-          POP();
+          POP(); // retval
+          POP(); // ip
+          POP(); // bp
+          POP(); // funcall address
           if (abce_push_mb(abce, &mb) != 0)
           {
             maybeabort();
@@ -1822,13 +1837,15 @@ outpbset:
           {
             POP();
           }
-          // FIXME get ip and bp
+          GETIP(-1);
+          GETBP(-2);
           POP(); // ip
           POP(); // bp
           for (i = 0; i < cntargs; i++)
           {
             POP();
           }
+          POP(); // funcall address
           if (abce_push_mb(abce, &mb) != 0)
           {
             maybeabort();
