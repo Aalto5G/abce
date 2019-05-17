@@ -72,19 +72,20 @@ struct abce_mb_area {
 };
 // These must match error codes ABCE_E_EXPECT_*
 enum abce_type {
-  ABCE_T_T = 46,
-  ABCE_T_D = 39,
-  ABCE_T_B = 48,
-  ABCE_T_F = 40,
-  ABCE_T_S = 47,
-  ABCE_T_PB = 41, // packet buffer
-  ABCE_T_IOS = 42,
-  ABCE_T_BP = 43,
-  ABCE_T_IP = 44,
-  //ABCE_T_LP,
-  ABCE_T_A = 45,
+  ABCE_T_T = 45,
+  ABCE_T_IOS = 46,
+  ABCE_T_A = 47,
+  ABCE_T_S = 48,
+  ABCE_T_PB = 49, // packet buffer
   ABCE_T_SC = 50,
-  ABCE_T_N = 49,
+
+  ABCE_T_D = 39,
+  ABCE_T_B = 40,
+  ABCE_T_F = 41,
+  ABCE_T_BP = 42,
+  ABCE_T_IP = 43,
+  //ABCE_T_LP,
+  ABCE_T_N = 44,
 };
 struct abce_mb {
   enum abce_type typ;
