@@ -149,6 +149,7 @@ int amyplanyywrap(yyscan_t scanner)
 %type<d> valuelistentry
 %type<d> maybe_arglist
 %type<d> maybeqmequals
+%type<d> varref_tail
 
 %start st
 
@@ -293,6 +294,17 @@ statement:
 }
 ;
 
+varref_tail:
+  OPEN_BRACKET expr CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_LISTSET;
+}
+| OPEN_BRACE expr CLOSE_BRACE
+{
+  $$ = ABCE_OPCODE_DICTSET_MAINTAIN; // FIXME remember to pop!
+}
+;
+
 lvalue:
   varref
 {
@@ -302,9 +314,9 @@ lvalue:
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
 }
-  maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+  maybe_bracketexprlist varref_tail
 {
-  $$ = ABCE_OPCODE_LISTSET;
+  $$ = $4;
 }
 | dynstart
 {
@@ -312,26 +324,35 @@ lvalue:
 }
 | dynstart
 {
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
 }
-  maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+  maybe_bracketexprlist varref_tail
 {
-  $$ = ABCE_OPCODE_LISTSET;
+  $$ = $4;
 }
-| LEX OPEN_BRACKET expr CLOSE_BRACKET
-{
-  printf("LEX not supported yet\n");
-  abort(); // FIXME not supported yet
-}
-| LEX OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+| lexstart
 {
   printf("LEX not supported yet\n");
   abort(); // FIXME not supported yet
 }
-| OPEN_PAREN expr CLOSE_PAREN maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+| lexstart maybe_bracketexprlist varref_tail
 {
-  $$ = ABCE_OPCODE_LISTSET;
+  printf("LEX not supported yet\n");
+  abort(); // FIXME not supported yet
 }
+| OPEN_PAREN expr CLOSE_PAREN maybe_bracketexprlist varref_tail
+{
+  $$ = $5;
+}
+;
+
+lexstart:
+  LEX
+{
+  printf("LEX not supported yet\n");
+  abort(); // FIXME not supported yet
+}
+  OPEN_BRACKET expr CLOSE_BRACKET
 ;
 
 dynstart:
@@ -343,9 +364,16 @@ dynstart:
 ;
 
 maybe_bracketexprlist:
-| maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+| maybe_bracketexprlist varref_tail
 {
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
+  if ($2 == ABCE_OPCODE_LISTSET)
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
+  }
+  else
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTGET);
+  }
 }
 ;
 
