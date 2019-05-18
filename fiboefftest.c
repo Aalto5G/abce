@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
   amyplanyy.abce.ip = -tmpsiz-100;
 
-  printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz, UINT64_MAX));
+  printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz));
   printf("actual err %d\n", (int)amyplanyy.abce.err.code);
   printf("actual typ %d\n", (int)amyplanyy.abce.err.mb.typ);
 

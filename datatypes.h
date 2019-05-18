@@ -116,6 +116,8 @@ struct abce {
   void *userdata;
   int trusted;
   // Stack and registers
+  int (*ins_budget_fn)(struct abce *abce);
+  void *ins_budget_baton;
   size_t bytes_alloced;
   size_t bytes_cap;
   struct abce_mb *stackbase;

@@ -132,6 +132,9 @@ static inline void abce_mb_refdn(struct abce *abce, struct abce_mb *mb)
   mb->u.area = NULL;
 }
 
+void
+abce_mb_refdn_noinline(struct abce *abce, struct abce_mb *mb);
+
 struct abce_mb
 abce_mb_refup_noinline(struct abce *abce, const struct abce_mb *mb);
 
@@ -1176,7 +1179,7 @@ struct abce_mb abce_mb_create_array(struct abce *abce);
 int
 abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz);
 
-int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz, uint64_t ins_budget);
+int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz);
 
 int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t newsz);
 

@@ -35,6 +35,8 @@ void abce_init(struct abce *abce)
   abce->bytes_cap = SIZE_MAX;
   abce->trap = NULL;
   abce->alloc_baton = NULL;
+  abce->ins_budget_fn = NULL;
+  abce->ins_budget_baton = NULL;
   abce->userdata = NULL;
   abce->stacklimit = 1024*1024;
   abce->stackbase = abce_alloc_stack(abce->stacklimit);
@@ -270,4 +272,10 @@ struct abce_mb
 abce_mb_refup_noinline(struct abce *abce, const struct abce_mb *mb)
 {
   return abce_mb_refup(abce, mb);
+}
+
+void
+abce_mb_refdn_noinline(struct abce *abce, struct abce_mb *mb)
+{
+  abce_mb_refdn(abce, mb);
 }
