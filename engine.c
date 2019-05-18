@@ -1286,10 +1286,15 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       ret = -EFAULT;
       break;
     }
-    if (abce->ins_budget_fn && abce->ins_budget_fn(abce))
+    if (abce->ins_budget_fn)
     {
-      ret = -EDQUOT;
-      break;
+      int ret2;
+      ret2 = abce->ins_budget_fn(abce, ins);
+      if (ret2)
+      {
+        ret = ret2;
+        break;
+      }
     }
 #if 0
     if (ins_budget == 0)

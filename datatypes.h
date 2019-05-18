@@ -116,7 +116,7 @@ struct abce {
   void *userdata;
   int trusted;
   // Stack and registers
-  int (*ins_budget_fn)(struct abce *abce);
+  int (*ins_budget_fn)(struct abce *abce, uint16_t ins);
   void *ins_budget_baton;
   size_t bytes_alloced;
   size_t bytes_cap;
