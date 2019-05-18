@@ -1,4 +1,4 @@
-#include "scopes.h"
+#include "abcescopes.h"
 #include "abce.h"
 
 const struct abce_mb *abce_sc_get_rec_mb_area(
@@ -69,7 +69,7 @@ int abce_sc_replace_val_mb(
     }
     return 0;
   }
-  e = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   abce_mb_refdn(abce, &e->val);
   e->val = abce_mb_refup(abce, pval);
   return 0;

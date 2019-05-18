@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "yyutils.h"
+#include "amyplanyyutils.h"
 
 char *str =
   "@function $fibonacci($x)\n"

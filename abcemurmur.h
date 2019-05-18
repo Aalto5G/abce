@@ -1,15 +1,15 @@
-#ifndef _MURMUR_H_
-#define _MURMUR_H_
+#ifndef _ABCE_MURMUR_H_
+#define _ABCE_MURMUR_H_
 
 #include <stdint.h>
 #include <stddef.h>
-#include "hdr.h"
+#include "abcehdr.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct murmurctx {
+struct abce_murmurctx {
   uint32_t hash;
   uint32_t len;
 };
@@ -20,7 +20,7 @@ struct murmurctx {
     .len = 0, \
   }
 
-static inline void murmurctx_feed32(struct murmurctx *ctx, uint32_t val)
+static inline void abce_murmurctx_feed32(struct abce_murmurctx *ctx, uint32_t val)
 {
   uint32_t c1 = 0xcc9e2d51;
   uint32_t c2 = 0x1b873593;
@@ -38,26 +38,26 @@ static inline void murmurctx_feed32(struct murmurctx *ctx, uint32_t val)
   ctx->hash = hash;
 }
 
-static inline void murmurctx_feed_buf(
-  struct murmurctx *ctx, const void *buf, size_t sz)
+static inline void abce_murmurctx_feed_buf(
+  struct abce_murmurctx *ctx, const void *buf, size_t sz)
 {
   const char *cbuf = (const char*)buf;
   size_t i = 0;
-  struct murmurctx ctx2 = *ctx;
+  struct abce_murmurctx ctx2 = *ctx;
   while (i < (sz/4)*4)
   {
-    murmurctx_feed32(&ctx2, hdr_get32h(&cbuf[i]));
+    abce_murmurctx_feed32(&ctx2, abce_hdr_get32h(&cbuf[i]));
     i += 4;
   }
   while (i < sz)
   {
-    murmurctx_feed32(&ctx2, hdr_get8h(&cbuf[i]));
+    abce_murmurctx_feed32(&ctx2, abce_hdr_get8h(&cbuf[i]));
     i += 1;
   }
   *ctx = ctx2;
 }
 
-static inline uint32_t murmurctx_get(struct murmurctx *ctx)
+static inline uint32_t abce_murmurctx_get(struct abce_murmurctx *ctx)
 {
   uint32_t hash;
   hash = ctx->hash;
@@ -71,18 +71,18 @@ static inline uint32_t murmurctx_get(struct murmurctx *ctx)
 }
 
 
-static inline uint32_t murmur32(uint32_t seed, uint32_t val)
+static inline uint32_t abce_murmur32(uint32_t seed, uint32_t val)
 {
-  struct murmurctx ctx = MURMURCTX_INITER(seed);
-  murmurctx_feed32(&ctx, val);
-  return murmurctx_get(&ctx);
+  struct abce_murmurctx ctx = MURMURCTX_INITER(seed);
+  abce_murmurctx_feed32(&ctx, val);
+  return abce_murmurctx_get(&ctx);
 }
 
-static inline uint32_t murmur_buf(uint32_t seed, const void *buf, size_t sz)
+static inline uint32_t abce_murmur_buf(uint32_t seed, const void *buf, size_t sz)
 {
-  struct murmurctx ctx = MURMURCTX_INITER(seed);
-  murmurctx_feed_buf(&ctx, buf, sz);
-  return murmurctx_get(&ctx);
+  struct abce_murmurctx ctx = MURMURCTX_INITER(seed);
+  abce_murmurctx_feed_buf(&ctx, buf, sz);
+  return abce_murmurctx_get(&ctx);
 }
 
 #ifdef __cplusplus

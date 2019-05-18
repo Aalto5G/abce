@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "yyutils.h"
+#include "amyplanyyutils.h"
 #include "amyplanyy.tab.h"
 
 /*

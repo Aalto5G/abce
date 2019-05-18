@@ -1,5 +1,5 @@
-#ifndef _RBTREE_H_
-#define _RBTREE_H_
+#ifndef _ABCE_RBTREE_H_
+#define _ABCE_RBTREE_H_
 
 #include <errno.h>
 

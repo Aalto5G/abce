@@ -4,10 +4,10 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include "rbtree.h"
-#include "murmur.h"
-#include "containerof.h"
-#include "likely.h"
+#include "abcerbtree.h"
+#include "abcemurmur.h"
+#include "abcecontainerof.h"
+#include "abcelikely.h"
 #include "abceopcodes.h"
 #include "abce.h"
 
@@ -81,7 +81,7 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   n = ABCE_RB_TREE_NOCMP_FIND(&abce->strcache[hashloc], abce_str_cache_cmp_asymlen, NULL, &key);
   if (n != NULL)
   {
-    return CONTAINER_OF(n, struct abce_mb_string, node)->locidx;
+    return ABCE_CONTAINER_OF(n, struct abce_mb_string, node)->locidx;
   }
   if (abce->cachesz >= abce->cachecap)
   {
@@ -175,7 +175,7 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
         while (mba->u.tree.tree.root != NULL)
         {
           struct abce_mb_rb_entry *mbe =
-            CONTAINER_OF(mba->u.tree.tree.root,
+            ABCE_CONTAINER_OF(mba->u.tree.tree.root,
                          struct abce_mb_rb_entry, n);
           abce_mb_refdn(abce, &mbe->key);
           abce_mb_refdn(abce, &mbe->val);
@@ -226,7 +226,7 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
           while (mba->u.sc.heads[i].root != NULL)
           {
             struct abce_mb_rb_entry *mbe =
-              CONTAINER_OF(mba->u.sc.heads[i].root,
+              ABCE_CONTAINER_OF(mba->u.sc.heads[i].root,
                            struct abce_mb_rb_entry, n);
             abce_mb_refdn(abce, &mbe->key);
             abce_mb_refdn(abce, &mbe->val);
@@ -248,7 +248,7 @@ void abce_mb_dump_impl(const struct abce_mb *mb);
 
 void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first)
 {
-  struct abce_mb_rb_entry *e = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  struct abce_mb_rb_entry *e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   if (n == NULL)
   {
     return;

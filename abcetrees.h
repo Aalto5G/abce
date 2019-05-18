@@ -22,7 +22,7 @@ abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,
   {
     return -ENOENT;
   }
-  *mbres = &CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
+  *mbres = &ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
   return 0;
 }
 static inline int
@@ -40,7 +40,7 @@ abce_tree_del_str(struct abce *abce,
   {
     return -ENOENT;
   }
-  mbe = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  mbe = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   abce_mb_refdn(abce, &mbe->key);
   abce_mb_refdn(abce, &mbe->val);
   abce_rb_tree_nocmp_delete(&mbt->u.area->u.tree.tree, n);
@@ -171,7 +171,7 @@ out:
     *mbresval = NULL;
     return -ENOENT;
   }
-  mbe = CONTAINER_OF(node, struct abce_mb_rb_entry, n);
+  mbe = ABCE_CONTAINER_OF(node, struct abce_mb_rb_entry, n);
   *mbreskey = &mbe->key;
   *mbresval = &mbe->val;
   return 0;

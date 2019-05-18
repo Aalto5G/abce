@@ -1,6 +1,6 @@
 .SUFFIXES:
 
-SRC_LIB := yyutils.c memblock.c rbtree.c locvarctx.c engine.c string.c trees.c scopes.c abce.c
+SRC_LIB := amyplanyyutils.c memblock.c abcerbtree.c amyplanlocvarctx.c engine.c abcestring.c abcetrees.c abcescopes.c abce.c
 SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c
 
 SRC_CPP_LIB :=

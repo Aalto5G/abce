@@ -1,6 +1,6 @@
-#include "locvarctx.h"
+#include "amyplanlocvarctx.h"
 
-struct abce_locvarctx *abce_locvarctx_breakcontinue(struct abce_locvarctx *ctx, size_t levels)
+struct amyplan_locvarctx *amyplan_locvarctx_breakcontinue(struct amyplan_locvarctx *ctx, size_t levels)
 {
   if (levels == 0 || ctx == NULL)
   {
@@ -8,7 +8,7 @@ struct abce_locvarctx *abce_locvarctx_breakcontinue(struct abce_locvarctx *ctx, 
   }
   while (ctx != NULL)
   {
-    if (abce_locvarctx_is_loop(ctx))
+    if (amyplan_locvarctx_is_loop(ctx))
     {
       levels--;
     }
@@ -18,19 +18,19 @@ struct abce_locvarctx *abce_locvarctx_breakcontinue(struct abce_locvarctx *ctx, 
     }
     ctx = ctx->parent;
   }
-  if (ctx == NULL || !abce_locvarctx_is_loop(ctx))
+  if (ctx == NULL || !amyplan_locvarctx_is_loop(ctx))
   {
     return NULL;
   }
   return ctx;
 }
 
-struct abce_locvarctx *abce_locvarctx_alloc(struct abce_locvarctx *parent,
+struct amyplan_locvarctx *amyplan_locvarctx_alloc(struct amyplan_locvarctx *parent,
                                             size_t init_startidx,
                                             size_t jmpaddr_break,
                                             size_t jmpaddr_continue)
 {
-  struct abce_locvarctx *ctx0 =
+  struct amyplan_locvarctx *ctx0 =
     malloc(sizeof(*ctx0) + ABCE_DEFAULT_LOCVARCTX_SIZE*sizeof(*ctx0->heads));
   size_t i;
   if ((jmpaddr_break == (size_t)-1) != (jmpaddr_continue == (size_t)-1))
@@ -62,15 +62,15 @@ struct abce_locvarctx *abce_locvarctx_alloc(struct abce_locvarctx *parent,
   return ctx0;
 }
 
-void abce_locvarctx_free(struct abce_locvarctx *ctx)
+void amyplan_locvarctx_free(struct amyplan_locvarctx *ctx)
 {
   size_t i;
   for (i = 0; i < ctx->capacity; i++)
   {
     while (ctx->heads[i].root != NULL)
     {
-      struct abce_locvar *locvar =
-        CONTAINER_OF(ctx->heads[i].root, struct abce_locvar, node);
+      struct amyplan_locvar *locvar =
+        ABCE_CONTAINER_OF(ctx->heads[i].root, struct amyplan_locvar, node);
       abce_rb_tree_nocmp_delete(&ctx->heads[i], ctx->heads[i].root);
       free(locvar);
     }
@@ -81,12 +81,12 @@ void abce_locvarctx_free(struct abce_locvarctx *ctx)
 static inline uint32_t abce_str_hash(const char *str)
 {
   size_t len = strlen(str);
-  return murmur_buf(0x12345678U, str, len);
+  return abce_murmur_buf(0x12345678U, str, len);
 }
 
-static inline int abce_locvar_str_cmp_asym(const char *str, struct abce_rb_tree_node *n2, void *ud)
+static inline int amyplan_locvar_str_cmp_asym(const char *str, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_locvar *e = CONTAINER_OF(n2, struct abce_locvar, node);
+  struct amyplan_locvar *e = ABCE_CONTAINER_OF(n2, struct amyplan_locvar, node);
   size_t len1 = strlen(str);
   size_t len2, lenmin;
   int ret;
@@ -110,11 +110,11 @@ static inline int abce_locvar_str_cmp_asym(const char *str, struct abce_rb_tree_
   return 0;
 }
 
-static inline int abce_locvar_str_cmp_sym(
+static inline int amyplan_locvar_str_cmp_sym(
   struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_locvar *e1 = CONTAINER_OF(n1, struct abce_locvar, node);
-  struct abce_locvar *e2 = CONTAINER_OF(n2, struct abce_locvar, node);
+  struct amyplan_locvar *e1 = ABCE_CONTAINER_OF(n1, struct amyplan_locvar, node);
+  struct amyplan_locvar *e2 = ABCE_CONTAINER_OF(n2, struct amyplan_locvar, node);
   size_t len1, len2, lenmin;
   int ret;
   char *str1, *str2;
@@ -139,30 +139,30 @@ static inline int abce_locvar_str_cmp_sym(
   return 0;
 }
 
-int64_t abce_locvarctx_search_rec(struct abce_locvarctx *ctx, const char *name)
+int64_t amyplan_locvarctx_search_rec(struct amyplan_locvarctx *ctx, const char *name)
 {
   uint32_t hashval;
   size_t hashloc;
   struct abce_rb_tree_node *n;
   hashval = abce_str_hash(name);
   hashloc = hashval & (ctx->capacity - 1);
-  n = ABCE_RB_TREE_NOCMP_FIND(&ctx->heads[hashloc], abce_locvar_str_cmp_asym, NULL, name);
+  n = ABCE_RB_TREE_NOCMP_FIND(&ctx->heads[hashloc], amyplan_locvar_str_cmp_asym, NULL, name);
   if (n != NULL)
   {
-    return CONTAINER_OF(n, struct abce_locvar, node)->idx;
+    return ABCE_CONTAINER_OF(n, struct amyplan_locvar, node)->idx;
   }
   if (ctx->parent == NULL)
   {
     return -ENOENT;
   }
-  return abce_locvarctx_search_rec(ctx->parent, name);
+  return amyplan_locvarctx_search_rec(ctx->parent, name);
 }
 
-int abce_locvarctx_add_param(struct abce_locvarctx *ctx, const char *name)
+int amyplan_locvarctx_add_param(struct amyplan_locvarctx *ctx, const char *name)
 {
   int64_t loc;
   size_t namelen = strlen(name);
-  struct abce_locvar *locvar;
+  struct amyplan_locvar *locvar;
   uint32_t hashval;
   size_t hashloc;
   if (ctx->parent != NULL)
@@ -171,7 +171,7 @@ int abce_locvarctx_add_param(struct abce_locvarctx *ctx, const char *name)
   }
   hashval = abce_str_hash(name);
   hashloc = hashval & (ctx->capacity - 1);
-  loc = abce_locvarctx_search_rec(ctx, name);
+  loc = amyplan_locvarctx_search_rec(ctx, name);
   if (loc >= 0)
   {
     return -EEXIST;
@@ -184,23 +184,23 @@ int abce_locvarctx_add_param(struct abce_locvarctx *ctx, const char *name)
   locvar->idx = ctx->sz++;
   ctx->args++;
   memcpy(locvar->name, name, namelen + 1);
-  if (abce_rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
+  if (abce_rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], amyplan_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
   {
     abort();
   }
   return 0;
 }
 
-int abce_locvarctx_add(struct abce_locvarctx *ctx, const char *name)
+int amyplan_locvarctx_add(struct amyplan_locvarctx *ctx, const char *name)
 {
   int64_t loc;
   size_t namelen = strlen(name);
-  struct abce_locvar *locvar;
+  struct amyplan_locvar *locvar;
   uint32_t hashval;
   size_t hashloc;
   hashval = abce_str_hash(name);
   hashloc = hashval & (ctx->capacity - 1);
-  loc = abce_locvarctx_search_rec(ctx, name);
+  loc = amyplan_locvarctx_search_rec(ctx, name);
   if (loc >= 0)
   {
     return -EEXIST;
@@ -212,7 +212,7 @@ int abce_locvarctx_add(struct abce_locvarctx *ctx, const char *name)
   }
   locvar->idx = ctx->startidx + ctx->sz++;
   memcpy(locvar->name, name, namelen + 1);
-  if (abce_rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
+  if (abce_rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], amyplan_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
   {
     abort();
   }

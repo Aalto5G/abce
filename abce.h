@@ -1,7 +1,7 @@
 #ifndef _ABCE_H_
 #define _ABCE_H_
 
-#include "datatypes.h"
+#include "abcedatatypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -183,7 +183,7 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
   if (idx < 0)
   {
     addr = abce->sp + idx;
-    if (unlikely(addr >= abce->sp || addr < abce->bp))
+    if (abce_unlikely(addr >= abce->sp || addr < abce->bp))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
       abce->err.mb.typ = ABCE_T_D;
@@ -194,7 +194,7 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
   else
   {
     addr = abce->bp + idx;
-    if (unlikely(addr >= abce->sp || addr < abce->bp))
+    if (abce_unlikely(addr >= abce->sp || addr < abce->bp))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
       abce->err.mb.typ = ABCE_T_D;
@@ -215,7 +215,7 @@ static inline int abce_getboolean(int *b, struct abce *abce, int64_t idx)
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
+  if (abce_unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
   {
     abce->err.code = ABCE_E_EXPECT_BOOL;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -235,7 +235,7 @@ static inline int abce_verifymb(struct abce *abce, int64_t idx, enum abce_type t
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != typ))
+  if (abce_unlikely(mb->typ != typ))
   {
     abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -254,7 +254,7 @@ static inline int abce_getfunaddr(int64_t *paddr, struct abce *abce, int64_t idx
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != ABCE_T_F))
+  if (abce_unlikely(mb->typ != ABCE_T_F))
   {
     abce->err.code = ABCE_E_EXPECT_FUNC;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -275,7 +275,7 @@ static inline int abce_getbp(struct abce *abce, int64_t idx)
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != ABCE_T_BP))
+  if (abce_unlikely(mb->typ != ABCE_T_BP))
   {
     abce->err.code = ABCE_E_EXPECT_BP;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -283,7 +283,7 @@ static inline int abce_getbp(struct abce *abce, int64_t idx)
     return -EINVAL;
   }
   trial = mb->u.d;
-  if (unlikely(trial != mb->u.d))
+  if (abce_unlikely(trial != mb->u.d))
   {
     abce->err.code = ABCE_E_REG_NOT_INT;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -304,7 +304,7 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != ABCE_T_IP))
+  if (abce_unlikely(mb->typ != ABCE_T_IP))
   {
     //printf("invalid typ: %d\n", mb->typ);
     abce->err.code = ABCE_E_EXPECT_IP;
@@ -313,7 +313,7 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
     return -EINVAL;
   }
   trial = mb->u.d;
-  if (unlikely(trial != mb->u.d))
+  if (abce_unlikely(trial != mb->u.d))
   {
     abce->err.code = ABCE_E_REG_NOT_INT;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -345,7 +345,7 @@ static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t id
     return -EOVERFLOW;
   }
   mbptr = &abce->stackbase[addr];
-  if (unlikely(mbptr->typ != ABCE_T_SC))
+  if (abce_unlikely(mbptr->typ != ABCE_T_SC))
   {
     abce->err.code = ABCE_E_EXPECT_SCOPE;
     abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
@@ -364,7 +364,7 @@ static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t id
     return -EOVERFLOW;
   }
   mbptr = &abce->stackbase[addr];
-  if (unlikely(mbptr->typ != ABCE_T_A))
+  if (abce_unlikely(mbptr->typ != ABCE_T_A))
   {
     abce->err.code = ABCE_E_EXPECT_ARRAY;
     abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
@@ -383,7 +383,7 @@ static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t id
     return -EOVERFLOW;
   }
   mbptr = &abce->stackbase[addr];
-  if (unlikely(mbptr->typ != ABCE_T_PB))
+  if (abce_unlikely(mbptr->typ != ABCE_T_PB))
   {
     abce->err.code = ABCE_E_EXPECT_PB;
     abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
@@ -402,7 +402,7 @@ static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t i
     return -EOVERFLOW;
   }
   mbptr = &abce->stackbase[addr];
-  if (unlikely(mbptr->typ != ABCE_T_S))
+  if (abce_unlikely(mbptr->typ != ABCE_T_S))
   {
     abce->err.code = ABCE_E_EXPECT_STR;
     abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
@@ -433,7 +433,7 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
   }
   //printf("addr %d\n", (int)addr);
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
+  if (abce_unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
   {
     abce->err.code = ABCE_E_EXPECT_DBL;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -446,7 +446,7 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
 
 static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
@@ -459,7 +459,7 @@ static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
 
 static inline int abce_push_boolean(struct abce *abce, int boolean)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_B;
@@ -474,7 +474,7 @@ static inline int abce_push_boolean(struct abce *abce, int boolean)
 
 static inline int abce_push_nil(struct abce *abce)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_N;
@@ -487,7 +487,7 @@ static inline int abce_push_nil(struct abce *abce)
 
 static inline int abce_push_ip(struct abce *abce)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_IP;
@@ -501,7 +501,7 @@ static inline int abce_push_ip(struct abce *abce)
 }
 static inline int abce_push_bp(struct abce *abce)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_BP;
@@ -515,7 +515,7 @@ static inline int abce_push_bp(struct abce *abce)
 }
 static inline int abce_push_double(struct abce *abce, double dbl)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_D;
@@ -529,14 +529,14 @@ static inline int abce_push_double(struct abce *abce, double dbl)
 }
 static inline int abce_push_fun(struct abce *abce, double fun_addr)
 {
-  if (unlikely(abce->sp >= abce->stacklimit))
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_F;
     abce->err.mb.u.d = fun_addr;
     return -EOVERFLOW;
   }
-  if (unlikely((double)(int64_t)fun_addr != fun_addr))
+  if (abce_unlikely((double)(int64_t)fun_addr != fun_addr))
   {
     abce->err.code = ABCE_E_FUNADDR_NOT_INT;
     abce->err.mb.typ = ABCE_T_F;
@@ -632,12 +632,12 @@ abce_mb_create_string_nul(struct abce *abce, const char *str)
 static inline uint32_t abce_str_hash(const char *str)
 {
   size_t len = strlen(str);
-  return murmur_buf(0x12345678U, str, len);
+  return abce_murmur_buf(0x12345678U, str, len);
 }
 static inline uint32_t abce_str_len_hash(const struct abce_const_str_len *str_len)
 {
   size_t len = str_len->len;
-  return murmur_buf(0x12345678U, str_len->str, len);
+  return abce_murmur_buf(0x12345678U, str_len->str, len);
 }
 static inline uint32_t abce_mb_str_hash(const struct abce_mb *mb)
 {
@@ -645,11 +645,11 @@ static inline uint32_t abce_mb_str_hash(const struct abce_mb *mb)
   {
     abort();
   }
-  return murmur_buf(0x12345678U, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+  return abce_murmur_buf(0x12345678U, mb->u.area->u.str.buf, mb->u.area->u.str.size);
 }
 static inline int abce_str_cache_cmp_asymlen(const struct abce_const_str_len *str_len, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_mb_string *e = CONTAINER_OF(n2, struct abce_mb_string, node);
+  struct abce_mb_string *e = ABCE_CONTAINER_OF(n2, struct abce_mb_string, node);
   size_t len1 = str_len->len;
   size_t len2, lenmin;
   int ret;
@@ -674,7 +674,7 @@ static inline int abce_str_cache_cmp_asymlen(const struct abce_const_str_len *st
 }
 static inline int abce_str_cmp_asym(const char *str, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_mb_rb_entry *e = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
+  struct abce_mb_rb_entry *e = ABCE_CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
   size_t len1 = strlen(str);
   size_t len2, lenmin;
   int ret;
@@ -705,7 +705,7 @@ static inline int abce_str_cmp_asym(const char *str, struct abce_rb_tree_node *n
 static inline int abce_str_cmp_halfsym(
   const struct abce_mb *key, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_mb_rb_entry *e2 = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
+  struct abce_mb_rb_entry *e2 = ABCE_CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
   size_t len1, len2, lenmin;
   int ret;
   char *str1, *str2;
@@ -737,8 +737,8 @@ static inline int abce_str_cmp_halfsym(
 static inline int abce_str_cache_cmp_sym(
   struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_mb_string *e1 = CONTAINER_OF(n1, struct abce_mb_string, node);
-  struct abce_mb_string *e2 = CONTAINER_OF(n2, struct abce_mb_string, node);
+  struct abce_mb_string *e1 = ABCE_CONTAINER_OF(n1, struct abce_mb_string, node);
+  struct abce_mb_string *e2 = ABCE_CONTAINER_OF(n2, struct abce_mb_string, node);
   size_t len1, len2, lenmin;
   int ret;
   char *str1, *str2;
@@ -797,8 +797,8 @@ static inline int abce_str_cmp_sym_mb(
 static inline int abce_str_cmp_sym(
   struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
-  struct abce_mb_rb_entry *e1 = CONTAINER_OF(n1, struct abce_mb_rb_entry, n);
-  struct abce_mb_rb_entry *e2 = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
+  struct abce_mb_rb_entry *e1 = ABCE_CONTAINER_OF(n1, struct abce_mb_rb_entry, n);
+  struct abce_mb_rb_entry *e2 = ABCE_CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
   if (e1->key.typ != ABCE_T_S || e2->key.typ != ABCE_T_S)
   {
     abort();
@@ -831,7 +831,7 @@ static inline const struct abce_mb *abce_sc_get_myval_mb_area(
   {
     return NULL;
   }
-  return &CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
+  return &ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
 }
 
 static inline const struct abce_mb *abce_sc_get_myval_mb(
@@ -858,7 +858,7 @@ static inline const struct abce_mb *abce_sc_get_myval_str_area(
   {
     return NULL;
   }
-  return &CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
+  return &ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n)->val;
 }
 
 static inline const struct abce_mb *abce_sc_get_myval_str(
@@ -1017,7 +1017,7 @@ static inline int
 abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   const size_t guard = 100;
-  if (unlikely(!((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
+  if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard))))
   {
     abce->err.code = ABCE_E_BYTECODE_FAULT;
@@ -1060,7 +1060,7 @@ static inline int
 abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   const size_t guard = 100;
-  if (unlikely(!((abce->ip >= 0 && (size_t)abce->ip+8 <= abce->bytecodesz) ||
+  if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip+8 <= abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip+8 <= -(int64_t)guard))))
   {
     abce->err.code = ABCE_E_BYTECODE_FAULT;
@@ -1087,12 +1087,12 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
   {
     return -EFAULT;
   }
-  if (likely(ophi < 128))
+  if (abce_likely(ophi < 128))
   {
     *ins = ophi;
     return 0;
   }
-  else if (unlikely((ophi & 0xC0) == 0x80))
+  else if (abce_unlikely((ophi & 0xC0) == 0x80))
   {
     //printf("EILSEQ 1\n");
     abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
@@ -1100,13 +1100,13 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     abce->err.mb.u.d = (1<<16) | ophi;
     return -EILSEQ;
   }
-  else if (likely((ophi & 0xE0) == 0xC0))
+  else if (abce_likely((ophi & 0xE0) == 0xC0))
   {
     if (abce_fetch_b(&oplo, abce, addcode, addsz) != 0)
     {
       return -EFAULT;
     }
-    if (unlikely((oplo & 0xC0) != 0x80))
+    if (abce_unlikely((oplo & 0xC0) != 0x80))
     {
       //printf("EILSEQ 2\n");
       abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
@@ -1115,7 +1115,7 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
       return -EILSEQ;
     }
     *ins = ((ophi&0x1F) << 6) | (oplo & 0x3F);
-    if (unlikely(*ins < 128))
+    if (abce_unlikely(*ins < 128))
     {
       //printf("EILSEQ 3\n");
       abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
@@ -1125,13 +1125,13 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     }
     return 0;
   }
-  else if (likely((ophi & 0xF0) == 0xE0))
+  else if (abce_likely((ophi & 0xF0) == 0xE0))
   {
     if (abce_fetch_b(&opmid, abce, addcode, addsz) != 0)
     {
       return -EFAULT;
     }
-    if (unlikely((opmid & 0xC0) != 0x80))
+    if (abce_unlikely((opmid & 0xC0) != 0x80))
     {
       //printf("EILSEQ 4\n");
       abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
@@ -1143,7 +1143,7 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
     {
       return -EFAULT;
     }
-    if (unlikely((oplo & 0xC0) != 0x80))
+    if (abce_unlikely((oplo & 0xC0) != 0x80))
     {
       //printf("EILSEQ 5\n");
       abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
@@ -1152,7 +1152,7 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
       return -EILSEQ;
     }
     *ins = ((ophi&0xF) << 12) | ((opmid&0x3F) << 6) | (oplo & 0x3F);
-    if (unlikely(*ins <= 0x7FF))
+    if (abce_unlikely(*ins <= 0x7FF))
     {
       //printf("EILSEQ 6\n");
       abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;

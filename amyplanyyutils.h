@@ -1,5 +1,5 @@
-#ifndef _YYUTILS_H_
-#define _YYUTILS_H_
+#ifndef _AMYPLAN_YYUTILS_H_
+#define _AMYPLAN_YYUTILS_H_
 
 #include <stdio.h>
 #include <stdint.h>

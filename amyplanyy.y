@@ -19,11 +19,11 @@ typedef void *yyscan_t;
 */
 
 #include "amyplanyy.h"
-#include "yyutils.h"
+#include "amyplanyyutils.h"
 #include "amyplanyy.tab.h"
 #include "amyplanyy.lex.h"
 #include "abceopcodes.h"
-#include "locvarctx.h"
+#include "amyplanlocvarctx.h"
 #include <arpa/inet.h>
 
 void amyplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct amyplanyy *amyplanyy, const char *str)
@@ -161,7 +161,7 @@ aplanrules:
 | aplanrules assignrule
 | aplanrules FUNCTION VARREF_LITERAL
 {
-  amyplanyy->ctx = abce_locvarctx_alloc(NULL, 2, (size_t)-1, (size_t)-1);
+  amyplanyy->ctx = amyplan_locvarctx_alloc(NULL, 2, (size_t)-1, (size_t)-1);
 }
 OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
 {
@@ -182,7 +182,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
   amyplanyy_add_double(amyplanyy, symbol_add(amyplanyy, $3, strlen($3)));
   free($3);
-  abce_locvarctx_free(amyplanyy->ctx);
+  amyplan_locvarctx_free(amyplanyy->ctx);
   amyplanyy->ctx = NULL;
 }
 ;
@@ -194,12 +194,12 @@ maybe_parlist:
 parlist:
 VARREF_LITERAL
 {
-  abce_locvarctx_add_param(amyplanyy->ctx, $1);
+  amyplan_locvarctx_add_param(amyplanyy->ctx, $1);
   free($1);
 }
 | parlist COMMA VARREF_LITERAL
 {
-  abce_locvarctx_add_param(amyplanyy->ctx, $3);
+  amyplan_locvarctx_add_param(amyplanyy->ctx, $3);
   free($3);
 }
 ;
@@ -212,7 +212,7 @@ funlines:
 locvarlines:
 | locvarlines LOCVAR VARREF_LITERAL EQUALS expr NEWLINE
 {
-  abce_locvarctx_add(amyplanyy->ctx, $3);
+  amyplan_locvarctx_add(amyplanyy->ctx, $3);
   free($3);
 }
 ;
@@ -233,9 +233,9 @@ statement:
 | RETURN expr NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, abce_locvarctx_arg_sz(amyplanyy->ctx)); // arg
+  amyplanyy_add_double(amyplanyy, amyplan_locvarctx_arg_sz(amyplanyy->ctx)); // arg
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, abce_locvarctx_recursive_sz(amyplanyy->ctx)); // loc
+  amyplanyy_add_double(amyplanyy, amyplan_locvarctx_recursive_sz(amyplanyy->ctx)); // loc
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RETEX2);
 }
 | BREAK NEWLINE
@@ -444,7 +444,7 @@ varref:
   VARREF_LITERAL
 {
   int64_t locvar;
-  locvar = abce_locvarctx_search_rec(amyplanyy->ctx, $1);
+  locvar = amyplan_locvarctx_search_rec(amyplanyy->ctx, $1);
   if (locvar >= 0)
   {
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);

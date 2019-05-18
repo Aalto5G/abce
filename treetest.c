@@ -1,5 +1,5 @@
 #include "abce.h"
-#include "trees.h"
+#include "abcetrees.h"
 
 void mydump_tre(int indent, const struct abce_rb_tree_node *node)
 {
@@ -12,7 +12,7 @@ void mydump_tre(int indent, const struct abce_rb_tree_node *node)
   {
     printf(" ");
   }
-  printf("key: %s\n", CONTAINER_OF(node, struct abce_mb_rb_entry, n)->key.u.area->u.str.buf);
+  printf("key: %s\n", ABCE_CONTAINER_OF(node, struct abce_mb_rb_entry, n)->key.u.area->u.str.buf);
   for (i = 0; i < indent; i++)
   {
     printf(" ");

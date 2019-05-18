@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "yyutils.h"
+#include "amyplanyyutils.h"
 
 int main(int argc, char **argv)
 {

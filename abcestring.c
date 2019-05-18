@@ -4,13 +4,13 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include "rbtree.h"
-#include "murmur.h"
-#include "containerof.h"
-#include "likely.h"
+#include "abcerbtree.h"
+#include "abcemurmur.h"
+#include "abcecontainerof.h"
+#include "abcelikely.h"
 #include "abceopcodes.h"
-#include "datatypes.h"
-#include "string.h"
+#include "abcedatatypes.h"
+#include "abcestring.h"
 
 struct abce_strbuf {
   char *str;

@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include "abce.h"
-#include "locvarctx.h"
+#include "amyplanlocvarctx.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,7 +74,7 @@ struct amyplanyyrule {
 struct amyplanyy {
   void *baton;
   struct abce abce;
-  struct abce_locvarctx *ctx;
+  struct amyplan_locvarctx *ctx;
 /*
   uint8_t *bytecode;
   size_t bytecapacity;

@@ -5,7 +5,7 @@
 #include <libgen.h>
 #include <arpa/inet.h>
 #include "amyplanyy.h"
-#include "yyutils.h"
+#include "amyplanyyutils.h"
 
 typedef void *yyscan_t;
 extern int amyplanyyparse(yyscan_t scanner, struct amyplanyy *amyplanyy);
