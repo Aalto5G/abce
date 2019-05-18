@@ -1,0 +1,127 @@
+There is one FIRST/FIRST conflict:
+
+STATEMENT -> LVALUE equals EXPR newline
+           | EXPR newline
+           | ...
+
+...which needs to be fixed by prefixing either assignment by @set or ignoring
+the return value of an expression by @ignore.
+
+
+ST -> APLANRULES .
+
+APLANRULES ->
+            | newline APLANRULES
+            | function varref_literal open_paren MAYBE_PARLIST close_paren newline
+              FUNLINES endfunction newline APLANRULES .
+
+MAYBE_PARLIST -> | PARLIST .
+PARLIST -> varref_literal PARLISTTAIL .
+
+PARLISTTAIL -> | comma PARLIST .
+
+FUNLINES -> LOCVARLINES BODYLINES .
+
+LOCVARLINES -> | locvar varref_literal equals EXPR newline LOCVARLINES .
+
+BODYLINES -> | STATEMENT BODYLINES .
+
+STATEMENT -> LVALUE equals EXPR newline
+           | return EXPR newline
+           | break newline
+           | continue newline
+           | EXPR newline
+           | if open_paren EXPR close_paren newline BODYLINES MAYBE_ELSE endif newline
+           | while open_paren EXPR close_paren newline BODYLINES endwhile newline
+           | append open_paren EXPR comma EXPR close_paren newline
+           | append_list open_paren EXPR comma EXPR close_paren newline
+           .
+
+MAYBE_ELSE -> | else BODYLINES .
+
+VARREF_TAIL -> open_bracket ATEXPR close_bracket
+             | open_brace ATEXPR close_brace
+             .
+
+ATEXPR -> EXPR | at EXPR .
+
+LVALUE -> VARREF VARREF2
+        | DYNSTART DYNSTART2
+        | LEXSTART LEXSTART2
+        | open_paren EXPR close_paren VARREF_TAIL MAYBE_BRACKETEXPRLIST
+        .
+
+LEXSTART -> lex open_bracket EXPR close_bracket .
+DYNSTART -> dyn open_bracket EXPR close_bracket .
+
+VARREF2 -> | VARREF_TAIL MAYBE_BRACKETEXPRLIST .
+DYNSTART2 -> | VARREF_TAIL MAYBE_BRACKETEXPRLIST .
+LEXSTART2 -> | VARREF_TAIL MAYBE_BRACKETEXPRLIST .
+
+MAYBE_BRACKETEXPRLIST -> | VARREF_TAIL MAYBE_BRACKETEXPRLIST .
+
+VALUE -> at EXPR | EXPR .
+
+VARREF -> varref_literal
+        | do varref_literal
+        | lo varref_literal
+        | io varref_literal
+        | d varref_literal
+        | l varref_literal
+        | i varref_literal
+        .
+
+EXPR -> EXPR11 .
+EXPR1 -> EXPR0 | logical_not EXPR1 | bitwise_not EXPR1 | add EXPR1 | sub EXPR1 .
+EXPR2 -> EXPR1 EXPR2_TAIL .
+EXPR2_TAIL -> | mul EXPR1 EXPR2_TAIL | div EXPR1 EXPR2_TAIL | mod EXPR1 EXPR2_TAIL .
+EXPR3 -> EXPR2 EXPR3_TAIL .
+EXPR3_TAIL -> | add EXPR2 EXPR3_TAIL | sub EXPR2 EXPR3_TAIL .
+EXPR4 -> EXPR3 EXPR4_TAIL .
+EXPR4_TAIL -> | shl EXPR3 EXPR4_TAIL | shr EXPR3 EXPR4_TAIL .
+EXPR5 -> EXPR4 EXPR5_TAIL .
+EXPR5_TAIL -> | lt EXPR4 EXPR5_TAIL | le EXPR4 EXPR5_TAIL
+              | gt EXPR4 EXPR5_TAIL | ge EXPR4 EXPR5_TAIL .
+EXPR6 -> EXPR5 EXPR6_TAIL .
+EXPR6_TAIL -> | eq EXPR5 EXPR6_TAIL | ne EXPR5 EXPR6_TAIL .
+EXPR7 -> EXPR6 EXPR7_TAIL .
+EXPR7_TAIL -> | bitwise_and EXPR6 EXPR7_TAIL .
+EXPR8 -> EXPR7 EXPR8_TAIL .
+EXPR8_TAIL -> | bitwise_xor EXPR7 EXPR8_TAIL .
+EXPR9 -> EXPR8 EXPR9_TAIL .
+EXPR9_TAIL -> | bitwise_or EXPR8 EXPR9_TAIL .
+EXPR10 -> EXPR9 EXPR10_TAIL .
+EXPR10_TAIL -> | logical_and EXPR9 EXPR10_TAIL .
+EXPR11 -> EXPR10 EXPR11_TAIL .
+EXPR11_TAIL -> | logical_or EXPR10 EXPR11_TAIL .
+EXPR0 -> DICT MAYBE_BRACKETEXPRLIST
+       | LIST MAYBE_BRACKETEXPRLIST
+       | string_literal
+       | number
+       | VARREF VARREF2 EXPRSUFFIX
+       | DYNSTART DYNSTART2 EXPRSUFFIX
+       | LEXSTART LEXSTART2 EXPRSUFFIX
+       | open_paren EXPR close_paren MAYBE_BRACKETEXPRLIST EXPRSUFFIX
+       | imm open_bracket EXPR close_bracket MAYBE_BRACKETEXPRLIST EXPRSUFFIX
+       | dyno open_bracket EXPR close_bracket MAYBE_BRACKETEXPRLIST EXPRSUFFIX
+       | lexo open_bracket EXPR close_bracket MAYBE_BRACKETEXPRLIST EXPRSUFFIX
+       | immo open_bracket EXPR close_bracket MAYBE_BRACKETEXPRLIST EXPRSUFFIX
+       | loc open_bracket string_literal close_bracket MAYBE_BRACKETEXPRLIST EXPRSUFFIX
+       .
+
+EXPRSUFFIX -> | open_paren MAYBE_ARGLIST close_paren | maybe_call .
+
+MAYBE_ARGLIST -> | ARGLIST .
+
+ARGLIST -> EXPR ARGLIST_SUFFIX .
+ARGLIST_SUFFIX -> | comma EXPR ARGLIST_SUFFIX .
+LIST -> open_bracket MAYBE_VALUELIST close_bracket .
+DICT -> open_brace MAYBE_DICTLIST close_brace .
+MAYBE_DICTLIST -> | DICTLIST .
+MAYBE_VALUELIST -> | VALUELIST .
+DICTLIST -> DICTENTRY DICTLIST_SUFFIX .
+DICTLIST_SUFFIX -> | comma DICTENTRY DICTLIST_SUFFIX .
+VALUELIST -> VALUELISTENTRY VALUELIST_SUFFIX .
+VALUELIST_SUFFIX -> | comma VALUELISTENTRY VALUELIST_SUFFIX .
+DICTENTRY -> VALUE colon VALUE .
+VALUELISTENTRY -> VALUE .
