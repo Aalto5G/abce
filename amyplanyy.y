@@ -294,7 +294,11 @@ lvalue:
 {
   $$ = ABCE_OPCODE_SET_STACK;
 }
-| varref maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+| varref
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
+}
+  maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
 {
   $$ = ABCE_OPCODE_LISTSET;
 }
