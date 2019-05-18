@@ -14,7 +14,7 @@ struct abce_murmurctx {
   uint32_t len;
 };
 
-#define MURMURCTX_INITER(seed) \
+#define ABCE_MURMURCTX_INITER(seed) \
   { \
     .hash = (seed), \
     .len = 0, \
@@ -73,14 +73,14 @@ static inline uint32_t abce_murmurctx_get(struct abce_murmurctx *ctx)
 
 static inline uint32_t abce_murmur32(uint32_t seed, uint32_t val)
 {
-  struct abce_murmurctx ctx = MURMURCTX_INITER(seed);
+  struct abce_murmurctx ctx = ABCE_MURMURCTX_INITER(seed);
   abce_murmurctx_feed32(&ctx, val);
   return abce_murmurctx_get(&ctx);
 }
 
 static inline uint32_t abce_murmur_buf(uint32_t seed, const void *buf, size_t sz)
 {
-  struct abce_murmurctx ctx = MURMURCTX_INITER(seed);
+  struct abce_murmurctx ctx = ABCE_MURMURCTX_INITER(seed);
   abce_murmurctx_feed_buf(&ctx, buf, sz);
   return abce_murmurctx_get(&ctx);
 }
