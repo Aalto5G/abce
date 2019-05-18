@@ -1135,6 +1135,111 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       abort();
     }
+    case ABCE_OPCODE_DICTNEXT_SAFE:
+    /*
+     * stack before: (bottom) - oldkey - dictloc - (top)
+     * stack after: (bottom) - newkey - newval - (top)
+     *
+     * How to use in loops (except this doesn't support "break"):
+     *   push nil
+     * iter:
+     *   push -1 # dict location after popping both
+     *   getnext # pushes new key and val
+     *   push -2
+     *   push_stack
+     *   ABCE_OPCODE_TYPE
+     *   push ABCE_T_N
+     *   ne
+     *   push addressof(iterend)
+     *   if_not_jmp_fwd
+     *     stmt1
+     *     stmt2
+     *     stmt3
+     *   pop
+     *   push addressof(iter)
+     *   jmp
+     * iterend:
+     *
+     * How to use in loops with break:
+     *   push nil
+     *   push addressof(iter)
+     *   jmp
+     * break:
+     *   push addresof(iterend)
+     *   jmp
+     * iter:
+     *   push -1 # dict location after popping both
+     *   getnext # pushes new key and val
+     *   push -2
+     *   push_stack
+     *   ABCE_OPCODE_TYPE
+     *   push ABCE_T_N
+     *   ne
+     *   push addressof(iterend)
+     *   if_not_jmp_fwd
+     *     stmt1
+     *     stmt2
+     *     stmt3
+     *   pop
+     *   push addressof(iter)
+     *   jmp
+     * iterend:
+     *
+     * How to use to get just the next key:
+     * push oldkey
+     * push dictloc
+     * getnext # stack after: (b) - newkey - newval - (t)
+     * pop # stack after: (b) - newkey - (t)
+     */
+    {
+      struct abce_mb mboldkey, mbt;
+      const struct abce_mb *mbreskey, *mbresval;
+      double dictidx;
+      int rettmp;
+      VERIFYMB(-1, ABCE_T_D);
+      GETDBL(&dictidx, -1);
+      GETMB(&mboldkey, -2);
+      if (mboldkey.typ != ABCE_T_N && mboldkey.typ != ABCE_T_S)
+      {
+        abce->err.code = ABCE_E_TREE_ITER_NOT_STR_OR_NUL;
+        abce->err.mb = abce_mb_refup(abce, &mboldkey);
+        abce_mb_refdn(abce, &mboldkey);
+        ret = -EINVAL;
+        break;
+      }
+      POP();
+      POP();
+      rettmp = abce_verifymb(abce, (int64_t)dictidx, ABCE_T_T);
+      if (rettmp != 0)
+      {
+        abce_mb_refdn(abce, &mboldkey);
+        ret = rettmp;
+        break;
+      }
+      if (abce_getmb(&mbt, abce, (int64_t)dictidx) != 0)
+      {
+        abce_maybeabort();
+      }
+      if (abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey) != 0)
+      {
+        if (abce_push_nil(abce) != 0)
+        {
+          abce_maybeabort();
+        }
+        if (abce_push_nil(abce) != 0)
+        {
+          abce_maybeabort();
+        }
+        abce_mb_refdn(abce, &mboldkey);
+        abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
+        break;
+      }
+      abce_push_mb(abce, mbreskey);
+      abce_push_mb(abce, mbresval);
+      abce_mb_refdn(abce, &mboldkey);
+      abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
+      break;
+    }
     case ABCE_OPCODE_FP_CLASSIFY:
     case ABCE_OPCODE_FILE_OPEN:
     case ABCE_OPCODE_FILE_CLOSE:
@@ -1742,6 +1847,35 @@ outpbset:
             abce_maybeabort();
           }
           abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
+          break;
+        }
+        case ABCE_OPCODE_EXCHANGE_TOP:
+        {
+          struct abce_mb mbtmp;
+          double loc;
+          size_t addr;
+          size_t addrm1;
+          GETDBL(&loc, -1);
+          POP();
+          if (loc != (double)(uint64_t)loc)
+          {
+            abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
+            abce->err.mb.typ = ABCE_T_D;
+            abce->err.mb.u.d = loc;
+            ret = -EINVAL;
+            break;
+          }
+          if (abce_calc_addr(&addr, abce, loc) != 0)
+          {
+            return -EOVERFLOW;
+          }
+          if (abce_calc_addr(&addrm1, abce, -1) != 0)
+          {
+            return -EOVERFLOW;
+          }
+          mbtmp = abce->stackbase[addr];
+          abce->stackbase[addr] = abce->stackbase[addrm1];
+          abce->stackbase[addrm1] = mbtmp;
           break;
         }
         case ABCE_OPCODE_PUSH_STACK:
@@ -2612,111 +2746,6 @@ outpbset:
           }
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
-          break;
-        }
-        case ABCE_OPCODE_DICTNEXT_SAFE:
-        /*
-         * stack before: (bottom) - oldkey - dictloc - (top)
-         * stack after: (bottom) - newkey - newval - (top)
-         *
-         * How to use in loops (except this doesn't support "break"):
-         *   push nil
-         * iter:
-         *   push -1 # dict location after popping both
-         *   getnext # pushes new key and val
-         *   push -2
-         *   push_stack
-         *   ABCE_OPCODE_TYPE
-         *   push ABCE_T_N
-         *   ne
-         *   push addressof(iterend)
-         *   if_not_jmp_fwd
-         *     stmt1
-         *     stmt2
-         *     stmt3
-         *   pop
-         *   push addressof(iter)
-         *   jmp
-         * iterend:
-         *
-         * How to use in loops with break:
-         *   push nil
-         *   push addressof(iter)
-         *   jmp
-         * break:
-         *   push addresof(iterend)
-         *   jmp
-         * iter:
-         *   push -1 # dict location after popping both
-         *   getnext # pushes new key and val
-         *   push -2
-         *   push_stack
-         *   ABCE_OPCODE_TYPE
-         *   push ABCE_T_N
-         *   ne
-         *   push addressof(iterend)
-         *   if_not_jmp_fwd
-         *     stmt1
-         *     stmt2
-         *     stmt3
-         *   pop
-         *   push addressof(iter)
-         *   jmp
-         * iterend:
-         *
-         * How to use to get just the next key:
-         * push oldkey
-         * push dictloc
-         * getnext # stack after: (b) - newkey - newval - (t)
-         * pop # stack after: (b) - newkey - (t)
-         */
-        {
-          struct abce_mb mboldkey, mbt;
-          const struct abce_mb *mbreskey, *mbresval;
-          double dictidx;
-          int rettmp;
-          VERIFYMB(-1, ABCE_T_D);
-          GETDBL(&dictidx, -1);
-          GETMB(&mboldkey, -2);
-          if (mboldkey.typ != ABCE_T_N && mboldkey.typ != ABCE_T_S)
-          {
-            abce->err.code = ABCE_E_TREE_ITER_NOT_STR_OR_NUL;
-            abce->err.mb = abce_mb_refup(abce, &mboldkey);
-            abce_mb_refdn(abce, &mboldkey);
-            ret = -EINVAL;
-            break;
-          }
-          POP();
-          POP();
-          rettmp = abce_verifymb(abce, (int64_t)dictidx, ABCE_T_T);
-          if (rettmp != 0)
-          {
-            abce_mb_refdn(abce, &mboldkey);
-            ret = rettmp;
-            break;
-          }
-          if (abce_getmb(&mbt, abce, (int64_t)dictidx) != 0)
-          {
-            abce_maybeabort();
-          }
-          if (abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey) != 0)
-          {
-            if (abce_push_nil(abce) != 0)
-            {
-              abce_maybeabort();
-            }
-            if (abce_push_nil(abce) != 0)
-            {
-              abce_maybeabort();
-            }
-            abce_mb_refdn(abce, &mboldkey);
-            abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
-            break;
-          }
-          abce_push_mb(abce, mbreskey);
-          abce_push_mb(abce, mbresval);
-          abce_mb_refdn(abce, &mboldkey);
-          abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           break;
         }
         default:
