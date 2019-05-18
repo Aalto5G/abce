@@ -225,6 +225,11 @@ bodylines:
 statement:
   lvalue EQUALS expr NEWLINE
 {
+  if ($1 == ABCE_OPCODE_STRGET)
+  {
+    printf("Can't assign to string\n");
+    YYABORT;
+  }
   amyplanyy_add_byte(amyplanyy, $1);
   if ($1 == ABCE_OPCODE_DICTSET_MAINTAIN)
   {
@@ -302,6 +307,14 @@ varref_tail:
 | OPEN_BRACE expr CLOSE_BRACE
 {
   $$ = ABCE_OPCODE_DICTSET_MAINTAIN; // FIXME remember to pop!
+}
+| OPEN_BRACKET AT expr CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_STRGET; // This is special. Can't assign to string.
+}
+| OPEN_BRACE AT expr CLOSE_BRACE
+{
+  $$ = ABCE_OPCODE_PBSET;
 }
 ;
 
@@ -701,7 +714,10 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
-    default: // FIXME str access
+    case ABCE_OPCODE_STRGET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    default:
       printf("FIXME default1\n");
       abort();
   }
@@ -725,7 +741,10 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
-    default: // FIXME str access
+    case ABCE_OPCODE_STRGET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    default:
       printf("FIXME default2\n");
       abort();
   }
@@ -755,7 +774,10 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
-    default: // FIXME str access
+    case ABCE_OPCODE_STRGET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    default:
       printf("FIXME default3\n");
       abort();
   }
