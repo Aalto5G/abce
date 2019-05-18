@@ -1261,7 +1261,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
   return ret;
 }
 
-static struct abce_mb fun_stringify(struct abce *abce, int64_t ip, unsigned char *addcode, size_t addsz)
+static struct abce_mb abce_fun_stringify(struct abce *abce, int64_t ip, unsigned char *addcode, size_t addsz)
 {
   int64_t ip_tmp = abce->ip;
   uint16_t ins;
@@ -1331,7 +1331,7 @@ static int abce_bt_gather(struct abce *abce, unsigned char *addcode, size_t adds
   {
     return -ENOMEM;
   }
-  abce->btbase[abce->btsz++] = fun_stringify(abce, abce->ip, addcode, addsz);
+  abce->btbase[abce->btsz++] = abce_fun_stringify(abce, abce->ip, addcode, addsz);
   for (i = abce->sp; i > 0; i--)
   {
     if (abce->stackbase[i-1].typ == ABCE_T_IP)
@@ -1341,7 +1341,7 @@ static int abce_bt_gather(struct abce *abce, unsigned char *addcode, size_t adds
         return -ENOMEM;
       }
       abce->btbase[abce->btsz++] =
-        fun_stringify(abce, abce->stackbase[i-1].u.d, addcode, addsz);
+        abce_fun_stringify(abce, abce->stackbase[i-1].u.d, addcode, addsz);
     }
   }
   return 0;

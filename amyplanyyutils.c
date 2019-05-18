@@ -60,7 +60,7 @@ static void *memdup(const void *mem, size_t sz)
   return result;
 }
 
-struct escaped_string yy_escape_string(char *orig)
+struct escaped_string amyplanyy_escape_string(char *orig)
 {
   char *buf = NULL;
   char *result = NULL;
@@ -137,7 +137,7 @@ struct escaped_string yy_escape_string(char *orig)
   return resultstruct;
 }
 
-struct escaped_string yy_escape_string_single(char *orig)
+struct escaped_string amyplanyy_escape_string_single(char *orig)
 {
   char *buf = NULL;
   char *result = NULL;
@@ -212,16 +212,6 @@ struct escaped_string yy_escape_string_single(char *orig)
   resultstruct.str = result;
   free(buf);
   return resultstruct;
-}
-
-uint32_t yy_get_ip(char *orig)
-{
-  struct in_addr addr;
-  if (inet_aton(orig, &addr) == 0)
-  {
-    return 0;
-  }
-  return ntohl(addr.s_addr);
 }
 
 void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int require)

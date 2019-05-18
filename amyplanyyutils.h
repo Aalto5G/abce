@@ -19,11 +19,9 @@ void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int requ
 void amyplanyydirparse(
   const char *argv0, const char *fname, struct amyplanyy *amyplanyy, int require);
 
-struct escaped_string yy_escape_string(char *orig);
+struct escaped_string amyplanyy_escape_string(char *orig);
 
-struct escaped_string yy_escape_string_single(char *orig);
-
-uint32_t yy_get_ip(char *orig);
+struct escaped_string amyplanyy_escape_string_single(char *orig);
 
 #ifdef __cplusplus
 };

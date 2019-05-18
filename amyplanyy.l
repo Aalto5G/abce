@@ -117,8 +117,8 @@ struct CSnippet luaSnippet = {
   return NUMBER;
 }
 
-\"([^\\\"]|\\.)*\"  yylval->str=yy_escape_string(yytext); return STRING_LITERAL;
-\'([^\\\']|\\.)*\'  yylval->str=yy_escape_string_single(yytext); return STRING_LITERAL;
+\"([^\\\"]|\\.)*\"  yylval->str=amyplanyy_escape_string(yytext); return STRING_LITERAL;
+\'([^\\\']|\\.)*\'  yylval->str=amyplanyy_escape_string_single(yytext); return STRING_LITERAL;
 #[^\n]*  /* ignore */;
 
 "%lua{"             { BEGIN(PERCENTLUA); luaSnippet.capacity = 0; luaSnippet.len = 0; luaSnippet.data = NULL; }
