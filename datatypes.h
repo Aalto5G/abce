@@ -136,6 +136,9 @@ struct abce {
   struct rb_tree_nocmp strcache[ABCE_DEFAULT_CACHE_SIZE];
   // Dynamic scope
   struct abce_mb dynscope;
+  size_t btcap;
+  size_t btsz;
+  struct abce_mb *btbase;
 };
 
 #ifdef __cplusplus

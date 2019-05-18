@@ -1261,6 +1261,92 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
   return ret;
 }
 
+static struct abce_mb fun_stringify(struct abce *abce, int64_t ip, unsigned char *addcode, size_t addsz)
+{
+  int64_t ip_tmp = abce->ip;
+  uint16_t ins;
+  double dbl;
+  size_t dblsz;
+  const struct abce_mb nil = {.typ = ABCE_T_N};
+  struct abce_err err = abce->err;
+  abce->ip = ip;
+  abce->err.code = ABCE_E_NONE;
+  abce->err.opcode = ABCE_OPCODE_NOP;
+  abce->err.mb.typ = ABCE_T_N;
+  abce->err.mb.u.d = 0;
+  //printf("Called stringify %lld\n", (long long)ip);
+  for (;;)
+  {
+    if (abce_fetch_i(&ins, abce, addcode, addsz) != 0)
+    {
+      abce_err_free(abce, &abce->err);
+      abce->err = err;
+      //printf("Fetch i\n");
+      abce->ip = ip_tmp;
+      //printf("Stringifying nil\n");
+      return nil;
+    }
+    //printf("Fetched i %d\n", (int)ins);
+    switch (ins)
+    {
+      case ABCE_OPCODE_PUSH_DBL:
+        abce->ip += 8;
+        abce->err = err;
+        break;
+      case ABCE_OPCODE_FUN_TRAILER:
+        //printf("Trailer\n");
+        if (abce_fetch_d(&dbl, abce, addcode, addsz) != 0)
+        {
+          abce_err_free(abce, &abce->err);
+          abce->err = err;
+          abce->ip = ip_tmp;
+          return nil;
+        }
+        dblsz = dbl;
+        if (dblsz >= abce->cachesz)
+        {
+          abce->ip = ip_tmp;
+          abce->err = err;
+          return nil;
+        }
+        abce->ip = ip_tmp;
+        //printf("Stringifying fun\n");
+        return abce_mb_refup(abce, &abce->cachebase[dblsz]);
+      case ABCE_OPCODE_FUN_HEADER:
+        //printf("Header\n");
+        abce->ip = ip_tmp;
+        abce->err = err;
+        return nil;
+      default:
+        break;
+    }
+  }
+  abce->ip = ip_tmp;
+}
+
+static int abce_bt_gather(struct abce *abce, unsigned char *addcode, size_t addsz)
+{
+  size_t i;
+  if (abce->btsz >= abce->btcap)
+  {
+    return -ENOMEM;
+  }
+  abce->btbase[abce->btsz++] = fun_stringify(abce, abce->ip, addcode, addsz);
+  for (i = abce->sp; i > 0; i--)
+  {
+    if (abce->stackbase[i-1].typ == ABCE_T_IP)
+    {
+      if (abce->btsz >= abce->btcap)
+      {
+        return -ENOMEM;
+      }
+      abce->btbase[abce->btsz++] =
+        fun_stringify(abce, abce->stackbase[i-1].u.d, addcode, addsz);
+    }
+  }
+  return 0;
+}
+
 int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   // code:
@@ -2823,6 +2909,10 @@ outpbset:
   if (ret == -EINTR)
   {
     ret = 0;
+  }
+  if (ret != 0)
+  {
+    abce_bt_gather(abce, addcode, addsz);
   }
   return ret;
 }

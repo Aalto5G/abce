@@ -40,6 +40,9 @@ void abce_init(struct abce *abce)
   abce->userdata = NULL;
   abce->stacklimit = 1024*1024;
   abce->stackbase = abce_alloc_stack(abce->stacklimit);
+  abce->btcap = 1024*1024;
+  abce->btsz = 0;
+  abce->btbase = abce_alloc_stack(abce->btcap);
   abce->sp = 0;
   abce->bp = 0;
   abce->ip = 0;
@@ -81,6 +84,10 @@ void abce_free(struct abce *abce)
     }
   }
 #endif
+  for (i = 0; i < abce->btsz; i++)
+  {
+    abce_mb_refdn(abce, &abce->btbase[i]);
+  }
   for (i = 0; i < abce->cachesz; i++)
   {
     abce_mb_refdn(abce, &abce->cachebase[i]);
@@ -98,6 +105,10 @@ void abce_free(struct abce *abce)
   abce_free_stack(abce->cachebase, abce->cachecap);
   abce->cachebase = NULL;
   abce->cachecap = 0;
+  abce_free_stack(abce->btbase, abce->btcap);
+  abce->btbase = NULL;
+  abce->btcap = 0;
+  abce_err_free(abce, &abce->err);
 }
 
 struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
