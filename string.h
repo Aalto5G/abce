@@ -3,6 +3,10 @@
 
 #include "abce.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int abce_strgsub(struct abce *abce,
                  char **res, size_t *ressz, size_t *rescap,
                  const char *haystack, size_t haystacksz,
@@ -40,5 +44,9 @@ int abce_strgsub_mb(struct abce *abce,
   abce->alloc(resstr, rescap, 0, abce);
   return 0;
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

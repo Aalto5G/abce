@@ -30,7 +30,7 @@ struct abce_const_str_len {
 struct abce_mb;
 
 struct abce_mb_tree {
-  struct rb_tree_nocmp tree;
+  struct abce_rb_tree_nocmp tree;
   size_t sz;
 };
 struct abce_mb_scope {
@@ -38,7 +38,7 @@ struct abce_mb_scope {
   struct abce_mb_area *parent;
   size_t size;
   size_t locidx;
-  struct rb_tree_nocmp heads[0];
+  struct abce_rb_tree_nocmp heads[0];
 };
 struct abce_mb_array {
   struct abce_mb *mbs;
@@ -51,7 +51,7 @@ struct abce_mb_pb {
   char *buf;
 };
 struct abce_mb_string {
-  struct rb_tree_node node;
+  struct abce_rb_tree_node node;
   size_t size;
   size_t locidx;
   char buf[0];
@@ -95,7 +95,7 @@ struct abce_mb {
   } u;
 };
 struct abce_mb_rb_entry {
-  struct rb_tree_node n;
+  struct abce_rb_tree_node n;
   struct abce_mb key; // must be a string!
   struct abce_mb val;
 };
@@ -133,7 +133,7 @@ struct abce {
   struct abce_mb *cachebase;
   size_t cachesz;
   size_t cachecap;
-  struct rb_tree_nocmp strcache[ABCE_DEFAULT_CACHE_SIZE];
+  struct abce_rb_tree_nocmp strcache[ABCE_DEFAULT_CACHE_SIZE];
   // Dynamic scope
   struct abce_mb dynscope;
   size_t btcap;

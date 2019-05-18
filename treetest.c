@@ -1,7 +1,7 @@
 #include "abce.h"
 #include "trees.h"
 
-void mydump_tre(int indent, const struct rb_tree_node *node)
+void mydump_tre(int indent, const struct abce_rb_tree_node *node)
 {
   int i;
   if (node == NULL)

@@ -3,6 +3,10 @@
 
 #include "datatypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const struct abce_mb *abce_sc_get_rec_mb_area(
   const struct abce_mb_area *mba, const struct abce_mb *it);
 
@@ -16,5 +20,9 @@ int abce_sc_replace_val_mb(
 int abce_sc_put_val_str(
   struct abce *abce,
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

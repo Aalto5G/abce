@@ -57,7 +57,7 @@ struct abce_locvarctx *abce_locvarctx_alloc(struct abce_locvarctx *parent,
   }
   for (i = 0; i < ctx0->capacity; i++)
   {
-    rb_tree_nocmp_init(&ctx0->heads[i]);
+    abce_rb_tree_nocmp_init(&ctx0->heads[i]);
   }
   return ctx0;
 }
@@ -71,7 +71,7 @@ void abce_locvarctx_free(struct abce_locvarctx *ctx)
     {
       struct abce_locvar *locvar =
         CONTAINER_OF(ctx->heads[i].root, struct abce_locvar, node);
-      rb_tree_nocmp_delete(&ctx->heads[i], ctx->heads[i].root);
+      abce_rb_tree_nocmp_delete(&ctx->heads[i], ctx->heads[i].root);
       free(locvar);
     }
   }
@@ -84,7 +84,7 @@ static inline uint32_t abce_str_hash(const char *str)
   return murmur_buf(0x12345678U, str, len);
 }
 
-static inline int abce_locvar_str_cmp_asym(const char *str, struct rb_tree_node *n2, void *ud)
+static inline int abce_locvar_str_cmp_asym(const char *str, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_locvar *e = CONTAINER_OF(n2, struct abce_locvar, node);
   size_t len1 = strlen(str);
@@ -111,7 +111,7 @@ static inline int abce_locvar_str_cmp_asym(const char *str, struct rb_tree_node 
 }
 
 static inline int abce_locvar_str_cmp_sym(
-  struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
+  struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_locvar *e1 = CONTAINER_OF(n1, struct abce_locvar, node);
   struct abce_locvar *e2 = CONTAINER_OF(n2, struct abce_locvar, node);
@@ -143,10 +143,10 @@ int64_t abce_locvarctx_search_rec(struct abce_locvarctx *ctx, const char *name)
 {
   uint32_t hashval;
   size_t hashloc;
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
   hashval = abce_str_hash(name);
   hashloc = hashval & (ctx->capacity - 1);
-  n = RB_TREE_NOCMP_FIND(&ctx->heads[hashloc], abce_locvar_str_cmp_asym, NULL, name);
+  n = ABCE_RB_TREE_NOCMP_FIND(&ctx->heads[hashloc], abce_locvar_str_cmp_asym, NULL, name);
   if (n != NULL)
   {
     return CONTAINER_OF(n, struct abce_locvar, node)->idx;
@@ -184,7 +184,7 @@ int abce_locvarctx_add_param(struct abce_locvarctx *ctx, const char *name)
   locvar->idx = ctx->sz++;
   ctx->args++;
   memcpy(locvar->name, name, namelen + 1);
-  if (rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
+  if (abce_rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
   {
     abort();
   }
@@ -212,7 +212,7 @@ int abce_locvarctx_add(struct abce_locvarctx *ctx, const char *name)
   }
   locvar->idx = ctx->startidx + ctx->sz++;
   memcpy(locvar->name, name, namelen + 1);
-  if (rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
+  if (abce_rb_tree_nocmp_insert_nonexist(&ctx->heads[hashloc], abce_locvar_str_cmp_sym, NULL, &locvar->node) != 0)
   {
     abort();
   }

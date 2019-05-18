@@ -74,11 +74,11 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   struct abce_mb mb;
   uint32_t hashval, hashloc;
   struct abce_const_str_len key = {.str = str, .len = len};
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
 
   hashval = abce_str_len_hash(&key);
   hashloc = hashval % (sizeof(abce->strcache)/sizeof(*abce->strcache));
-  n = RB_TREE_NOCMP_FIND(&abce->strcache[hashloc], abce_str_cache_cmp_asymlen, NULL, &key);
+  n = ABCE_RB_TREE_NOCMP_FIND(&abce->strcache[hashloc], abce_str_cache_cmp_asymlen, NULL, &key);
   if (n != NULL)
   {
     return CONTAINER_OF(n, struct abce_mb_string, node)->locidx;
@@ -94,7 +94,7 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   }
   mb.u.area->u.str.locidx = abce->cachesz;
   abce->cachebase[abce->cachesz++] = mb;
-  if (rb_tree_nocmp_insert_nonexist(&abce->strcache[hashloc], abce_str_cache_cmp_sym, NULL, &mb.u.area->u.str.node) != 0)
+  if (abce_rb_tree_nocmp_insert_nonexist(&abce->strcache[hashloc], abce_str_cache_cmp_sym, NULL, &mb.u.area->u.str.node) != 0)
   {
     abort();
   }
@@ -142,7 +142,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   }
   for (i = 0; i < capacity; i++)
   {
-    rb_tree_nocmp_init(&mba->u.sc.heads[i]);
+    abce_rb_tree_nocmp_init(&mba->u.sc.heads[i]);
   }
   mba->refcnt = 1;
   mb.typ = ABCE_T_SC;
@@ -179,7 +179,7 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
                          struct abce_mb_rb_entry, n);
           abce_mb_refdn(abce, &mbe->key);
           abce_mb_refdn(abce, &mbe->val);
-          rb_tree_nocmp_delete(&mba->u.tree.tree,
+          abce_rb_tree_nocmp_delete(&mba->u.tree.tree,
                                mba->u.tree.tree.root);
           abce->alloc(mbe, sizeof(*mbe), 0, abce);
         }
@@ -230,7 +230,7 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
                            struct abce_mb_rb_entry, n);
             abce_mb_refdn(abce, &mbe->key);
             abce_mb_refdn(abce, &mbe->val);
-            rb_tree_nocmp_delete(&mba->u.sc.heads[i],
+            abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
                                  mba->u.sc.heads[i].root);
             abce->alloc(mbe, sizeof(*mbe), 0, abce);
           }
@@ -246,7 +246,7 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
 
 void abce_mb_dump_impl(const struct abce_mb *mb);
 
-void abce_mb_treedump(const struct rb_tree_node *n, int *first)
+void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first)
 {
   struct abce_mb_rb_entry *e = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   if (n == NULL)

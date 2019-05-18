@@ -76,8 +76,8 @@ void abce_free(struct abce *abce)
                      struct abce_mb_string, node);
       struct abce_mb_area *area = CONTAINER_OF(mbe, struct abce_mb_area, u.str);
 #endif
-      rb_tree_nocmp_delete(&abce->strcache[i],
-                           abce->strcache[i].root);
+      abce_rb_tree_nocmp_delete(&abce->strcache[i],
+                                abce->strcache[i].root);
 #if 0
       abce_mb_arearefdn(abce, &area, ABCE_T_S);
 #endif
@@ -193,7 +193,7 @@ struct abce_mb abce_mb_create_tree(struct abce *abce)
     mb.typ = ABCE_T_N;
     return mb;
   }
-  rb_tree_nocmp_init(&mba->u.tree.tree);
+  abce_rb_tree_nocmp_init(&mba->u.tree.tree);
   mba->u.tree.sz = 0;
   mba->refcnt = 1;
   mb.typ = ABCE_T_T;

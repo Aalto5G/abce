@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct abce_word_iter {
   const char *string;
   size_t stringsz;
@@ -192,5 +196,9 @@ static inline void abce_str_buf_free(struct abce *abce,
 {
   abce->alloc(buf->buf, buf->capacity, 0, abce);
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

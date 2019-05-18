@@ -13,7 +13,7 @@
 #define ABCE_DEFAULT_LOCVARCTX_SIZE 8
 
 struct abce_locvar {
-  struct rb_tree_node node;
+  struct abce_rb_tree_node node;
   size_t idx;
   char name[0]; // Can be '\0'-terminated since charset limited
 };
@@ -26,7 +26,7 @@ struct abce_locvarctx {
   size_t capacity;
   size_t jmpaddr_break; // NB: remember to push false before jumping!
   size_t jmpaddr_continue;
-  struct rb_tree_nocmp heads[0];
+  struct abce_rb_tree_nocmp heads[0];
 };
 
 static inline size_t abce_locvarctx_sz(struct abce_locvarctx *ctx)

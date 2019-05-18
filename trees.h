@@ -4,16 +4,20 @@
 #include <stddef.h>
 #include "abce.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static inline int
 abce_tree_get_str(struct abce *abce, struct abce_mb **mbres,
                   struct abce_mb *mbt, const struct abce_mb *mbkey)
 {
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
   if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_S)
   {
     abort();
   }
-  n = RB_TREE_NOCMP_FIND(&mbt->u.area->u.tree.tree, abce_str_cmp_halfsym, NULL, mbkey);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mbt->u.area->u.tree.tree, abce_str_cmp_halfsym, NULL, mbkey);
   if (n == NULL)
   {
     return -ENOENT;
@@ -25,13 +29,13 @@ static inline int
 abce_tree_del_str(struct abce *abce,
                   struct abce_mb *mbt, const struct abce_mb *mbkey)
 {
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
   struct abce_mb_rb_entry *mbe;
   if (mbt->typ != ABCE_T_T || mbkey->typ != ABCE_T_S)
   {
     abort();
   }
-  n = RB_TREE_NOCMP_FIND(&mbt->u.area->u.tree.tree, abce_str_cmp_halfsym, NULL, mbkey);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mbt->u.area->u.tree.tree, abce_str_cmp_halfsym, NULL, mbkey);
   if (n == NULL)
   {
     return -ENOENT;
@@ -39,7 +43,7 @@ abce_tree_del_str(struct abce *abce,
   mbe = CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   abce_mb_refdn(abce, &mbe->key);
   abce_mb_refdn(abce, &mbe->val);
-  rb_tree_nocmp_delete(&mbt->u.area->u.tree.tree, n);
+  abce_rb_tree_nocmp_delete(&mbt->u.area->u.tree.tree, n);
   abce->alloc(mbe, sizeof(*mbe), 0, abce);
   return 0;
 }
@@ -76,7 +80,7 @@ abce_tree_set_str(struct abce *abce,
   }
   e->key = abce_mb_refup(abce, mbkey);
   e->val = abce_mb_refup(abce, mbval);
-  if (rb_tree_nocmp_insert_nonexist(&mbt->u.area->u.tree.tree, abce_str_cmp_sym, NULL, &e->n) != 0)
+  if (abce_rb_tree_nocmp_insert_nonexist(&mbt->u.area->u.tree.tree, abce_str_cmp_sym, NULL, &e->n) != 0)
   {
     abort();
   }
@@ -92,7 +96,7 @@ abce_tree_get_next(struct abce *abce,
                    const struct abce_mb *mbt,
                    const struct abce_mb *mbkey)
 {
-  struct rb_tree_node *node;
+  struct abce_rb_tree_node *node;
   struct abce_mb_rb_entry *mbe;
   if (mbt->typ != ABCE_T_T)
   {
@@ -172,5 +176,9 @@ out:
   *mbresval = &mbe->val;
   return 0;
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

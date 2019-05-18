@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include "hdr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct murmurctx {
   uint32_t hash;
   uint32_t len;
@@ -80,5 +84,9 @@ static inline uint32_t murmur_buf(uint32_t seed, const void *buf, size_t sz)
   murmurctx_feed_buf(&ctx, buf, sz);
   return murmurctx_get(&ctx);
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

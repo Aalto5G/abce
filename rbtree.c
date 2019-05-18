@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "rbtree.h"
 
-static int rb_subtree_ptrs_valid(struct rb_tree_node *node)
+static int abce_rb_subtree_ptrs_valid(struct abce_rb_tree_node *node)
 {
   int resultl = 0, resultr = 0;
   if (node->left != NULL)
@@ -12,7 +12,7 @@ static int rb_subtree_ptrs_valid(struct rb_tree_node *node)
     {
       return 0;
     }
-    resultl = rb_subtree_ptrs_valid(node->left);
+    resultl = abce_rb_subtree_ptrs_valid(node->left);
     if (resultl == 0)
     {
       return 0;
@@ -24,7 +24,7 @@ static int rb_subtree_ptrs_valid(struct rb_tree_node *node)
     {
       return 0;
     }
-    resultr = rb_subtree_ptrs_valid(node->right);
+    resultr = abce_rb_subtree_ptrs_valid(node->right);
     if (resultr == 0)
     {
       return 0;
@@ -33,7 +33,7 @@ static int rb_subtree_ptrs_valid(struct rb_tree_node *node)
   return 1;
 }
 
-static int rb_subtree_height(struct rb_tree_node *node)
+static int abce_rb_subtree_height(struct abce_rb_tree_node *node)
 {
   int resultl = 0, resultr = 0;
   if (node->left != NULL)
@@ -42,7 +42,7 @@ static int rb_subtree_height(struct rb_tree_node *node)
     {
       return -1;
     }
-    resultl = rb_subtree_height(node->left);
+    resultl = abce_rb_subtree_height(node->left);
     if (resultl < 0)
     {
       return -1;
@@ -54,7 +54,7 @@ static int rb_subtree_height(struct rb_tree_node *node)
     {
       return -1;
     }
-    resultr = rb_subtree_height(node->right);
+    resultr = abce_rb_subtree_height(node->right);
     if (resultr < 0)
     {
       return -1;
@@ -67,7 +67,7 @@ static int rb_subtree_height(struct rb_tree_node *node)
   return node->is_black ? 1 + resultr : resultr;
 }
 
-static int __attribute__((unused)) rb_tree_nocmp_ptrs_valid(struct rb_tree_nocmp *tree)
+static int __attribute__((unused)) abce_rb_tree_nocmp_ptrs_valid(struct abce_rb_tree_nocmp *tree)
 {
   if (tree->root == NULL)
   {
@@ -77,14 +77,14 @@ static int __attribute__((unused)) rb_tree_nocmp_ptrs_valid(struct rb_tree_nocmp
   {
     return 0;
   }
-  if (rb_subtree_ptrs_valid(tree->root) == 0)
+  if (abce_rb_subtree_ptrs_valid(tree->root) == 0)
   {
     return 0;
   }
   return 1;
 }
 
-int rb_tree_nocmp_valid(struct rb_tree_nocmp *tree)
+int abce_rb_tree_nocmp_valid(struct abce_rb_tree_nocmp *tree)
 {
   if (tree->root == NULL)
   {
@@ -94,16 +94,16 @@ int rb_tree_nocmp_valid(struct rb_tree_nocmp *tree)
   {
     return 0;
   }
-  if (rb_subtree_height(tree->root) < 0)
+  if (abce_rb_subtree_height(tree->root) < 0)
   {
     return 0;
   }
   return 1;
 }
 
-struct rb_tree_node *rb_tree_nocmp_leftmost(struct rb_tree_nocmp *tree)
+struct abce_rb_tree_node *abce_rb_tree_nocmp_leftmost(struct abce_rb_tree_nocmp *tree)
 {
-  struct rb_tree_node *node = tree->root;
+  struct abce_rb_tree_node *node = tree->root;
   if (node == NULL)
   {
     return NULL;
@@ -118,9 +118,9 @@ struct rb_tree_node *rb_tree_nocmp_leftmost(struct rb_tree_nocmp *tree)
   }
 }
 
-struct rb_tree_node *rb_tree_nocmp_rightmost(struct rb_tree_nocmp *tree)
+struct abce_rb_tree_node *abce_rb_tree_nocmp_rightmost(struct abce_rb_tree_nocmp *tree)
 {
-  struct rb_tree_node *node = tree->root;
+  struct abce_rb_tree_node *node = tree->root;
   if (node == NULL)
   {
     return NULL;
@@ -135,9 +135,9 @@ struct rb_tree_node *rb_tree_nocmp_rightmost(struct rb_tree_nocmp *tree)
   }
 }
 
-static inline struct rb_tree_node *sibling(struct rb_tree_node *node)
+static inline struct abce_rb_tree_node *sibling(struct abce_rb_tree_node *node)
 {
-  struct rb_tree_node *p = node->parent;
+  struct abce_rb_tree_node *p = node->parent;
   if (p == NULL)
   {
     return NULL;
@@ -152,7 +152,7 @@ static inline struct rb_tree_node *sibling(struct rb_tree_node *node)
   }
 }
 
-static inline struct rb_tree_node *sibling_parent(struct rb_tree_node *node, struct rb_tree_node *p)
+static inline struct abce_rb_tree_node *sibling_parent(struct abce_rb_tree_node *node, struct abce_rb_tree_node *p)
 {
   if (p == NULL)
   {
@@ -168,10 +168,10 @@ static inline struct rb_tree_node *sibling_parent(struct rb_tree_node *node, str
   }
 }
 
-static inline struct rb_tree_node *uncle(struct rb_tree_node *node)
+static inline struct abce_rb_tree_node *uncle(struct abce_rb_tree_node *node)
 {
-  struct rb_tree_node *p = node->parent;
-  struct rb_tree_node *g = p->parent;
+  struct abce_rb_tree_node *p = node->parent;
+  struct abce_rb_tree_node *g = p->parent;
   if (g == NULL)
   {
     return NULL;
@@ -179,13 +179,13 @@ static inline struct rb_tree_node *uncle(struct rb_tree_node *node)
   return sibling(p);
 }
 
-static inline void rotate_left(struct rb_tree_nocmp *tree, struct rb_tree_node *p)
+static inline void rotate_left(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *p)
 {
-  struct rb_tree_node *parent = p->parent;
-  struct rb_tree_node *q = p->right;
-  struct rb_tree_node *a = p->left;
-  struct rb_tree_node *b = q->left;
-  struct rb_tree_node *c = q->right;
+  struct abce_rb_tree_node *parent = p->parent;
+  struct abce_rb_tree_node *q = p->right;
+  struct abce_rb_tree_node *a = p->left;
+  struct abce_rb_tree_node *b = q->left;
+  struct abce_rb_tree_node *c = q->right;
   //printf("rotating left\n");
   p->left = a;
   if (a)
@@ -226,13 +226,13 @@ static inline void rotate_left(struct rb_tree_nocmp *tree, struct rb_tree_node *
   }
 }
 
-static inline void rotate_right(struct rb_tree_nocmp *tree, struct rb_tree_node *q)
+static inline void rotate_right(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *q)
 {
-  struct rb_tree_node *parent = q->parent;
-  struct rb_tree_node *p = q->left;
-  struct rb_tree_node *a = p->left;
-  struct rb_tree_node *b = p->right;
-  struct rb_tree_node *c = q->right;
+  struct abce_rb_tree_node *parent = q->parent;
+  struct abce_rb_tree_node *p = q->left;
+  struct abce_rb_tree_node *a = p->left;
+  struct abce_rb_tree_node *b = p->right;
+  struct abce_rb_tree_node *c = q->right;
   //printf("rotating right\n");
   p->left = a;
   if (a)
@@ -273,7 +273,7 @@ static inline void rotate_right(struct rb_tree_nocmp *tree, struct rb_tree_node 
   }
 }
 
-void rb_tree_nocmp_insert_repair(struct rb_tree_nocmp *tree, struct rb_tree_node *node)
+void abce_rb_tree_nocmp_insert_repair(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *node)
 {
   if (node->parent == NULL)
   {
@@ -288,12 +288,12 @@ void rb_tree_nocmp_insert_repair(struct rb_tree_nocmp *tree, struct rb_tree_node
     node->parent->is_black = 1;
     uncle(node)->is_black = 1;
     node->parent->parent->is_black = 0;
-    rb_tree_nocmp_insert_repair(tree, node->parent->parent); // Tail recursion
+    abce_rb_tree_nocmp_insert_repair(tree, node->parent->parent); // Tail recursion
   }
   else
   {
-    struct rb_tree_node *p = node->parent;
-    struct rb_tree_node *g = p->parent;
+    struct abce_rb_tree_node *p = node->parent;
+    struct abce_rb_tree_node *g = p->parent;
     //printf("case 4 %p %p\n", p, g);
     if (g->left && node == g->left->right)
     {
@@ -325,9 +325,9 @@ void rb_tree_nocmp_insert_repair(struct rb_tree_nocmp *tree, struct rb_tree_node
   }
 }
 
-void rb_tree_insert(struct rb_tree *tree, struct rb_tree_node *node)
+void abce_rb_tree_insert(struct abce_rb_tree *tree, struct abce_rb_tree_node *node)
 {
-  struct rb_tree_node *node2;
+  struct abce_rb_tree_node *node2;
   node->is_black = 0;
   node->left = NULL;
   node->right = NULL;
@@ -335,7 +335,7 @@ void rb_tree_insert(struct rb_tree *tree, struct rb_tree_node *node)
   {
     tree->nocmp.root = node;
     node->parent = NULL;
-    rb_tree_nocmp_insert_repair(&tree->nocmp, node);
+    abce_rb_tree_nocmp_insert_repair(&tree->nocmp, node);
     return;
   }
   node2 = tree->nocmp.root;
@@ -347,7 +347,7 @@ void rb_tree_insert(struct rb_tree *tree, struct rb_tree_node *node)
       {
         node2->left = node;
         node->parent = node2;
-        rb_tree_nocmp_insert_repair(&tree->nocmp, node);
+        abce_rb_tree_nocmp_insert_repair(&tree->nocmp, node);
         return;
       }
       node2 = node2->left;
@@ -358,7 +358,7 @@ void rb_tree_insert(struct rb_tree *tree, struct rb_tree_node *node)
       {
         node2->right = node;
         node->parent = node2;
-        rb_tree_nocmp_insert_repair(&tree->nocmp, node);
+        abce_rb_tree_nocmp_insert_repair(&tree->nocmp, node);
         return;
       }
       node2 = node2->right;
@@ -366,15 +366,15 @@ void rb_tree_insert(struct rb_tree *tree, struct rb_tree_node *node)
   }
 }
 
-static inline int is_leaf(struct rb_tree_node *node)
+static inline int is_leaf(struct abce_rb_tree_node *node)
 {
   return node == NULL;
   //return node->left == NULL && node->right == NULL;
 }
 
-static void rb_tree_delete_case6(struct rb_tree_nocmp *tree, struct rb_tree_node *n, struct rb_tree_node *parent)
+static void abce_rb_tree_delete_case6(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n, struct abce_rb_tree_node *parent)
 {
-  struct rb_tree_node *s = sibling_parent(n, parent);
+  struct abce_rb_tree_node *s = sibling_parent(n, parent);
  
   s->is_black = parent->is_black;
   parent->is_black = 1;
@@ -391,9 +391,9 @@ static void rb_tree_delete_case6(struct rb_tree_nocmp *tree, struct rb_tree_node
   }
 }
 
-static void rb_tree_delete_case5(struct rb_tree_nocmp *tree, struct rb_tree_node *n, struct rb_tree_node *parent)
+static void abce_rb_tree_delete_case5(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n, struct abce_rb_tree_node *parent)
 {
-  struct rb_tree_node *s = sibling_parent(n, parent);
+  struct abce_rb_tree_node *s = sibling_parent(n, parent);
  
   if (s->is_black)
   {
@@ -414,12 +414,12 @@ static void rb_tree_delete_case5(struct rb_tree_nocmp *tree, struct rb_tree_node
       rotate_left(tree, s);
     }
   }
-  rb_tree_delete_case6(tree, n, parent);
+  abce_rb_tree_delete_case6(tree, n, parent);
 }
 
-static void rb_tree_delete_case4(struct rb_tree_nocmp *tree, struct rb_tree_node *n, struct rb_tree_node *parent)
+static void abce_rb_tree_delete_case4(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n, struct abce_rb_tree_node *parent)
 {
-  struct rb_tree_node *s = sibling_parent(n, parent);
+  struct abce_rb_tree_node *s = sibling_parent(n, parent);
   if ((parent->is_black == 0) &&
       (s == NULL || s->is_black) &&
       (s->left == NULL || s->left->is_black) &&
@@ -430,15 +430,15 @@ static void rb_tree_delete_case4(struct rb_tree_nocmp *tree, struct rb_tree_node
   }
   else
   {
-    rb_tree_delete_case5(tree, n, parent);
+    abce_rb_tree_delete_case5(tree, n, parent);
   }
 }
 
-static void rb_tree_delete_case1(struct rb_tree_nocmp *tree, struct rb_tree_node *node, struct rb_tree_node *parent);
+static void abce_rb_tree_delete_case1(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *node, struct abce_rb_tree_node *parent);
 
-static void rb_tree_delete_case3(struct rb_tree_nocmp *tree, struct rb_tree_node *n, struct rb_tree_node *parent)
+static void abce_rb_tree_delete_case3(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n, struct abce_rb_tree_node *parent)
 {
-  struct rb_tree_node *s = sibling_parent(n, parent);
+  struct abce_rb_tree_node *s = sibling_parent(n, parent);
   //printf("case3\n");
   if ((parent == NULL || parent->is_black) &&
       (s == NULL || s->is_black) &&
@@ -446,17 +446,17 @@ static void rb_tree_delete_case3(struct rb_tree_nocmp *tree, struct rb_tree_node
       (s->right == NULL || s->right->is_black))
   {
     s->is_black = 0;
-    rb_tree_delete_case1(tree, parent, parent->parent);
+    abce_rb_tree_delete_case1(tree, parent, parent->parent);
   }
   else
   {
-    rb_tree_delete_case4(tree, n, parent);
+    abce_rb_tree_delete_case4(tree, n, parent);
   }
 }
 
-static void rb_tree_delete_case2(struct rb_tree_nocmp *tree, struct rb_tree_node *n, struct rb_tree_node *parent)
+static void abce_rb_tree_delete_case2(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n, struct abce_rb_tree_node *parent)
 {
-  struct rb_tree_node *s = sibling_parent(n, parent);
+  struct abce_rb_tree_node *s = sibling_parent(n, parent);
   //printf("case2\n");
   if (s && s->is_black == 0)
   {
@@ -471,27 +471,27 @@ static void rb_tree_delete_case2(struct rb_tree_nocmp *tree, struct rb_tree_node
       rotate_right(tree, parent);
     }
   }
-  rb_tree_delete_case3(tree, n, parent);
+  abce_rb_tree_delete_case3(tree, n, parent);
 }
 
-static void rb_tree_delete_case1(struct rb_tree_nocmp *tree, struct rb_tree_node *node, struct rb_tree_node *parent)
+static void abce_rb_tree_delete_case1(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *node, struct abce_rb_tree_node *parent)
 {
   //printf("case1 %p %p\n", node, parent);
   if (parent != NULL) // XXX
   {
-    rb_tree_delete_case2(tree, node, parent);
+    abce_rb_tree_delete_case2(tree, node, parent);
   }
 }
 
-static void __attribute__((unused)) rb_tree_exchange(struct rb_tree_nocmp *tree, struct rb_tree_node *n1, struct rb_tree_node *n2)
+static void __attribute__((unused)) abce_rb_tree_exchange(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2)
 {
-  struct rb_tree_node *n1_parent = n1->parent;
-  struct rb_tree_node *n1_left = n1->left;
-  struct rb_tree_node *n1_right = n1->right;
+  struct abce_rb_tree_node *n1_parent = n1->parent;
+  struct abce_rb_tree_node *n1_left = n1->left;
+  struct abce_rb_tree_node *n1_right = n1->right;
   int n1_is_black = n1->is_black;
-  struct rb_tree_node *n2_parent = n2->parent;
-  struct rb_tree_node *n2_left = n2->left;
-  struct rb_tree_node *n2_right = n2->right;
+  struct abce_rb_tree_node *n2_parent = n2->parent;
+  struct abce_rb_tree_node *n2_left = n2->left;
+  struct abce_rb_tree_node *n2_right = n2->right;
   int n2_is_black = n2->is_black;
   if (n2_parent == n1 && n1->left == n2)
   {
@@ -577,7 +577,7 @@ static void __attribute__((unused)) rb_tree_exchange(struct rb_tree_nocmp *tree,
   }
   if (n1_parent == n2)
   {
-    rb_tree_exchange(tree, n2, n1);
+    abce_rb_tree_exchange(tree, n2, n1);
     return;
   }
   //printf("exchanging\n");
@@ -653,11 +653,11 @@ static void __attribute__((unused)) rb_tree_exchange(struct rb_tree_nocmp *tree,
   n2->is_black = n1_is_black;
 }
 
-static void __attribute__((unused)) rb_tree_replace(struct rb_tree_nocmp *tree, struct rb_tree_node *n1, struct rb_tree_node *n2)
+static void __attribute__((unused)) abce_rb_tree_replace(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2)
 {
-  struct rb_tree_node *n1_parent = n1->parent;
-  struct rb_tree_node *n1_left = n1->left;
-  struct rb_tree_node *n1_right = n1->right;
+  struct abce_rb_tree_node *n1_parent = n1->parent;
+  struct abce_rb_tree_node *n1_left = n1->left;
+  struct abce_rb_tree_node *n1_right = n1->right;
   //printf("replacing %p\n", n1_parent);
   // substitute n2 into n1's place in the tree
   if (n1_parent)
@@ -700,13 +700,13 @@ static void __attribute__((unused)) rb_tree_replace(struct rb_tree_nocmp *tree, 
   }
 }
 
-static void rb_tree_delete_one_child(struct rb_tree_nocmp *tree, struct rb_tree_node *node)
+static void abce_rb_tree_delete_one_child(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *node)
 {
   /*
    * Precondition: n has at most one non-leaf child.
    */
-  struct rb_tree_node *child = is_leaf(node->right) ? node->left : node->right;
-  //rb_tree_replace(tree, node, child);
+  struct abce_rb_tree_node *child = is_leaf(node->right) ? node->left : node->right;
+  //abce_rb_tree_replace(tree, node, child);
   if (node->parent == NULL)
   {
     tree->root = child;
@@ -743,12 +743,12 @@ static void rb_tree_delete_one_child(struct rb_tree_nocmp *tree, struct rb_tree_
     }
     else
     {
-      rb_tree_delete_case1(tree, child, node->parent);
+      abce_rb_tree_delete_case1(tree, child, node->parent);
     }
   }
 }
 
-void rb_tree_nocmp_delete(struct rb_tree_nocmp *tree, struct rb_tree_node *node)
+void abce_rb_tree_nocmp_delete(struct abce_rb_tree_nocmp *tree, struct abce_rb_tree_node *node)
 {
 #if 0
   if (node->left == NULL && node->right == NULL)
@@ -774,8 +774,8 @@ void rb_tree_nocmp_delete(struct rb_tree_nocmp *tree, struct rb_tree_node *node)
 #endif
   if (!is_leaf(node->left) && !is_leaf(node->right))
   {
-    struct rb_tree_node *node2 = node->left;
-    //struct rb_tree_node *oldright = node->right;
+    struct abce_rb_tree_node *node2 = node->left;
+    //struct abce_rb_tree_node *oldright = node->right;
     for (;;)
     {
       if (node2->right == NULL)
@@ -805,35 +805,35 @@ void rb_tree_nocmp_delete(struct rb_tree_nocmp *tree, struct rb_tree_node *node)
     node2->right->parent = node2;
 #endif
     //abort();
-    rb_tree_exchange(tree, node, node2);
+    abce_rb_tree_exchange(tree, node, node2);
     //abort();
 #if 0
-    if (!rb_tree_ptrs_valid(tree))
+    if (!abce_rb_tree_ptrs_valid(tree))
     {
       printf("invalid ptrs inside\n");
       return;
       abort();
     }
-    if (!rb_tree_valid(tree))
+    if (!abce_rb_tree_valid(tree))
     {
       printf("invalid 1 inside\n");
       return;
       abort();
     }
 #endif
-    rb_tree_delete_one_child(tree, node);
+    abce_rb_tree_delete_one_child(tree, node);
     //node2->is_black = node->is_black; // XXX
-    //rb_tree_replace(tree, node, node2);
+    //abce_rb_tree_replace(tree, node, node2);
     //node2->right = oldright;
     //oldright->parent = node2;
 #if 0
-    if (!rb_tree_ptrs_valid(tree))
+    if (!abce_rb_tree_ptrs_valid(tree))
     {
       printf("invalid 2 ptrs inside\n");
       return;
       abort();
     }
-    if (!rb_tree_valid(tree))
+    if (!abce_rb_tree_valid(tree))
     {
       printf("invalid 2 inside\n");
       return;
@@ -844,6 +844,6 @@ void rb_tree_nocmp_delete(struct rb_tree_nocmp *tree, struct rb_tree_node *node)
     return;
   }
   //printf("deleting one child\n");
-  rb_tree_delete_one_child(tree, node);
+  abce_rb_tree_delete_one_child(tree, node);
 }
 

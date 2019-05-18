@@ -647,7 +647,7 @@ static inline uint32_t abce_mb_str_hash(const struct abce_mb *mb)
   }
   return murmur_buf(0x12345678U, mb->u.area->u.str.buf, mb->u.area->u.str.size);
 }
-static inline int abce_str_cache_cmp_asymlen(const struct abce_const_str_len *str_len, struct rb_tree_node *n2, void *ud)
+static inline int abce_str_cache_cmp_asymlen(const struct abce_const_str_len *str_len, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_mb_string *e = CONTAINER_OF(n2, struct abce_mb_string, node);
   size_t len1 = str_len->len;
@@ -672,7 +672,7 @@ static inline int abce_str_cache_cmp_asymlen(const struct abce_const_str_len *st
   }
   return 0;
 }
-static inline int abce_str_cmp_asym(const char *str, struct rb_tree_node *n2, void *ud)
+static inline int abce_str_cmp_asym(const char *str, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_mb_rb_entry *e = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
   size_t len1 = strlen(str);
@@ -703,7 +703,7 @@ static inline int abce_str_cmp_asym(const char *str, struct rb_tree_node *n2, vo
 }
 
 static inline int abce_str_cmp_halfsym(
-  const struct abce_mb *key, struct rb_tree_node *n2, void *ud)
+  const struct abce_mb *key, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_mb_rb_entry *e2 = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
   size_t len1, len2, lenmin;
@@ -735,7 +735,7 @@ static inline int abce_str_cmp_halfsym(
 }
 
 static inline int abce_str_cache_cmp_sym(
-  struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
+  struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_mb_string *e1 = CONTAINER_OF(n1, struct abce_mb_string, node);
   struct abce_mb_string *e2 = CONTAINER_OF(n2, struct abce_mb_string, node);
@@ -795,7 +795,7 @@ static inline int abce_str_cmp_sym_mb(
 }
 
 static inline int abce_str_cmp_sym(
-  struct rb_tree_node *n1, struct rb_tree_node *n2, void *ud)
+  struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_mb_rb_entry *e1 = CONTAINER_OF(n1, struct abce_mb_rb_entry, n);
   struct abce_mb_rb_entry *e2 = CONTAINER_OF(n2, struct abce_mb_rb_entry, n);
@@ -819,14 +819,14 @@ static inline const struct abce_mb *abce_sc_get_myval_mb_area(
 {
   uint32_t hashval;
   size_t hashloc;
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
   if (key->typ != ABCE_T_S)
   {
     abort();
   }
   hashval = abce_mb_str_hash(key);
   hashloc = hashval & (mba->u.sc.size - 1);
-  n = RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, key);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, key);
   if (n == NULL)
   {
     return NULL;
@@ -850,10 +850,10 @@ static inline const struct abce_mb *abce_sc_get_myval_str_area(
 {
   uint32_t hashval;
   size_t hashloc;
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
   hashval = abce_str_hash(str);
   hashloc = hashval & (mba->u.sc.size - 1);
-  n = RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_asym, NULL, str);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_asym, NULL, str);
   if (n == NULL)
   {
     return NULL;
@@ -976,7 +976,7 @@ abce_mb_array_append(struct abce *abce,
   return 0;
 }
 
-void abce_mb_treedump(const struct rb_tree_node *n, int *first);
+void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first);
 
 void abce_dump_str(const char *str, size_t sz);
 

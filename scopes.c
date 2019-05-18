@@ -40,7 +40,7 @@ int abce_sc_replace_val_mb(
   struct abce_mb_rb_entry *e;
   size_t hashloc;
   int ret;
-  struct rb_tree_node *n;
+  struct abce_rb_tree_node *n;
 
   if (mb->typ != ABCE_T_SC || pkey->typ != ABCE_T_S)
   {
@@ -49,7 +49,7 @@ int abce_sc_replace_val_mb(
   hashval = abce_mb_str_hash(pkey);
   hashloc = hashval & (mba->u.sc.size - 1);
 
-  n = RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
   if (n == NULL)
   {
     e = abce->alloc(NULL, 0, sizeof(*e), abce);
@@ -61,7 +61,7 @@ int abce_sc_replace_val_mb(
     }
     e->key = abce_mb_refup(abce, pkey);
     e->val = abce_mb_refup(abce, pval);
-    ret = rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+    ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
                                         abce_str_cmp_sym, NULL, &e->n);
     if (ret != 0)
     {
@@ -105,7 +105,7 @@ int abce_sc_put_val_str(
     return -ENOMEM;
   }
   e->val = abce_mb_refup(abce, pval);
-  ret = rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+  ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
                                       abce_str_cmp_sym, NULL, &e->n);
   if (ret == 0)
   {
