@@ -290,3 +290,87 @@ abce_mb_refdn_noinline(struct abce *abce, struct abce_mb *mb)
 {
   abce_mb_refdn(abce, mb);
 }
+
+int
+abce_fetch_i_tail(uint8_t ophi, uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
+{
+  uint8_t opmid, oplo;
+  if (abce_unlikely((ophi & 0xC0) == 0x80))
+  {
+    //printf("EILSEQ 1\n");
+    abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = (1<<16) | ophi;
+    return -EILSEQ;
+  }
+  else if (abce_likely((ophi & 0xE0) == 0xC0))
+  {
+    if (abce_fetch_b(&oplo, abce, addcode, addsz) != 0)
+    {
+      return -EFAULT;
+    }
+    if (abce_unlikely((oplo & 0xC0) != 0x80))
+    {
+      //printf("EILSEQ 2\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (2<<16) | ophi;
+      return -EILSEQ;
+    }
+    *ins = ((ophi&0x1F) << 6) | (oplo & 0x3F);
+    if (abce_unlikely(*ins < 128))
+    {
+      //printf("EILSEQ 3\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (3<<16) | *ins;
+      return -EILSEQ;
+    }
+    return 0;
+  }
+  else if (abce_likely((ophi & 0xF0) == 0xE0))
+  {
+    if (abce_fetch_b(&opmid, abce, addcode, addsz) != 0)
+    {
+      return -EFAULT;
+    }
+    if (abce_unlikely((opmid & 0xC0) != 0x80))
+    {
+      //printf("EILSEQ 4\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (4<<16) | opmid;
+      return -EILSEQ;
+    }
+    if (abce_fetch_b(&oplo, abce, addcode, addsz) != 0)
+    {
+      return -EFAULT;
+    }
+    if (abce_unlikely((oplo & 0xC0) != 0x80))
+    {
+      //printf("EILSEQ 5\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (5<<16) | opmid;
+      return -EILSEQ;
+    }
+    *ins = ((ophi&0xF) << 12) | ((opmid&0x3F) << 6) | (oplo & 0x3F);
+    if (abce_unlikely(*ins <= 0x7FF))
+    {
+      //printf("EILSEQ 6\n");
+      abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = (6<<16) | *ins;
+      return -EILSEQ;
+    }
+    return 0;
+  }
+  else
+  {
+    //printf("EILSEQ 7\n");
+    abce->err.code = ABCE_E_ILLEGAL_INSTRUCTION;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = (7<<16) | ophi;
+    return -EILSEQ;
+  }
+}
