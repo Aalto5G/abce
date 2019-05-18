@@ -345,7 +345,7 @@ static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t id
   if (unlikely(mbptr->typ != ABCE_T_SC))
   {
     abce->err.code = ABCE_E_EXPECT_SCOPE;
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -364,7 +364,7 @@ static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t id
   if (unlikely(mbptr->typ != ABCE_T_A))
   {
     abce->err.code = ABCE_E_EXPECT_ARRAY;
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -383,7 +383,7 @@ static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t id
   if (unlikely(mbptr->typ != ABCE_T_PB))
   {
     abce->err.code = ABCE_E_EXPECT_PB;
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -402,7 +402,7 @@ static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t i
   if (unlikely(mbptr->typ != ABCE_T_S))
   {
     abce->err.code = ABCE_E_EXPECT_STR;
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
