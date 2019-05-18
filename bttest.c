@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   struct amyplanyy amyplanyy = {};
   unsigned char tmpbuf[1024] = {0};
   size_t tmpsiz = 0;
-  //size_t i;
+  size_t i;
 
   amyplanyy_init(&amyplanyy);
 
@@ -43,6 +43,18 @@ int main(int argc, char **argv)
   printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz));
   printf("actual err %d\n", (int)amyplanyy.abce.err.code);
   printf("actual typ %d\n", (int)amyplanyy.abce.err.mb.typ);
+
+  for (i = 0; i < amyplanyy.abce.btsz; i++)
+  {
+    if (amyplanyy.abce.btbase[i].typ == ABCE_T_S)
+    {
+      printf("%s\n", amyplanyy.abce.btbase[i].u.area->u.str.buf);
+    }
+    else
+    {
+      printf("(-)\n");
+    }
+  }
 
   // FIXME doesn't support long instructions
 #if 0
