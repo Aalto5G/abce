@@ -1286,7 +1286,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
       ret = -EFAULT;
       break;
     }
-    if (abce->ins_budget_fn)
+    if (unlikely(abce->ins_budget_fn != NULL))
     {
       int ret2;
       ret2 = abce->ins_budget_fn(abce, ins);
@@ -1378,7 +1378,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           //uint8_t inslo;
           int rettmp;
           GETDBL(&argcnt, -1);
-          if ((double)(size_t)argcnt != argcnt)
+          if (unlikely((double)(size_t)argcnt != argcnt))
           {
             abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -1390,8 +1390,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           POP(); // argcnt
 calltrailer:
           // FIXME off by one?
-          if (!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
-                (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard)))
+          if (unlikely(!((new_ip >= 0 && (size_t)new_ip+10 <= abce->bytecodesz) ||
+                (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip+10 <= -(int64_t)guard))))
           {
             abce->err.code = ABCE_E_BYTECODE_FAULT;
             abce->err.mb.typ = ABCE_T_D;
@@ -1399,11 +1399,11 @@ calltrailer:
             ret = -EFAULT;
             break;
           }
-          if (abce_push_bp(abce) != 0)
+          if (unlikely(abce_push_bp(abce) != 0))
           {
             abort(); // Can't fail, we just popped one value
           }
-          if (abce_push_ip(abce) != 0)
+          if (unlikely(abce_push_ip(abce) != 0))
           {
             ret = -EOVERFLOW;
             break;
@@ -1412,12 +1412,12 @@ calltrailer:
           abce->bp = abce->sp - 2 - (uint64_t)argcnt;
 #if 1
           rettmp = abce_fetch_b(&inshi, abce, addcode, addsz);
-          if (rettmp != 0)
+          if (unlikely(rettmp != 0))
           {
             ret = rettmp;
             break;
           }
-          if (inshi != ABCE_OPCODE_FUN_HEADER)
+          if (unlikely(inshi != ABCE_OPCODE_FUN_HEADER))
           {
             abce->err.code = ABCE_E_EXPECT_FUN_HEADER;
             abce->err.mb.typ = ABCE_T_D;
@@ -1464,12 +1464,12 @@ calltrailer:
 #endif
           double dbl;
           rettmp = abce_fetch_d(&dbl, abce, addcode, addsz);
-          if (rettmp != 0)
+          if (unlikely(rettmp != 0))
           {
             ret = rettmp;
             break;
           }
-          if (dbl != (double)(uint64_t)argcnt)
+          if (unlikely(dbl != (double)(uint64_t)argcnt))
           {
             abce->err.code = ABCE_E_INVALID_ARG_CNT;
             abce->err.mb.typ = ABCE_T_D;
@@ -1965,7 +1965,7 @@ outpbset:
           size_t i;
           GETDBL(&cntloc, -1);
           GETDBL(&cntargs, -2);
-          if (cntloc != (uint32_t)cntloc)
+          if (unlikely(cntloc != (uint32_t)cntloc))
           {
             abce->err.code = ABCE_E_RET_LOCVARCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -1973,7 +1973,7 @@ outpbset:
             ret = -EINVAL;
             break;
           }
-          if (cntargs != (uint32_t)cntargs)
+          if (unlikely(cntargs != (uint32_t)cntargs))
           {
             abce->err.code = ABCE_E_RET_ARGCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -1999,7 +1999,7 @@ outpbset:
             POP();
           }
           POP(); // funcall address
-          if (abce_push_mb(abce, &mb) != 0)
+          if (unlikely(abce_push_mb(abce, &mb) != 0))
           {
             abce_maybeabort();
           }
