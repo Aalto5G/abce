@@ -58,15 +58,23 @@ static inline int abce_set_double(struct abce *abce, size_t idx, double dbl)
   return 0;
 }
 
-static inline int abce_add_double(struct abce *abce, double dbl)
+static inline int
+abce_add_double_alt(void *bcode, size_t *bsz, size_t cap, double dbl)
 {
-  if (abce->bytecodesz + 8 > abce->bytecodecap)
+  unsigned char *bytecode = bcode;
+  if ((*bsz) + 8 > cap)
   {
     return -EFAULT;
   }
-  abce_put_dbl(dbl, &abce->bytecode[abce->bytecodesz]);
-  abce->bytecodesz += 8;
+  abce_put_dbl(dbl, &bytecode[*bsz]);
+  (*bsz) += 8;
   return 0;
+}
+
+static inline int abce_add_double(struct abce *abce, double dbl)
+{
+  return abce_add_double_alt(
+    abce->bytecode, &abce->bytecodesz, abce->bytecodecap, dbl);
 }
 
 void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ);
@@ -538,38 +546,46 @@ static inline int abce_push_fun(struct abce *abce, double fun_addr)
   return 0;
 }
 
-static inline int abce_add_ins(struct abce *abce, uint16_t ins)
+static inline int
+abce_add_ins_alt(void *bcode, size_t *bsz, size_t cap, uint16_t ins)
 {
+  unsigned char *bytecode = bcode;
   if (ins >= 2048)
   {
-    if (abce->bytecodesz + 3 > abce->bytecodecap)
+    if ((*bsz) + 3 > cap)
     {
       return -EFAULT;
     }
-    abce->bytecode[abce->bytecodesz++] = (ins>>12) | 0xE0;
-    abce->bytecode[abce->bytecodesz++] = ((ins>>6)&0x3F) | 0x80;
-    abce->bytecode[abce->bytecodesz++] = ((ins)&0x3F) | 0x80;
+    bytecode[(*bsz)++] = (ins>>12) | 0xE0;
+    bytecode[(*bsz)++] = ((ins>>6)&0x3F) | 0x80;
+    bytecode[(*bsz)++] = ((ins)&0x3F) | 0x80;
     return 0;
   }
   else if (ins >= 128)
   {
-    if (abce->bytecodesz + 2 > abce->bytecodecap)
+    if ((*bsz) + 2 > cap)
     {
       return -EFAULT;
     }
-    abce->bytecode[abce->bytecodesz++] = ((ins>>6)) | 0xC0;
-    abce->bytecode[abce->bytecodesz++] = ((ins)&0x3F) | 0x80;
+    bytecode[(*bsz)++] = ((ins>>6)) | 0xC0;
+    bytecode[(*bsz)++] = ((ins)&0x3F) | 0x80;
     return 0;
   }
   else
   {
-    if (abce->bytecodesz >= abce->bytecodecap)
+    if ((*bsz) >= cap)
     {
       return -EFAULT;
     }
-    abce->bytecode[abce->bytecodesz++] = ins;
+    bytecode[(*bsz)++] = ins;
     return 0;
   }
+}
+
+static inline int abce_add_ins(struct abce *abce, uint16_t ins)
+{
+  return abce_add_ins_alt(abce->bytecode, &abce->bytecodesz, abce->bytecodecap,
+                          ins);
 }
 
 static inline int abce_add_byte(struct abce *abce, unsigned char byte)
@@ -876,6 +892,17 @@ abce_sc_get_rec_str(const struct abce_mb *mb, const char *str)
     abort();
   }
   return abce_sc_get_rec_str_area(mb->u.area, str);
+}
+
+static inline int64_t
+abce_sc_get_rec_str_fun(const struct abce_mb *mb, const char *str)
+{
+  const struct abce_mb *mb2 = abce_sc_get_rec_str(mb, str);
+  if (mb2 == NULL || mb2->typ != ABCE_T_F)
+  {
+    abort();
+  }
+  return mb2->u.d;
 }
 
 int abce_sc_put_val_str(
