@@ -14,3 +14,4 @@ perf.data
 perf.data.old
 .*.sw?
 /fiboefftest
+/fibonaccitest

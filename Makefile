@@ -1,7 +1,7 @@
 .SUFFIXES:
 
 SRC_LIB := yyutils.c memblock.c rbtree.c locvarctx.c engine.c string.c trees.c scopes.c abce.c
-SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c
+SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c
 
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
@@ -47,7 +47,7 @@ DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
 .PHONY: all wc
 
-all: amyplantest main locvartest treetest fiboefftest
+all: amyplantest main locvartest treetest fiboefftest fibonaccitest
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
@@ -75,6 +75,9 @@ amyplantest: amyplantest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 fiboefftest: fiboefftest.o libabce.a Makefile $(LUALIB)
+	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
+
+fibonaccitest: fibonaccitest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 libabce.a: $(OBJ_LIB) $(OBJGEN_LIB) $(OBJ_CPP_LIB) Makefile
