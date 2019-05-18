@@ -204,7 +204,7 @@ static inline int abce_getboolean(int *b, struct abce *abce, int64_t idx)
     return -EOVERFLOW;
   }
   mb = &abce->stackbase[addr];
-  if (unlikely(mb->typ != ABCE_T_D || mb->typ != ABCE_T_B))
+  if (unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
   {
     abce->err.code = ABCE_E_EXPECT_BOOL;
     abce->err.mb = abce_mb_refup_noinline(abce, mb);
