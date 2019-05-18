@@ -1579,8 +1579,8 @@ calltrailer:
             break;
           }
           ioff = off;
-          if (sz != -1 && sz != -2 && sz != -4 &&
-              sz != 1 && sz != 2 && sz != 4)
+          if (sz != 0 && sz != -1 && sz != -2 &&
+              sz != 0 && sz != 1 && sz != 2)
           {
             abce->err.code = ABCE_E_PB_OPSZ_INVALID;
             abce->err.mb.typ = ABCE_T_D;
@@ -1600,8 +1600,7 @@ calltrailer:
           }
           switch (isz)
           {
-            case -1:
-            case 1:
+            case 0:
               if ((uint32_t)(uint8_t)val != val)
               {
                 abce->err.code = ABCE_E_PB_VAL_OOB;
@@ -1612,7 +1611,7 @@ calltrailer:
               }
               hdr_set8h(&mbpb.u.area->u.pb.buf[ioff], val);
               break;
-            case 2:
+            case 1:
               if ((uint32_t)(uint16_t)val != val)
               {
                 abce->err.code = ABCE_E_PB_VAL_OOB;
@@ -1623,10 +1622,10 @@ calltrailer:
               }
               hdr_set16n(&mbpb.u.area->u.pb.buf[ioff], val);
               break;
-            case 4:
+            case 2:
               hdr_set32n(&mbpb.u.area->u.pb.buf[ioff], val);
               break;
-            case -2:
+            case -1:
               if ((uint32_t)(uint16_t)val != val)
               {
                 abce->err.code = ABCE_E_PB_VAL_OOB;
@@ -1637,7 +1636,7 @@ calltrailer:
               }
               hdr_set16n(&mbpb.u.area->u.pb.buf[ioff], abce_bswap16(val));
               break;
-            case -4:
+            case -2:
               hdr_set32n(&mbpb.u.area->u.pb.buf[ioff], abce_bswap32(val));
               break;
             default:
@@ -1670,8 +1669,8 @@ outpbset:
             break;
           }
           ioff = off;
-          if (sz != -1 && sz != -2 && sz != -4 &&
-              sz != 1 && sz != 2 && sz != 4)
+          if (sz != -0 && sz != -1 && sz != -2 &&
+              sz != 0 && sz != 1 && sz != 2)
           {
             abce->err.code = ABCE_E_PB_OPSZ_INVALID;
             abce->err.mb.typ = ABCE_T_D;
@@ -1691,20 +1690,19 @@ outpbset:
           }
           switch (isz)
           {
-            case -1:
-            case 1:
+            case 0:
               val = hdr_get8h(&mbpb.u.area->u.pb.buf[ioff]);
               break;
-            case 2:
+            case 1:
               val = hdr_get16n(&mbpb.u.area->u.pb.buf[ioff]);
               break;
-            case 4:
+            case 2:
               val = hdr_get32n(&mbpb.u.area->u.pb.buf[ioff]);
               break;
-            case -2:
+            case -1:
               val = abce_bswap16(hdr_get16n(&mbpb.u.area->u.pb.buf[ioff]));
               break;
-            case -4:
+            case -2:
               val = abce_bswap32(hdr_get32n(&mbpb.u.area->u.pb.buf[ioff]));
               break;
             default:
@@ -2332,6 +2330,7 @@ outpbset:
           GETDBL(&d, -1);
           GETDBL(&sz, -2);
           i = sz;
+#if 0
           if (i != sz)
           {
             abce->err.code = ABCE_E_INTCONVERT_SZ_NOT_UINT;
@@ -2340,7 +2339,8 @@ outpbset:
             ret = -EINVAL;
             break;
           }
-          if (i != 1 && i != 2 && i != 4)
+#endif
+          if (sz != 0 && sz != 1 && sz != 2)
           {
             abce->err.code = ABCE_E_INTCONVERT_SZ_NOTSUP;
             abce->err.mb.typ = ABCE_T_D;
@@ -2352,19 +2352,19 @@ outpbset:
           POP();
           switch (i)
           {
-            case 1:
+            case 0:
               if (abce_push_double(abce, (uint8_t)(int8_t)d) != 0)
               {
                 abce_maybeabort();
               }
               break;
-            case 2:
+            case 1:
               if (abce_push_double(abce, (uint16_t)(int16_t)d) != 0)
               {
                 abce_maybeabort();
               }
               break;
-            case 4:
+            case 2:
               if (abce_push_double(abce, (uint32_t)(int32_t)d) != 0)
               {
                 abce_maybeabort();
@@ -2382,6 +2382,7 @@ outpbset:
           GETDBL(&d, -1);
           GETDBL(&sz, -2);
           i = sz;
+#if 0
           if (i != sz)
           {
             abce->err.code = ABCE_E_INTCONVERT_SZ_NOT_UINT;
@@ -2390,7 +2391,8 @@ outpbset:
             ret = -EINVAL;
             break;
           }
-          if (i != 1 && i != 2 && i != 4)
+#endif
+          if (sz != 0 && sz != 1 && sz != 2)
           {
             abce->err.code = ABCE_E_INTCONVERT_SZ_NOTSUP;
             abce->err.mb.typ = ABCE_T_D;
@@ -2402,19 +2404,19 @@ outpbset:
           POP();
           switch (i)
           {
-            case 1:
+            case 0:
               if (abce_push_double(abce, (int8_t)(uint8_t)d) != 0)
               {
                 abce_maybeabort();
               }
               break;
-            case 2:
+            case 1:
               if (abce_push_double(abce, (int16_t)(uint16_t)d) != 0)
               {
                 abce_maybeabort();
               }
               break;
-            case 4:
+            case 2:
               if (abce_push_double(abce, (int32_t)(uint32_t)d) != 0)
               {
                 abce_maybeabort();
@@ -2595,7 +2597,7 @@ outpbset:
           }
           else
           {
-            if (abce_push_nil(abce) != 0)
+            if (abce_push_nil(abce) != 0) // FIXME really nil? Should be error?
             {
               abce_maybeabort();
             }
