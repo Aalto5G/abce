@@ -277,6 +277,16 @@ statement:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
   amyplanyy_set_double(amyplanyy, $<d>6 + 1, amyplanyy->abce.bytecodesz);
 }
+| APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN NEWLINE
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPEND_MAINTAIN);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+}
+| APPEND_LIST OPEN_PAREN expr COMMA expr CLOSE_PAREN NEWLINE
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+}
 ;
 
 lvalue:
@@ -745,16 +755,6 @@ expr0:
 {
   free($3.str);
   abort();
-}
-| APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPEND_MAINTAIN);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
-}
-| APPEND_LIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
 }
 ;
 
