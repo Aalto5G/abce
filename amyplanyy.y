@@ -306,26 +306,40 @@ lvalue:
 {
   $$ = ABCE_OPCODE_LISTSET;
 }
-| DYN OPEN_BRACKET expr CLOSE_BRACKET
+| dynstart
 {
-  abort(); // FIXME not supported yet
+  $$ = ABCE_OPCODE_SCOPEVAR_SET;
 }
-| DYN OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+| dynstart
 {
-  abort(); // FIXME not supported yet
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+}
+  maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_LISTSET;
 }
 | LEX OPEN_BRACKET expr CLOSE_BRACKET
 {
+  printf("LEX not supported yet\n");
   abort(); // FIXME not supported yet
 }
 | LEX OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
 {
+  printf("LEX not supported yet\n");
   abort(); // FIXME not supported yet
 }
 | OPEN_PAREN expr CLOSE_PAREN maybe_bracketexprlist OPEN_BRACKET expr CLOSE_BRACKET
 {
   $$ = ABCE_OPCODE_LISTSET;
 }
+;
+
+dynstart:
+  DYN
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+}
+  OPEN_BRACKET expr CLOSE_BRACKET
 ;
 
 maybe_bracketexprlist:
@@ -446,31 +460,37 @@ varref:
 | DO VARREF_LITERAL
 {
   free($2);
+  printf("DO not supported yet\n");
   abort();
 }
 | LO VARREF_LITERAL
 {
   free($2);
+  printf("LO not supported yet\n");
   abort();
 }
 | IO VARREF_LITERAL
 {
   free($2);
+  printf("IO not supported yet\n");
   abort();
 }
 | D VARREF_LITERAL
 {
   free($2);
+  printf("D not supported yet\n");
   abort();
 }
 | L VARREF_LITERAL
 {
   free($2);
+  printf("L not supported yet\n");
   abort();
 }
 | I VARREF_LITERAL
 {
   free($2);
+  printf("I not supported yet\n");
   abort();
 }
 ;
@@ -641,6 +661,9 @@ expr0:
     case ABCE_OPCODE_SET_STACK:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
       break;
+    case ABCE_OPCODE_SCOPEVAR_SET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
+      break;
     case ABCE_OPCODE_LISTSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
       break;
@@ -650,17 +673,21 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
-    default:
+    default: // FIXME str access
+      printf("FIXME default1\n");
       abort();
   }
 }
-| lvalue OPEN_PAREN maybe_arglist CLOSE_PAREN
+| lvalue
 {
   switch ((int)$1)
   {
     case ABCE_OPCODE_SET_STACK:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
       break;
+    case ABCE_OPCODE_SCOPEVAR_SET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
+      break;
     case ABCE_OPCODE_LISTSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
       break;
@@ -670,14 +697,15 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
-    default:
+    default: // FIXME str access
+      printf("FIXME default2\n");
       abort();
   }
-  // push new_ip, argcnt
-  // FIXME new_ip is before args on stack
-  abort();
+}
+  OPEN_PAREN maybe_arglist CLOSE_PAREN
+{
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, $3);
+  amyplanyy_add_double(amyplanyy, $4);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL);
 }
 | lvalue MAYBE_CALL
@@ -687,6 +715,9 @@ expr0:
     case ABCE_OPCODE_SET_STACK:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
       break;
+    case ABCE_OPCODE_SCOPEVAR_SET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
+      break;
     case ABCE_OPCODE_LISTSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
       break;
@@ -696,7 +727,8 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
-    default:
+    default: // FIXME str access
+      printf("FIXME default3\n");
       abort();
   }
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);

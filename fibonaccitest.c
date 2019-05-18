@@ -6,7 +6,7 @@ char *str =
   "  @if($x<3)\n"
   "    @return 1\n"
   "  @endif\n"
-  "  @return $fibonacci($x - 1) + $fibonacci($x - 2)\n"
+  "  @return @dyn[\"fibonacci\"]($x - 1) + @dyn[\"fibonacci\"]($x - 2)\n"
   "@endfunction\n";
 
 int main(int argc, char **argv)
