@@ -233,9 +233,9 @@ statement:
 | RETURN expr NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_byte(amyplanyy, abce_locvarctx_arg_sz(amyplanyy->ctx)); // arg
+  amyplanyy_add_double(amyplanyy, abce_locvarctx_arg_sz(amyplanyy->ctx)); // arg
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_byte(amyplanyy, abce_locvarctx_recursive_sz(amyplanyy->ctx)); // loc
+  amyplanyy_add_double(amyplanyy, abce_locvarctx_recursive_sz(amyplanyy->ctx)); // loc
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RETEX2);
 }
 | BREAK NEWLINE
