@@ -262,9 +262,13 @@ statement:
 {
   amyplanyy_set_double(amyplanyy, $<d>6, amyplanyy->abce.bytecodesz);
 }
-| WHILE OPEN_PAREN expr CLOSE_PAREN NEWLINE
+| WHILE
 {
-  $<d>$ = amyplanyy->abce.bytecodesz;
+  $<d>$ = amyplanyy->abce.bytecodesz; // startpoint
+}
+  OPEN_PAREN expr CLOSE_PAREN NEWLINE
+{
+  $<d>$ = amyplanyy->abce.bytecodesz; // breakpoint
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
@@ -273,9 +277,9 @@ statement:
   ENDWHILE NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, $<d>6);
+  amyplanyy_add_double(amyplanyy, $<d>2);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
-  amyplanyy_set_double(amyplanyy, $<d>6 + 1, amyplanyy->abce.bytecodesz);
+  amyplanyy_set_double(amyplanyy, $<d>7 + 1, amyplanyy->abce.bytecodesz);
 }
 | APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN NEWLINE
 {
