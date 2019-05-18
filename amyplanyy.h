@@ -15,18 +15,18 @@
 extern "C" {
 #endif
 
-struct escaped_string {
+struct amyplan_escaped_string {
   size_t sz;
   char *str;
 };
 
-struct CSnippet {
+struct amyplan_csnippet {
   char *data;
   size_t len;
   size_t capacity;
 };
 
-static inline void csadd(struct CSnippet *cs, char ch)
+static inline void amyplan_csadd(struct amyplan_csnippet *cs, char ch)
 {
   if (cs->len + 2 >= cs->capacity)
   {
@@ -39,7 +39,7 @@ static inline void csadd(struct CSnippet *cs, char ch)
   cs->len++;
 }
 
-static inline void csaddstr(struct CSnippet *cs, char *str)
+static inline void amyplan_csaddstr(struct amyplan_csnippet *cs, char *str)
 {
   size_t len = strlen(str);
   if (cs->len + len + 1 >= cs->capacity)
@@ -57,29 +57,10 @@ static inline void csaddstr(struct CSnippet *cs, char *str)
   cs->data[cs->len] = '\0';
 }
 
-struct dep {
-  char *name;
-  int rec;
-};
-
-struct amyplanyyrule {
-  struct dep *deps;
-  size_t depsz;
-  size_t depcapacity;
-  char **targets;
-  size_t targetsz;
-  size_t targetcapacity;
-};
-
 struct amyplanyy {
   void *baton;
   struct abce abce;
   struct amyplan_locvarctx *ctx;
-/*
-  uint8_t *bytecode;
-  size_t bytecapacity;
-  size_t bytesz;
-*/
 };
 
 static inline void amyplanyy_init(struct amyplanyy *yy)
@@ -88,7 +69,7 @@ static inline void amyplanyy_init(struct amyplanyy *yy)
   yy->ctx = NULL;
 }
 
-static inline size_t symbol_add(struct amyplanyy *amyplanyy, const char *symbol, size_t symlen)
+static inline size_t amyplan_symbol_add(struct amyplanyy *amyplanyy, const char *symbol, size_t symlen)
 {
   return abce_cache_add_str(&amyplanyy->abce, symbol, symlen);
 }

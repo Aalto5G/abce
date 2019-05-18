@@ -60,11 +60,11 @@ static void *memdup(const void *mem, size_t sz)
   return result;
 }
 
-struct escaped_string amyplanyy_escape_string(char *orig)
+struct amyplan_escaped_string amyplanyy_escape_string(char *orig)
 {
   char *buf = NULL;
   char *result = NULL;
-  struct escaped_string resultstruct;
+  struct amyplan_escaped_string resultstruct;
   size_t j = 0;
   size_t capacity = 0;
   size_t i = 1;
@@ -137,11 +137,11 @@ struct escaped_string amyplanyy_escape_string(char *orig)
   return resultstruct;
 }
 
-struct escaped_string amyplanyy_escape_string_single(char *orig)
+struct amyplan_escaped_string amyplanyy_escape_string_single(char *orig)
 {
   char *buf = NULL;
   char *result = NULL;
-  struct escaped_string resultstruct;
+  struct amyplan_escaped_string resultstruct;
   size_t j = 0;
   size_t capacity = 0;
   size_t i = 1;

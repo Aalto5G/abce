@@ -32,7 +32,7 @@
 %%
 
 %{
-struct CSnippet luaSnippet = {
+struct amyplan_csnippet luaSnippet = {
   .data = NULL,
   .len = 0,
   .capacity = 0,
@@ -130,8 +130,8 @@ struct CSnippet luaSnippet = {
                      luaSnippet.len = 0;
                      return PERCENTLUA_LITERAL;
                  }
-<PERCENTLUA>.             { csadd(&luaSnippet, yytext[0]); }
-<PERCENTLUA>"\n"          { csadd(&luaSnippet, yytext[0]); ++yylineno; yycolumn=1; }
+<PERCENTLUA>.             { amyplan_csadd(&luaSnippet, yytext[0]); }
+<PERCENTLUA>"\n"          { amyplan_csadd(&luaSnippet, yytext[0]); ++yylineno; yycolumn=1; }
 
 \n                                { ++yylineno; yycolumn=1; return NEWLINE; }
 \\\n                              { ++yylineno; yycolumn=1; }

@@ -54,7 +54,7 @@ int amyplanyywrap(yyscan_t scanner)
   } d2;
   double d;
   char *s;
-  struct escaped_string str;
+  struct amyplan_escaped_string str;
   struct {
     int i;
     char *s;
@@ -180,7 +180,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   amyplanyy_add_double(amyplanyy, amyplanyy->ctx->sz - amyplanyy->ctx->args); // locvarcnt
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RETEX2);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
-  amyplanyy_add_double(amyplanyy, symbol_add(amyplanyy, $3, strlen($3)));
+  amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $3, strlen($3)));
   free($3);
   amyplan_locvarctx_free(amyplanyy->ctx);
   amyplanyy->ctx = NULL;
@@ -364,7 +364,7 @@ expr NEWLINE
   printf("Assigning to %s\n", $1);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
-  amyplanyy_add_double(amyplanyy, symbol_add(amyplanyy, $1, strlen($1)));
+  amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $1, strlen($1)));
   free($1);
 }
 /*
@@ -397,7 +397,7 @@ expr NEWLINE
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
-  amyplanyy_add_double(amyplanyy, symbol_add(amyplanyy, $1, strlen($1)));
+  amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $1, strlen($1)));
   free($1);
 }
 */
