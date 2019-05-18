@@ -314,7 +314,7 @@ varref_tail:
 }
 | OPEN_BRACE AT expr CLOSE_BRACE
 {
-  $$ = ABCE_OPCODE_PBSET;
+  $$ = ABCE_OPCODE_PBSET; // FIXME needs transfer size of operation
 }
 ;
 
