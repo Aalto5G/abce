@@ -2339,8 +2339,8 @@ outpbset:
         {
           struct abce_mb mbsc, mbit;
           const struct abce_mb *ptr;
-          GETMBSC(&mbsc, -1);
-          GETMB(&mbit, -2);
+          GETMBSC(&mbsc, -2);
+          GETMB(&mbit, -1);
           if (mbit.typ != ABCE_T_S)
           {
             abce->err.code = ABCE_E_EXPECT_STR;
@@ -2375,8 +2375,8 @@ outpbset:
         {
           struct abce_mb mbsc, mbit;
           const struct abce_mb *ptr;
-          GETMBSC(&mbsc, -1);
-          GETMB(&mbit, -2);
+          GETMBSC(&mbsc, -2);
+          GETMB(&mbit, -1);
           if (mbit.typ != ABCE_T_S)
           {
             abce->err.code = ABCE_E_EXPECT_STR;
