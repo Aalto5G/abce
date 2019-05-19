@@ -32,7 +32,7 @@ static void abce_strbuf_bump(struct abce *abce, struct abce_strbuf *buf, size_t 
   {
     newcap = buf->sz + bump;
   }
-  newbuf = abce->alloc(buf->str, buf->cap, newcap, abce);
+  newbuf = abce->alloc(buf->str, buf->cap, newcap, &abce->alloc_baton);
   if (newbuf == NULL)
   {
     buf->taint = 1;
@@ -113,7 +113,7 @@ int abce_strgsub(struct abce *abce,
   abce_strbuf_add_nul(abce, &buf);
   if (buf.taint)
   {
-    abce->alloc(buf.str, buf.cap, 0, abce);
+    abce->alloc(buf.str, buf.cap, 0, &abce->alloc_baton);
     *res = NULL;
     *ressz = 0;
     *rescap = 0;
