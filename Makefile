@@ -1,7 +1,7 @@
 .SUFFIXES:
 
 SRC_LIB := amyplanyyutils.c memblock.c abcerbtree.c amyplanlocvarctx.c engine.c abcestring.c abcetrees.c abcescopes.c abce.c abceapi.c
-SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c ret.c breaktest.c
+SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c ret.c breaktest.c gctest.c
 
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
@@ -47,7 +47,7 @@ DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
 .PHONY: all wc
 
-all: amyplantest main locvartest treetest fiboefftest fibonaccitest bttest ret breaktest
+all: amyplantest main locvartest treetest fiboefftest fibonaccitest bttest ret breaktest gctest
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
@@ -62,6 +62,9 @@ CC=clang
 CPP=clang++
 CFLAGS=-O3 -Wall -g #-I$(LUAINC)
 CPPFLAGS=-O3 -Wall -g #-I$(LUAINC)
+
+gctest: gctest.o libabce.a Makefile $(LUALIB)
+	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 ret: ret.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl

@@ -30,6 +30,14 @@ void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     {
       return NULL;
     }
+    if (abce->gcblocksz >= abce->gcblockcap)
+    {
+      abce_gc(abce);
+    }
+    if (abce->gcblocksz >= abce->gcblockcap)
+    {
+      return NULL;
+    }
     result = malloc(newsz);
     if (result)
     {
@@ -153,21 +161,13 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   mb.u.area->u.sc.locidx = abce->cachesz;
   abce->cachebase[abce->cachesz++] = abce_mb_refup(abce, &mb);
 
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_SC);
   return mb;
 }
 
-void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ)
+void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
 {
   size_t i;
-  struct abce_mb_area *mba = *mbap;
-  if (mba == NULL)
-  {
-    return;
-  }
-  if (mba->refcnt != 0)
-  {
-    abort();
-  }
   switch (typ)
   {
     case ABCE_T_T:
@@ -242,6 +242,22 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
     default:
       break;
   }
+}
+
+void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ)
+{
+  struct abce_mb_area *mba = *mbap;
+  if (mba == NULL)
+  {
+    return;
+  }
+  if (mba->refcnt != 0)
+  {
+    abort();
+  }
+  abce_free_gcblock_one(abce, mba->locidx);
+  mba->locidx = (size_t)-1;
+  abce_mb_gc_free(abce, mba, typ);
   *mbap = NULL;
 }
 

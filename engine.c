@@ -1386,6 +1386,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
   int ret = -EAGAIN;
   double argcnt;
   int64_t new_ip;
+  abce->in_engine = 1;
   if (addcode != NULL)
   {
     abce->ip = -(int64_t)addsz-(int64_t)guard;
@@ -1994,11 +1995,13 @@ outpbset:
           }
           if (abce_calc_addr(&addr, abce, loc) != 0)
           {
-            return -EOVERFLOW;
+            ret = -EOVERFLOW;
+            break;
           }
           if (abce_calc_addr(&addrm1, abce, -1) != 0)
           {
-            return -EOVERFLOW;
+            ret = -EOVERFLOW;
+            break;
           }
           mbtmp = abce->stackbase[addr];
           abce->stackbase[addr] = abce->stackbase[addrm1];
@@ -2946,5 +2949,6 @@ outpbset:
   {
     abce_bt_gather(abce, addcode, addsz);
   }
+  abce->in_engine = 0;
   return ret;
 }

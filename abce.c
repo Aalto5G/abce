@@ -29,6 +29,7 @@ void abce_free_bcode(unsigned char *bcodebase, size_t limit)
 void abce_init(struct abce *abce)
 {
   memset(abce, 0, sizeof(*abce));
+  abce->in_engine = 0;
   abce->trusted = 1;
   abce->alloc = abce_std_alloc;
   abce->bytes_alloced = 0;
@@ -40,6 +41,9 @@ void abce_init(struct abce *abce)
   abce->userdata = NULL;
   abce->stacklimit = 1024*1024;
   abce->stackbase = abce_alloc_stack(abce->stacklimit);
+  abce->gcblockcap = 1024*1024;
+  abce->gcblocksz = 0;
+  abce->gcblockbase = abce_alloc_stack(abce->gcblockcap);
   abce->btcap = 1024*1024;
   abce->btsz = 0;
   abce->btbase = abce_alloc_stack(abce->btcap);
@@ -58,6 +62,127 @@ void abce_init(struct abce *abce)
   if (abce->dynscope.typ == ABCE_T_N)
   {
     abort();
+  }
+}
+
+void abce_free_gcblock_one(struct abce *abce, size_t locidx)
+{
+  if (locidx >= abce->gcblocksz)
+  {
+    abort();
+  }
+  abce->gcblockbase[locidx] = abce->gcblockbase[--abce->gcblocksz];
+  abce->gcblockbase[locidx].u.area->locidx = locidx;
+}
+
+void abce_mark_mb(struct abce *abce, const struct abce_mb *mb);
+
+void abce_mark_tree(struct abce *abce, struct abce_rb_tree_node *n)
+{
+  struct abce_mb_rb_entry *mbe;
+  if (n == NULL)
+  {
+    return;
+  }
+  mbe = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  abce_mark_mb(abce, &mbe->key);
+  abce_mark_mb(abce, &mbe->val);
+  abce_mark_tree(abce, n->left);
+  abce_mark_tree(abce, n->right);
+}
+
+void abce_mark(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
+{
+  size_t i;
+  if (mba->locidx == (size_t)-1)
+  {
+    return;
+  }
+  switch (typ)
+  {
+    case ABCE_T_T:
+      abce_mark_tree(abce, mba->u.tree.tree.root);
+      break;
+    case ABCE_T_A:
+      for (i = 0; i < mba->u.ar.size; i++)
+      {
+        abce_mark_mb(abce, &mba->u.ar.mbs[i]);
+      }
+      break;
+    case ABCE_T_SC:
+      if (mba->u.sc.parent)
+      {
+        abce_mark(abce, mba->u.sc.parent, ABCE_T_SC);
+      }
+      for (i = 0; i < mba->u.sc.size; i++)
+      {
+        abce_mark_tree(abce, mba->u.sc.heads[i].root);
+      }
+      break;
+    case ABCE_T_IOS:
+    case ABCE_T_S:
+    case ABCE_T_PB:
+      break;
+    default:
+      abort();
+  }
+  mba->locidx = -1;
+}
+
+void abce_mark_mb(struct abce *abce, const struct abce_mb *mb)
+{
+  switch (mb->typ)
+  {
+    case ABCE_T_T:
+    case ABCE_T_A:
+    case ABCE_T_SC:
+    case ABCE_T_IOS:
+    case ABCE_T_S:
+    case ABCE_T_PB:
+      abce_mark(abce, mb->u.area, mb->typ);
+    default:
+      break;
+  }
+}
+
+
+void abce_gc(struct abce *abce)
+{
+  size_t i;
+  if (!abce->in_engine)
+  {
+    return;
+  }
+  abce_mark_mb(abce, &abce->dynscope);
+  abce_mark_mb(abce, &abce->err.mb);
+  for (i = 0; i < abce->sp; i++)
+  {
+    abce_mark_mb(abce, &abce->stackbase[i]);
+  }
+  for (i = 0; i < abce->cachesz; i++)
+  {
+    abce_mark_mb(abce, &abce->cachebase[i]);
+  }
+  for (i = 0; i < abce->btsz; i++)
+  {
+    abce_mark_mb(abce, &abce->btbase[i]);
+  }
+
+  i = 0;
+  while (i < abce->gcblocksz)
+  {
+    if (abce->gcblockbase[i].u.area->locidx != (size_t)-1)
+    {
+      abce_mb_gc_free(abce, abce->gcblockbase[i].u.area, abce->gcblockbase[i].typ);
+      abce->gcblockbase[i] = abce->gcblockbase[--abce->gcblocksz];
+      continue;
+    }
+    i++;
+  }
+
+  for (i = 0; i < abce->gcblocksz; i++)
+  {
+    abce->gcblockbase[i].u.area->locidx = i;
   }
 }
 
@@ -99,10 +224,16 @@ void abce_free(struct abce *abce)
   {
     abce_mb_refdn(abce, &abce->cachebase[i]);
   }
+  abce->cachesz = 0;
   for (i = 0; i < abce->sp; i++)
   {
     abce_mb_refdn(abce, &abce->stackbase[i]);
   }
+  abce->sp = 0;
+
+  abce->in_engine = 1; // to make GC work
+  abce_gc(abce);
+
   abce_free_stack(abce->stackbase, abce->stacklimit);
   abce->stackbase = NULL;
   abce->stacklimit = 0;
@@ -115,6 +246,9 @@ void abce_free(struct abce *abce)
   abce_free_stack(abce->btbase, abce->btcap);
   abce->btbase = NULL;
   abce->btcap = 0;
+  abce_free_stack(abce->gcblockbase, abce->gcblockcap);
+  abce->gcblockbase = NULL;
+  abce->gcblockcap = 0;
   abce_err_free(abce, &abce->err);
 }
 
@@ -138,6 +272,7 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
 }
 
@@ -163,6 +298,7 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
 }
 
@@ -185,6 +321,7 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
 }
 
@@ -211,6 +348,7 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
   mba->refcnt = 1;
   mb.typ = ABCE_T_PB;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_PB);
   return mb;
 }
 
@@ -242,6 +380,7 @@ struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, si
   mba->refcnt = 1;
   mb.typ = ABCE_T_PB;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_PB);
   return mb;
 }
 
@@ -262,6 +401,7 @@ struct abce_mb abce_mb_create_tree(struct abce *abce)
   mba->refcnt = 1;
   mb.typ = ABCE_T_T;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_T);
   return mb;
 }
 
@@ -288,6 +428,7 @@ struct abce_mb abce_mb_create_array(struct abce *abce)
   mba->refcnt = 1;
   mb.typ = ABCE_T_A;
   mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_A);
   return mb;
 }
 

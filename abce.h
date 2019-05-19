@@ -1176,6 +1176,25 @@ static inline void abce_err_free(struct abce *abce, struct abce_err *err)
   err->mb.typ = ABCE_T_N;
 }
 
+void abce_free_gcblock_one(struct abce *abce, size_t locidx);
+
+void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ);
+
+static inline void abce_setup_mb_for_gc(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
+{
+  size_t locidx = abce->gcblocksz;
+  if (locidx >= abce->gcblockcap)
+  {
+    abort();
+  }
+  abce->gcblockbase[locidx].typ = typ;
+  abce->gcblockbase[locidx].u.area = mba;
+  mba->locidx = locidx;
+  abce->gcblocksz++;
+}
+
+void abce_gc(struct abce *abce);
+
 #ifdef __cplusplus
 };
 #endif

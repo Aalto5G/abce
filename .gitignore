@@ -18,3 +18,4 @@ perf.data.old
 /bttest
 /breaktest
 /ret
+/gctest

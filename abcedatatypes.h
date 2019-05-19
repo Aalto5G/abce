@@ -61,6 +61,7 @@ struct abce_mb_ios {
 };
 struct abce_mb_area {
   size_t refcnt;
+  size_t locidx;
   union {
     struct abce_mb_array ar;
     struct abce_mb_ios ios;
@@ -109,6 +110,7 @@ struct abce_err {
 };
 
 struct abce {
+  int in_engine;
   struct abce_err err;
   void *(*alloc)(void *old, size_t oldsz, size_t newsz, void **pbaton);
   int (*trap)(void **pbaton, uint16_t ins, unsigned char *addcode, size_t addsz);
@@ -135,6 +137,10 @@ struct abce {
   size_t cachesz;
   size_t cachecap;
   struct abce_rb_tree_nocmp strcache[ABCE_DEFAULT_CACHE_SIZE];
+  // GC cache
+  struct abce_mb *gcblockbase;
+  size_t gcblocksz;
+  size_t gcblockcap;
   // Dynamic scope
   struct abce_mb dynscope;
   size_t btcap;
