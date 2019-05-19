@@ -40,6 +40,8 @@ struct amyplan_csnippet luaSnippet = {
 %}
 
 @         return AT;
+@true     return TRUE;
+@false    return FALSE;
 @print    return PRINT;
 @function return FUNCTION;
 @endfunction return ENDFUNCTION;

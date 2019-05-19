@@ -139,7 +139,7 @@ int amyplanyywrap(yyscan_t scanner)
 %token BREAK
 %token CONTINUE
 
-%token DIV MUL ADD SUB SHL SHR NE EQ LOGICAL_AND LOGICAL_OR LOGICAL_NOT MOD BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR
+%token DIV MUL ADD SUB SHL SHR NE EQ LOGICAL_AND LOGICAL_OR LOGICAL_NOT MOD BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR TRUE FALSE
 
 
 %token ERROR_TOK
@@ -247,11 +247,47 @@ statement:
 }
 | BREAK NEWLINE
 {
-  abort(); // not supported yet, FIXME!
+  int64_t loc = amyplan_locvarctx_break(amyplanyy->ctx, 1);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, loc);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
 }
 | CONTINUE NEWLINE
 {
-  abort(); // not supported yet, FIXME!
+  int64_t loc = amyplan_locvarctx_continue(amyplanyy->ctx, 1);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, loc);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+}
+| BREAK NUMBER NEWLINE
+{
+  size_t sz = $2;
+  int64_t loc;
+  if ((double)sz != $2 || sz == 0)
+  {
+    printf("Break count not positive integer\n");
+    YYABORT;
+  }
+  loc = amyplan_locvarctx_break(amyplanyy->ctx, sz);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, loc);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+}
+| CONTINUE NUMBER NEWLINE
+{
+  size_t sz = $2;
+  int64_t loc;
+  if ((double)sz != $2 || sz == 0)
+  {
+    printf("Continue count not positive integer\n");
+    YYABORT;
+  }
+  loc = amyplan_locvarctx_continue(amyplanyy->ctx, sz);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, loc);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
 }
 | expr NEWLINE
 {
@@ -277,6 +313,14 @@ statement:
 }
   OPEN_PAREN expr CLOSE_PAREN NEWLINE
 {
+  struct amyplan_locvarctx *ctx =
+    amyplan_locvarctx_alloc(amyplanyy->ctx, 0, amyplanyy->abce.bytecodesz, $<d>2);
+  if (ctx == NULL)
+  {
+    printf("Out of memory\n");
+    YYABORT;
+  }
+  amyplanyy->ctx = ctx;
   $<d>$ = amyplanyy->abce.bytecodesz; // breakpoint
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
@@ -285,6 +329,9 @@ statement:
   bodylines
   ENDWHILE NEWLINE
 {
+  struct amyplan_locvarctx *ctx = amyplanyy->ctx->parent;
+  free(amyplanyy->ctx);
+  amyplanyy->ctx = ctx;
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, $<d>2);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
@@ -712,6 +759,14 @@ expr0:
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, $1);
+}
+| TRUE
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_TRUE);
+}
+| FALSE
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE);
 }
 | lvalue
 {
