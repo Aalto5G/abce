@@ -30,6 +30,8 @@ void abce_init(struct abce *abce)
 {
   memset(abce, 0, sizeof(*abce));
   abce->in_engine = 0;
+  abce->lastbytes_alloced = 0;
+  abce->lastgcblocksz = 0;
   abce->trusted = 1;
   abce->alloc = abce_std_alloc;
   abce->bytes_alloced = 0;

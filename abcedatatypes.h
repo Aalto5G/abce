@@ -117,6 +117,8 @@ struct abce {
   void *alloc_baton;
   void *trap_baton;
   void *userdata;
+  size_t lastbytes_alloced;
+  size_t lastgcblocksz;
   int trusted;
   // Stack and registers
   int (*ins_budget_fn)(void **pbaton, uint16_t ins);

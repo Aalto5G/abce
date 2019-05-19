@@ -25,14 +25,23 @@ void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     {
       abort();
     }
-    if ((newsz > abce->bytes_cap) ||
-        (abce->bytes_alloced > (abce->bytes_cap - newsz)))
+    if (newsz > abce->bytes_cap)
     {
       return NULL;
     }
-    if (abce->gcblocksz >= abce->gcblockcap)
+    if ((   abce->gcblocksz*1.0 > abce->lastgcblocksz*1.3
+         || abce->bytes_alloced*1.0 > abce->lastbytes_alloced*1.3
+         || abce->gcblocksz >= abce->gcblockcap
+         || abce->bytes_alloced > (abce->bytes_cap - newsz))
+        && abce->in_engine)
     {
       abce_gc(abce);
+      abce->lastgcblocksz = abce->gcblocksz;
+      abce->lastbytes_alloced = abce->bytes_alloced;
+    }
+    if (abce->bytes_alloced > (abce->bytes_cap - newsz))
+    {
+      return NULL;
     }
     if (abce->gcblocksz >= abce->gcblockcap)
     {
@@ -61,8 +70,20 @@ void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     {
       abort();
     }
-    if ((newsz > abce->bytes_cap) ||
-        ((abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz)))
+    if (newsz > abce->bytes_cap)
+    {
+      return NULL;
+    }
+    if ((   abce->gcblocksz*1.0 > abce->lastgcblocksz*1.3
+         || abce->bytes_alloced*1.0 > abce->lastbytes_alloced*1.3
+         || (abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz))
+        && abce->in_engine)
+    {
+      abce_gc(abce);
+      abce->lastgcblocksz = abce->gcblocksz;
+      abce->lastbytes_alloced = abce->bytes_alloced;
+    }
+    if ((abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz))
     {
       return NULL;
     }
