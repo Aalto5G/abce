@@ -1025,6 +1025,26 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_refdn_typ(abce, &mbar2, ABCE_T_A);
       break;
     }
+    case ABCE_OPCODE_PUSH_NEW_PB:
+    {
+      struct abce_mb mb;
+      int rettmp;
+      mb = abce_mb_create_pb(abce);
+      if (mb.typ == ABCE_T_N)
+      {
+        ret = -ENOMEM;
+        break;
+      }
+      rettmp = abce_push_mb(abce, &mb);
+      if (rettmp != 0)
+      {
+        ret = rettmp;
+        abce_mb_refdn(abce, &mb);
+        break;
+      }
+      abce_mb_refdn_typ(abce, &mb, ABCE_T_PB);
+      break;
+    }
     case ABCE_OPCODE_PUSH_NEW_DICT:
     {
       struct abce_mb mb;

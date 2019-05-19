@@ -1100,6 +1100,8 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
 
 struct abce_mb abce_mb_create_tree(struct abce *abce);
 
+struct abce_mb abce_mb_create_pb(struct abce *abce);
+
 struct abce_mb abce_mb_create_array(struct abce *abce);
 
 int

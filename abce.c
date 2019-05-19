@@ -181,6 +181,32 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
   return mb;
 }
 
+struct abce_mb abce_mb_create_pb(struct abce *abce)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), abce);
+  if (mba == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba);
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.pb.size = 0;
+  mba->u.pb.capacity = 128;
+  mba->u.pb.buf =
+    (char*)abce->alloc(NULL, 0, 128, abce);
+  if (mba->u.pb.buf == NULL)
+  {
+    mba->u.pb.capacity = 0; // This is the simplest way forward.
+  }
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_PB;
+  mb.u.area = mba;
+  return mb;
+}
+
 struct abce_mb abce_mb_create_tree(struct abce *abce)
 {
   struct abce_mb_area *mba;
