@@ -58,6 +58,7 @@ struct amyplan_csnippet luaSnippet = {
 @immo   return IMMO;
 @loc   return LOC;
 @if   return IF;
+@else   return ELSE;
 @endif   return ENDIF;
 @while return WHILE;
 @endwhile return ENDWHILE;

@@ -118,6 +118,7 @@ int amyplanyywrap(yyscan_t scanner)
 %token DYN
 %token LEX
 %token IMM
+%token ELSE
 %token D
 %token L
 %token I
@@ -264,10 +265,12 @@ statement:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
 }
   bodylines
-  ENDIF NEWLINE
 {
   amyplanyy_set_double(amyplanyy, $<d>6, amyplanyy->abce.bytecodesz);
+  $<d>$ = $<d>6; // For overwrite by maybe_else
 }
+  maybe_else
+  ENDIF NEWLINE
 | WHILE
 {
   $<d>$ = amyplanyy->abce.bytecodesz; // startpoint
@@ -296,6 +299,21 @@ statement:
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+}
+;
+
+maybe_else:
+| ELSE NEWLINE
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  $<d>$ = amyplanyy->abce.bytecodesz;
+  amyplanyy_add_double(amyplanyy, -50); // to be overwritten
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+  amyplanyy_set_double(amyplanyy, $<d>0, amyplanyy->abce.bytecodesz); // Overwrite
+}
+bodylines
+{
+  amyplanyy_set_double(amyplanyy, $<d>3, amyplanyy->abce.bytecodesz);
 }
 ;
 
