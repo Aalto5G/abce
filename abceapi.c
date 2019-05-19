@@ -344,20 +344,205 @@ size_t abceapi_gettreesize(struct abce *abce, int stackidx)
   abce->err = err_old;
   return ressz;
 }
-int abceapi_getarray(struct abce *abce);
-int abceapi_gettree(struct abce *abce);
-int abceapi_setarray(struct abce *abce);
-int abceapi_settree(struct abce *abce);
-int abceapi_deltree(struct abce *abce);
-int abceapi_arrayappend(struct abce *abce);
-int abceapi_arrayappendmany(struct abce *abce);
-int abceapi_arraypop(struct abce *abce);
-int abceapi_hastree(struct abce *abce);
-int abceapi_hasscope(struct abce *abce);
-int abceapi_next(struct abce *abce);
-int abceapi_getdynscope(struct abce *abce);
-int abceapi_scopevar(struct abce *abce);
-int abceapi_scopevarset(struct abce *abce);
 
-int abceapi_call(struct abce *abce);
-int abceapi_call_if_fun(struct abce *abce);
+/*
+ * RFE these might not maintain the stack size on error
+ */
+int abceapi_getarray(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_LISTGET};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_gettree(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_DICTGET};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_setarray(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_LISTSET};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_settree(struct abce *abce)
+{
+  unsigned char bcode[2] = {ABCE_OPCODE_DICTSET_MAINTAIN, ABCE_OPCODE_POP};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_deltree(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_DICTDEL};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_arrayappend(struct abce *abce)
+{
+  unsigned char bcode[2] = {ABCE_OPCODE_APPEND_MAINTAIN, ABCE_OPCODE_POP};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_arrayappendmany(struct abce *abce)
+{
+  unsigned char bcode[16];
+  struct abce_err err_old = abce->err;
+  size_t bsz = 0;
+  int ret;
+  if (abce_add_ins_alt(bcode, &bsz, sizeof(bcode), ABCE_OPCODE_APPENDALL_MAINTAIN) != 0)
+  {
+    abort();
+  }
+  if (abce_add_ins_alt(bcode, &bsz, sizeof(bcode), ABCE_OPCODE_POP) != 0)
+  {
+    abort();
+  }
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, bsz) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_arraypop(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_LISTPOP};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_hastree(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_DICTHAS};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_hasscope(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_SCOPE_HAS};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_treenext(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_DICTNEXT_SAFE};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_getdynscope(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_GETSCOPE_DYN};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_scopevar(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_SCOPEVAR};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+int abceapi_scopevarset(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_SCOPEVAR_SET};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}
+
+int abceapi_call(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_CALL};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  return ret;
+}
+int abceapi_call_if_fun(struct abce *abce)
+{
+  unsigned char bcode[1] = {ABCE_OPCODE_CALL_IF_FUN};
+  struct abce_err err_old = abce->err;
+  int ret;
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
+  return ret;
+}
+int abceapi_dump(struct abce *abce)
+{
+  unsigned char bcode[16];
+  struct abce_err err_old = abce->err;
+  int ret;
+  size_t bsz = 0;
+  if (abce_add_ins_alt(bcode, &bsz, sizeof(bcode), ABCE_OPCODE_DUMP) != 0)
+  {
+    abort();
+  }
+  abce_free_bt(abce);
+  ret = abce_engine(abce, bcode, bsz) == 0;
+  abce_free_bt(abce);
+  abce->err = err_old;
+  return ret;
+}

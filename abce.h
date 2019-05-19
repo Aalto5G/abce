@@ -1035,6 +1035,8 @@ void abce_free_bcode(unsigned char *bcodebase, size_t limit);
 
 void abce_init(struct abce *abce);
 
+void abce_free_bt(struct abce *abce);
+
 void abce_free(struct abce *abce);
 
 static inline int

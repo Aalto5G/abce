@@ -61,4 +61,6 @@ int abceapi_scopevarset(struct abce *abce);
 int abceapi_call(struct abce *abce);
 int abceapi_call_if_fun(struct abce *abce);
 
+int abceapi_dump(struct abce *abce);
+
 #endif

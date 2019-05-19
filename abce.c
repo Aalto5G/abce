@@ -61,6 +61,16 @@ void abce_init(struct abce *abce)
   }
 }
 
+void abce_free_bt(struct abce *abce)
+{
+  size_t i;
+  for (i = 0; i < abce->btsz; i++)
+  {
+    abce_mb_refdn(abce, &abce->btbase[i]);
+  }
+  abce->btsz = 0;
+}
+
 void abce_free(struct abce *abce)
 {
   size_t i;
@@ -84,10 +94,7 @@ void abce_free(struct abce *abce)
     }
   }
 #endif
-  for (i = 0; i < abce->btsz; i++)
-  {
-    abce_mb_refdn(abce, &abce->btbase[i]);
-  }
+  abce_free_bt(abce);
   for (i = 0; i < abce->cachesz; i++)
   {
     abce_mb_refdn(abce, &abce->cachebase[i]);
