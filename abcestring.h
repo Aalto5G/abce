@@ -41,7 +41,7 @@ int abce_strgsub_mb(struct abce *abce,
   {
     return -ENOMEM;
   }
-  abce->alloc(resstr, rescap, 0, abce);
+  abce->alloc(resstr, rescap, 0, &abce->alloc_baton);
   return 0;
 }
 

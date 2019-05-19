@@ -44,7 +44,7 @@ abce_tree_del_str(struct abce *abce,
   abce_mb_refdn(abce, &mbe->key);
   abce_mb_refdn(abce, &mbe->val);
   abce_rb_tree_nocmp_delete(&mbt->u.area->u.tree.tree, n);
-  abce->alloc(mbe, sizeof(*mbe), 0, abce);
+  abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
   return 0;
 }
 
@@ -70,7 +70,7 @@ abce_tree_set_str(struct abce *abce,
     *mbres = abce_mb_refup(abce, mbval);
     return 0;
   }
-  e = abce->alloc(NULL, 0, sizeof(*e), abce);
+  e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);
   if (e == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;

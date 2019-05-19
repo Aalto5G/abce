@@ -11,8 +11,9 @@
 #include "abceopcodes.h"
 #include "abce.h"
 
-void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, struct abce *abce)
+void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
 {
+  struct abce *abce = ABCE_CONTAINER_OF(pbaton, struct abce, alloc_baton);
   void *result;
   if (old == NULL)
   {
@@ -111,7 +112,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   capacity = abce_next_highest_power_of_2(capacity);
 
   mba = abce->alloc(NULL, 0, sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads),
-                    abce);
+                    &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -181,16 +182,16 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
           abce_mb_refdn(abce, &mbe->val);
           abce_rb_tree_nocmp_delete(&mba->u.tree.tree,
                                mba->u.tree.tree.root);
-          abce->alloc(mbe, sizeof(*mbe), 0, abce);
+          abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
         }
-        abce->alloc(mba, sizeof(*mba), 0, abce);
+        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
       }
       break;
     case ABCE_T_IOS:
       if (1)
       {
         fclose(mba->u.ios.f);
-        abce->alloc(mba, sizeof(*mba), 0, abce);
+        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
       }
       break;
     case ABCE_T_A:
@@ -200,21 +201,21 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
         {
           abce_mb_refdn(abce, &mba->u.ar.mbs[i]);
         }
-        abce->alloc(mba->u.ar.mbs, mba->u.ar.capacity*sizeof(*mba->u.ar.mbs), 0, abce);
-        abce->alloc(mba, sizeof(*mba), 0, abce);
+        abce->alloc(mba->u.ar.mbs, mba->u.ar.capacity*sizeof(*mba->u.ar.mbs), 0, &abce->alloc_baton);
+        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
       }
       break;
     case ABCE_T_S:
       if (1)
       {
-        abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, abce);
+        abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
       }
       break;
     case ABCE_T_PB:
       if (1)
       {
-        abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, abce);
-        abce->alloc(mba, sizeof(*mba), 0, abce);
+        abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
+        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
       }
       break;
     case ABCE_T_SC:
@@ -232,10 +233,10 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
             abce_mb_refdn(abce, &mbe->val);
             abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
                                  mba->u.sc.heads[i].root);
-            abce->alloc(mbe, sizeof(*mbe), 0, abce);
+            abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
           }
         }
-        abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, abce);
+        abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
       }
       break;
     default:

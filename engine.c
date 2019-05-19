@@ -1407,7 +1407,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
     if (abce_unlikely(abce->ins_budget_fn != NULL))
     {
       int ret2;
-      ret2 = abce->ins_budget_fn(abce, ins);
+      ret2 = abce->ins_budget_fn(&abce->ins_budget_baton, ins);
       if (ret2)
       {
         ret = ret2;
@@ -2892,7 +2892,7 @@ outpbset:
     }
     else if (abce_likely(ins < 128))
     {
-      int ret2 = abce->trap(abce, ins, addcode, addsz);
+      int ret2 = abce->trap(&abce->trap_baton, ins, addcode, addsz);
       if (ret2 != 0)
       {
         ret = ret2;
@@ -2910,7 +2910,7 @@ outpbset:
     }
     else if (abce_likely(ins < 0x800))
     {
-      int ret2 = abce->trap(abce, ins, addcode, addsz);
+      int ret2 = abce->trap(&abce->trap_baton, ins, addcode, addsz);
       if (ret2 != 0)
       {
         ret = ret2;
@@ -2926,7 +2926,7 @@ outpbset:
     }
     else
     {
-      int ret2 = abce->trap(abce, ins, addcode, addsz);
+      int ret2 = abce->trap(&abce->trap_baton, ins, addcode, addsz);
       if (ret2 != 0)
       {
         ret = ret2;

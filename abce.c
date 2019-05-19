@@ -116,7 +116,7 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz1 + sz2 + 1, abce);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz1 + sz2 + 1, &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -139,7 +139,7 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
   size_t i;
-  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz*rep + 1, abce);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz*rep + 1, &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -163,7 +163,7 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz + 1, abce);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz + 1, &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -185,7 +185,7 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), abce);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -196,7 +196,7 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
   mba->u.pb.size = 0;
   mba->u.pb.capacity = 128;
   mba->u.pb.buf =
-    (char*)abce->alloc(NULL, 0, 128, abce);
+    (char*)abce->alloc(NULL, 0, 128, &abce->alloc_baton);
   if (mba->u.pb.buf == NULL)
   {
     mba->u.pb.capacity = 0; // This is the simplest way forward.
@@ -211,7 +211,7 @@ struct abce_mb abce_mb_create_tree(struct abce *abce)
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), abce);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -231,7 +231,7 @@ struct abce_mb abce_mb_create_array(struct abce *abce)
 {
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
-  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), abce);
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -242,7 +242,7 @@ struct abce_mb abce_mb_create_array(struct abce *abce)
   mba->u.ar.size = 0;
   mba->u.ar.capacity = 16;
   mba->u.ar.mbs =
-    (struct abce_mb*)abce->alloc(NULL, 0, 16*sizeof(*mba->u.ar.mbs), abce);
+    (struct abce_mb*)abce->alloc(NULL, 0, 16*sizeof(*mba->u.ar.mbs), &abce->alloc_baton);
   if (mba->u.ar.mbs == NULL)
   {
     mba->u.ar.capacity = 0; // This is the simplest way forward.
@@ -260,7 +260,7 @@ int abce_mb_array_append_grow(struct abce *abce, struct abce_mb *mb)
   mbs2 = (struct abce_mb*)abce->alloc(mb->u.area->u.ar.mbs,
                      sizeof(*mb->u.area->u.ar.mbs)*mb->u.area->u.ar.capacity,
                      sizeof(*mb->u.area->u.ar.mbs)*new_cap,
-                     abce);
+                     &abce->alloc_baton);
   if (mbs2 == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -290,7 +290,7 @@ int abce_mb_pb_do_resize(struct abce *abce, const struct abce_mb *mbpb, size_t n
   {
     new_capacity = newsz;
   }
-  new_buf = (char*)abce->alloc(mbpb->u.area->u.pb.buf, mbpb->u.area->u.pb.capacity, new_capacity, abce);
+  new_buf = (char*)abce->alloc(mbpb->u.area->u.pb.buf, mbpb->u.area->u.pb.capacity, new_capacity, &abce->alloc_baton);
   if (new_buf == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;

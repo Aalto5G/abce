@@ -162,7 +162,7 @@ static inline int abce_str_buf_grow(struct abce *abce,
   {
     new_capacity = buf->sz + addlen;
   }
-  new_buf = abce->alloc(buf->buf, buf->capacity, new_capacity, abce);
+  new_buf = abce->alloc(buf->buf, buf->capacity, new_capacity, &abce->alloc_baton);
   if (new_buf == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -194,7 +194,7 @@ static inline int abce_str_buf_add(struct abce *abce,
 static inline void abce_str_buf_free(struct abce *abce,
                                      struct abce_str_buf *buf)
 {
-  abce->alloc(buf->buf, buf->capacity, 0, abce);
+  abce->alloc(buf->buf, buf->capacity, 0, &abce->alloc_baton);
 }
 
 #ifdef __cplusplus

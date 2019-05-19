@@ -110,13 +110,14 @@ struct abce_err {
 
 struct abce {
   struct abce_err err;
-  void *(*alloc)(void *old, size_t oldsz, size_t newsz, struct abce *abce);
-  int (*trap)(struct abce*, uint16_t ins, unsigned char *addcode, size_t addsz);
+  void *(*alloc)(void *old, size_t oldsz, size_t newsz, void **pbaton);
+  int (*trap)(void **pbaton, uint16_t ins, unsigned char *addcode, size_t addsz);
   void *alloc_baton;
+  void *trap_baton;
   void *userdata;
   int trusted;
   // Stack and registers
-  int (*ins_budget_fn)(struct abce *abce, uint16_t ins);
+  int (*ins_budget_fn)(void **pbaton, uint16_t ins);
   void *ins_budget_baton;
   size_t bytes_alloced;
   size_t bytes_cap;
