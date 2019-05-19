@@ -27,7 +27,7 @@ int abceapi_isnil(struct abce *abce, int stackidx);
 int abceapi_getbool(struct abce *abce, int stackidx);
 double abceapi_getdbl(struct abce *abce, int stackidx);
 const char *abceapi_getstr(struct abce *abce, int stackidx, size_t *len);
-const char *abceapi_getpbstr(struct abce *abce, int stackidx, size_t *len);
+char *abceapi_getpbstr(struct abce *abce, int stackidx, size_t *len);
 
 int abceapi_pushnewarray(struct abce *abce);
 int abceapi_pushnewtree(struct abce *abce);

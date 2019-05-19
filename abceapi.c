@@ -160,11 +160,49 @@ double abceapi_getdbl(struct abce *abce, int stackidx)
 }
 const char *abceapi_getstr(struct abce *abce, int stackidx, size_t *len)
 {
-  return NULL; // FIXME implement
+  int res;
+  const char *resbuf;
+  struct abce_err err_old = abce->err;
+  struct abce_mb mb;
+  res = abce_getmb(&mb, abce, stackidx) == 0;
+  if (!res)
+  {
+    abce->err = err_old;
+    return NULL;
+  }
+  if (mb.typ != ABCE_T_S)
+  {
+    abce->err = err_old;
+    return NULL;
+  }
+  *len = mb.u.area->u.str.size;
+  resbuf = mb.u.area->u.str.buf;
+  abce_mb_refdn(abce, &mb);
+  abce->err = err_old;
+  return resbuf;
 }
-const char *abceapi_getpbstr(struct abce *abce, int stackidx, size_t *len)
+char *abceapi_getpbstr(struct abce *abce, int stackidx, size_t *len)
 {
-  return NULL; // FIXME implement
+  int res;
+  char *resbuf;
+  struct abce_err err_old = abce->err;
+  struct abce_mb mb;
+  res = abce_getmb(&mb, abce, stackidx) == 0;
+  if (!res)
+  {
+    abce->err = err_old;
+    return NULL;
+  }
+  if (mb.typ != ABCE_T_PB)
+  {
+    abce->err = err_old;
+    return NULL;
+  }
+  *len = mb.u.area->u.pb.size;
+  resbuf = mb.u.area->u.pb.buf;
+  abce_mb_refdn(abce, &mb);
+  abce->err = err_old;
+  return resbuf;
 }
 
 int abceapi_pushnewarray(struct abce *abce)
@@ -201,7 +239,19 @@ int abceapi_pushnewtree(struct abce *abce)
 }
 int abceapi_pushnewpb(struct abce *abce, const char *str, size_t len)
 {
-  abort(); // FIXME implement
+  struct abce_mb mb;
+  struct abce_err err_old = abce->err;
+  int ret;
+  mb = abce_mb_create_pb_from_buf(abce, str, len);
+  if (mb.typ == ABCE_T_N)
+  {
+    abce->err = err_old;
+    return 0;
+  }
+  ret = abce_push_mb(abce, &mb) == 0;
+  abce_mb_refdn_typ(abce, &mb, ABCE_T_PB);
+  abce->err = err_old;
+  return ret;
 }
 int abceapi_pushnewstr(struct abce *abce, const char *str, size_t len)
 {

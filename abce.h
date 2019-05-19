@@ -1128,6 +1128,8 @@ struct abce_mb abce_mb_create_tree(struct abce *abce);
 
 struct abce_mb abce_mb_create_pb(struct abce *abce);
 
+struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz);
+
 struct abce_mb abce_mb_create_array(struct abce *abce);
 
 int

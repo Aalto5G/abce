@@ -214,6 +214,37 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
   return mb;
 }
 
+struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
+  if (mba == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba);
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.pb.size = sz;
+  mba->u.pb.capacity = sz;
+  mba->u.pb.buf =
+    (char*)abce->alloc(NULL, 0, sz, &abce->alloc_baton);
+  if (mba->u.pb.buf == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sz;
+    abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  memcpy(mba->u.pb.buf, buf, sz);
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_PB;
+  mb.u.area = mba;
+  return mb;
+}
+
 struct abce_mb abce_mb_create_tree(struct abce *abce)
 {
   struct abce_mb_area *mba;
