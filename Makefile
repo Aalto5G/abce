@@ -56,6 +56,7 @@ wc:
 #LUALIB:=/usr/lib/x86_64-linux-gnu/liblua5.3.a
 LUAINC:=/usr/include/luajit-2.1
 LUALIB:=/usr/lib/x86_64-linux-gnu/libluajit-5.1.a
+LUALIB:=
 
 CC=clang
 CPP=clang++
