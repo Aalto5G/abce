@@ -131,6 +131,7 @@ enum abce_opcode {
   ABCE_OPCODE_PUSH_NEW_DICT = 183,
   ABCE_OPCODE_APPENDALL_MAINTAIN = 184,
   ABCE_OPCODE_PUSH_NEW_PB = 185,
+  ABCE_OPCODE_SCOPE_PARENT = 186,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

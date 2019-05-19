@@ -980,6 +980,18 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_refdn(abce, &mbsep);
       return 0;
     }
+    case ABCE_OPCODE_SCOPE_PARENT:
+    {
+      struct abce_mb mbscparent;
+      struct abce_mb mbsc;
+      GETMBSC(&mbsc, -1);
+      POP();
+      mbscparent = abce_mb_refuparea(abce, mbsc.u.area->u.sc.parent, ABCE_T_SC);
+      abce_push_mb(abce, &mbscparent);
+      abce_mb_refdn(abce, &mbsc);
+      abce_mb_refdn(abce, &mbscparent);
+      return 0;
+    }
     case ABCE_OPCODE_SCOPE_NEW:
     {
       int holey;
