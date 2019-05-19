@@ -615,6 +615,30 @@ abce_mb_arearefup(struct abce *abce, const struct abce_mb *mb)
   }
 }
 
+static inline struct abce_mb
+abce_mb_refuparea(struct abce *abce, struct abce_mb_area *mba,
+                  enum abce_type typ)
+{
+  struct abce_mb mb = {};
+  if (mba == NULL)
+  {
+    mb.typ = ABCE_T_N;
+    mb.u.d = 0;
+    return mb;
+  }
+  switch (typ)
+  {
+    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS:
+    case ABCE_T_A: case ABCE_T_SC: case ABCE_T_PB:
+      mb.typ = typ;
+      mb.u.area = mba;
+      mba->refcnt++;
+      return mb;
+    default:
+      abort();
+  }
+}
+
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz);
 
 struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
