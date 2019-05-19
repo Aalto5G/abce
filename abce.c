@@ -77,9 +77,16 @@ void abce_free_gcblock_one(struct abce *abce, size_t locidx)
   abce->gcblockbase[locidx].u.area->locidx = locidx;
 }
 
-void abce_mark_mb(struct abce *abce, const struct abce_mb *mb);
+struct abce_gcqe {
+  enum abce_type typ;
+  struct abce_mb_area *mba;
+};
 
-void abce_mark_tree(struct abce *abce, struct abce_rb_tree_node *n)
+void abce_enqueue_stackentry_mb(const struct abce_mb *mb,
+                                struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap);
+
+void abce_mark_tree(struct abce *abce, struct abce_rb_tree_node *n,
+                    struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap)
 {
   struct abce_mb_rb_entry *mbe;
   if (n == NULL)
@@ -87,51 +94,40 @@ void abce_mark_tree(struct abce *abce, struct abce_rb_tree_node *n)
     return;
   }
   mbe = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
-  abce_mark_mb(abce, &mbe->key);
-  abce_mark_mb(abce, &mbe->val);
-  abce_mark_tree(abce, n->left);
-  abce_mark_tree(abce, n->right);
+  abce_enqueue_stackentry_mb(&mbe->key, stackbase, stackidx, stackcap);
+  abce_enqueue_stackentry_mb(&mbe->val, stackbase, stackidx, stackcap);
+  abce_mark_tree(abce, n->left, stackbase, stackidx, stackcap);
+  abce_mark_tree(abce, n->right, stackbase, stackidx, stackcap);
 }
 
-void abce_mark(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
+void abce_enqueue_stackentry(enum abce_type typ, struct abce_mb_area *mba,
+                             struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap)
 {
-  size_t i;
   if (mba->locidx == (size_t)-1)
   {
     return;
   }
+  if (*stackidx >= stackcap)
+  {
+    abort();
+  }
+  mba->locidx = (size_t)-1;
   switch (typ)
   {
     case ABCE_T_T:
-      abce_mark_tree(abce, mba->u.tree.tree.root);
-      break;
     case ABCE_T_A:
-      for (i = 0; i < mba->u.ar.size; i++)
-      {
-        abce_mark_mb(abce, &mba->u.ar.mbs[i]);
-      }
-      break;
     case ABCE_T_SC:
-      if (mba->u.sc.parent)
-      {
-        abce_mark(abce, mba->u.sc.parent, ABCE_T_SC);
-      }
-      for (i = 0; i < mba->u.sc.size; i++)
-      {
-        abce_mark_tree(abce, mba->u.sc.heads[i].root);
-      }
-      break;
-    case ABCE_T_IOS:
-    case ABCE_T_S:
-    case ABCE_T_PB:
+      stackbase[*stackidx].typ = typ;
+      stackbase[*stackidx].mba = mba;
+      (*stackidx)++;
       break;
     default:
-      abort();
+      break;
   }
-  mba->locidx = -1;
 }
 
-void abce_mark_mb(struct abce *abce, const struct abce_mb *mb)
+void abce_enqueue_stackentry_mb(const struct abce_mb *mb,
+                                struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap)
 {
   switch (mb->typ)
   {
@@ -141,34 +137,118 @@ void abce_mark_mb(struct abce *abce, const struct abce_mb *mb)
     case ABCE_T_IOS:
     case ABCE_T_S:
     case ABCE_T_PB:
-      abce_mark(abce, mb->u.area, mb->typ);
+      abce_enqueue_stackentry(mb->typ, mb->u.area, stackbase, stackidx, stackcap);
+      break;
     default:
       break;
   }
 }
 
+void abce_mark(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ,
+               struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap)
+{
+  size_t i;
+  if (mba->locidx == (size_t)-1)
+  {
+    return;
+  }
+  abce_enqueue_stackentry(typ, mba, stackbase, stackidx, stackcap);
+  while ((*stackidx) > 0)
+  {
+    typ = stackbase[(*stackidx) - 1].typ;
+    mba = stackbase[(*stackidx) - 1].mba;
+    (*stackidx)--;
+    switch (typ)
+    {
+      case ABCE_T_T:
+        abce_mark_tree(abce, mba->u.tree.tree.root, stackbase, stackidx, stackcap);
+        break;
+      case ABCE_T_A:
+        for (i = 0; i < mba->u.ar.size; i++)
+        {
+          abce_enqueue_stackentry_mb(&mba->u.ar.mbs[i], stackbase, stackidx, stackcap);
+        }
+        break;
+      case ABCE_T_SC:
+        if (mba->u.sc.parent)
+        {
+          abce_enqueue_stackentry(ABCE_T_SC, mba->u.sc.parent, stackbase, stackidx, stackcap);
+        }
+        for (i = 0; i < mba->u.sc.size; i++)
+        {
+          abce_mark_tree(abce, mba->u.sc.heads[i].root, stackbase, stackidx, stackcap);
+        }
+        break;
+      case ABCE_T_IOS:
+      case ABCE_T_S:
+      case ABCE_T_PB:
+        break;
+      default:
+        abort();
+    }
+  }
+}
+
+void abce_mark_mb(struct abce *abce, const struct abce_mb *mb,
+                  struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap)
+{
+  switch (mb->typ)
+  {
+    case ABCE_T_T:
+    case ABCE_T_A:
+    case ABCE_T_SC:
+    case ABCE_T_IOS:
+    case ABCE_T_S:
+    case ABCE_T_PB:
+      abce_mark(abce, mb->u.area, mb->typ, stackbase, stackidx, stackcap);
+    default:
+      break;
+  }
+}
+
+struct abce_gcqe *abce_alloc_gcqueue(size_t limit)
+{
+  return mmap(NULL, abce_topages(limit * sizeof(struct abce_gcqe)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+}
+
+void abce_free_gcqueue(struct abce_gcqe *stackbase, size_t limit)
+{
+  if (munmap(stackbase, abce_topages(limit * sizeof(struct abce_gcqe))) != 0)
+  {
+    abort();
+  }
+}
 
 void abce_gc(struct abce *abce)
 {
   size_t i;
+  const size_t safety_margin = 100;
+  struct abce_gcqe *stackbase;
+  size_t stackcap;
+  size_t stackidx = 0;
   if (!abce->in_engine)
   {
     return;
   }
-  abce_mark_mb(abce, &abce->dynscope);
-  abce_mark_mb(abce, &abce->err.mb);
+  stackcap = abce->gcblocksz + safety_margin;
+  stackbase = abce_alloc_gcqueue(stackcap);
+  abce_mark_mb(abce, &abce->dynscope, stackbase, &stackidx, stackcap);
+  abce_mark_mb(abce, &abce->err.mb, stackbase, &stackidx, stackcap);
   for (i = 0; i < abce->sp; i++)
   {
-    abce_mark_mb(abce, &abce->stackbase[i]);
+    abce_mark_mb(abce, &abce->stackbase[i], stackbase, &stackidx, stackcap);
   }
   for (i = 0; i < abce->cachesz; i++)
   {
-    abce_mark_mb(abce, &abce->cachebase[i]);
+    abce_mark_mb(abce, &abce->cachebase[i], stackbase, &stackidx, stackcap);
   }
   for (i = 0; i < abce->btsz; i++)
   {
-    abce_mark_mb(abce, &abce->btbase[i]);
+    abce_mark_mb(abce, &abce->btbase[i], stackbase, &stackidx, stackcap);
   }
+  abce_free_gcqueue(stackbase, stackcap);
+  stackbase = NULL;
+  stackcap =0 ;
 
   i = 0;
   while (i < abce->gcblocksz)
