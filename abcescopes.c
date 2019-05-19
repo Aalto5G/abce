@@ -52,7 +52,7 @@ int abce_sc_replace_val_mb(
   n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
   if (n == NULL)
   {
-    e = abce->alloc(NULL, 0, sizeof(*e), abce);
+    e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);
     if (e == NULL)
     {
       abce->err.code = ABCE_E_NO_MEM;
@@ -90,7 +90,7 @@ int abce_sc_put_val_str(
   }
   hashval = abce_str_hash(str);
   hashloc = hashval & (mba->u.sc.size - 1);
-  e = abce->alloc(NULL, 0, sizeof(*e), abce);
+  e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);
   if (e == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
@@ -113,6 +113,6 @@ int abce_sc_put_val_str(
   }
   abce_mb_refdn(abce, &e->key);
   abce_mb_refdn(abce, &e->val);
-  abce->alloc(e, sizeof(*e), 0, abce);
+  abce->alloc(e, sizeof(*e), 0, &abce->alloc_baton);
   return ret;
 }
