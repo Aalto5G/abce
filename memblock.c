@@ -191,79 +191,90 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
 void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
 {
   size_t i;
-  switch (typ)
+  struct abce_mb obj = {.u = {.area = mba}, .typ = typ};
+
+  mba->refcnt = 1;
+  abce_maybe_mv_obj_to_scratch(abce, &obj);
+
+  while (abce->scratchstart < abce->gcblockcap)
   {
-    case ABCE_T_T:
-      if (1)
-      {
-        while (mba->u.tree.tree.root != NULL)
+    obj = abce->gcblockbase[abce->scratchstart++];
+    switch (obj.typ)
+    {
+      case ABCE_T_T:
+        if (1)
         {
-          struct abce_mb_rb_entry *mbe =
-            ABCE_CONTAINER_OF(mba->u.tree.tree.root,
-                         struct abce_mb_rb_entry, n);
-          abce_mb_refdn(abce, &mbe->key);
-          abce_mb_refdn(abce, &mbe->val);
-          abce_rb_tree_nocmp_delete(&mba->u.tree.tree,
-                               mba->u.tree.tree.root);
-          abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
-        }
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      break;
-    case ABCE_T_IOS:
-      if (1)
-      {
-        fclose(mba->u.ios.f);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      break;
-    case ABCE_T_A:
-      if (1)
-      {
-        for (i = 0; i < mba->u.ar.size; i++)
-        {
-          abce_mb_refdn(abce, &mba->u.ar.mbs[i]);
-        }
-        abce->alloc(mba->u.ar.mbs, mba->u.ar.capacity*sizeof(*mba->u.ar.mbs), 0, &abce->alloc_baton);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      break;
-    case ABCE_T_S:
-      if (1)
-      {
-        abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
-      }
-      break;
-    case ABCE_T_PB:
-      if (1)
-      {
-        abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      break;
-    case ABCE_T_SC:
-      if (1)
-      {
-        abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC);
-        for (i = 0; i < mba->u.sc.size; i++)
-        {
-          while (mba->u.sc.heads[i].root != NULL)
+          // Ok, this might be better (faster)
+          while (mba->u.tree.tree.root != NULL)
           {
             struct abce_mb_rb_entry *mbe =
-              ABCE_CONTAINER_OF(mba->u.sc.heads[i].root,
+              ABCE_CONTAINER_OF(mba->u.tree.tree.root,
                            struct abce_mb_rb_entry, n);
-            abce_mb_refdn(abce, &mbe->key);
-            abce_mb_refdn(abce, &mbe->val);
-            abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
-                                 mba->u.sc.heads[i].root);
+            abce_maybe_mv_obj_to_scratch(abce, &mbe->key);
+            abce_maybe_mv_obj_to_scratch(abce, &mbe->val);
+            abce_rb_tree_nocmp_delete(&mba->u.tree.tree,
+                                 mba->u.tree.tree.root);
             abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
           }
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
         }
-        abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
-      }
-      break;
-    default:
-      break;
+        break;
+      case ABCE_T_IOS:
+        if (1)
+        {
+          fclose(mba->u.ios.f);
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+        }
+        break;
+      case ABCE_T_A:
+        if (1)
+        {
+          for (i = 0; i < mba->u.ar.size; i++)
+          {
+            abce_maybe_mv_obj_to_scratch(abce, &mba->u.ar.mbs[i]);
+          }
+          abce->alloc(mba->u.ar.mbs, mba->u.ar.capacity*sizeof(*mba->u.ar.mbs), 0, &abce->alloc_baton);
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+        }
+        break;
+      case ABCE_T_S:
+        if (1)
+        {
+          abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
+        }
+        break;
+      case ABCE_T_PB:
+        if (1)
+        {
+          abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+        }
+        break;
+      case ABCE_T_SC:
+        if (1)
+        {
+          abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC);
+          for (i = 0; i < mba->u.sc.size; i++)
+          {
+            // Ok, this might be better (faster)
+            while (mba->u.sc.heads[i].root != NULL)
+            {
+              struct abce_mb_rb_entry *mbe =
+                ABCE_CONTAINER_OF(mba->u.sc.heads[i].root,
+                             struct abce_mb_rb_entry, n);
+              abce_maybe_mv_obj_to_scratch(abce, &mbe->key);
+              abce_maybe_mv_obj_to_scratch(abce, &mbe->val);
+              abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
+                                   mba->u.sc.heads[i].root);
+              abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
+            }
+          }
+          abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
+        }
+        break;
+      default:
+        break;
+    }
   }
 }
 
@@ -278,8 +289,8 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
   {
     abort();
   }
-  abce_free_gcblock_one(abce, mba->locidx);
-  mba->locidx = (size_t)-1;
+  //abce_free_gcblock_one(abce, mba->locidx);
+  //mba->locidx = (size_t)-1;
   abce_mb_gc_free(abce, mba, typ);
   *mbap = NULL;
 }

@@ -1178,6 +1178,8 @@ static inline void abce_err_free(struct abce *abce, struct abce_err *err)
 
 void abce_free_gcblock_one(struct abce *abce, size_t locidx);
 
+void abce_maybe_mv_obj_to_scratch(struct abce *abce, const struct abce_mb *obj);
+
 void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ);
 
 static inline void abce_setup_mb_for_gc(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)

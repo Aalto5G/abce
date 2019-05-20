@@ -143,6 +143,7 @@ struct abce {
   struct abce_mb *gcblockbase;
   size_t gcblocksz;
   size_t gcblockcap;
+  size_t scratchstart;
   // Dynamic scope
   struct abce_mb dynscope;
   size_t btcap;
