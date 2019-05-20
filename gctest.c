@@ -25,9 +25,10 @@ int main(int argc, char **argv)
   }
   amyplanyydoparse(f, &amyplanyy);
   fclose(f);
-  amyplanyy.abce.gcblockcap = 1000;
+  //amyplanyy.abce.gcblockcap = ;
+  amyplanyy.abce.in_engine = 1;
 
-  for (i = 0; i < 10000; i++)
+  for (i = 0; i < 1000*1000; i++)
   {
     abce_mb_create_tree(&amyplanyy.abce);
   }

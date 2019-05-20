@@ -96,8 +96,14 @@ void abce_mark_tree(struct abce *abce, struct abce_rb_tree_node *n,
   mbe = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   abce_enqueue_stackentry_mb(&mbe->key, stackbase, stackidx, stackcap);
   abce_enqueue_stackentry_mb(&mbe->val, stackbase, stackidx, stackcap);
-  abce_mark_tree(abce, n->left, stackbase, stackidx, stackcap);
-  abce_mark_tree(abce, n->right, stackbase, stackidx, stackcap);
+  if (n->left)
+  {
+    abce_mark_tree(abce, n->left, stackbase, stackidx, stackcap);
+  }
+  if (n->right)
+  {
+    abce_mark_tree(abce, n->right, stackbase, stackidx, stackcap);
+  }
 }
 
 void abce_enqueue_stackentry(enum abce_type typ, struct abce_mb_area *mba,
@@ -176,7 +182,10 @@ void abce_mark(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ,
         }
         for (i = 0; i < mba->u.sc.size; i++)
         {
-          abce_mark_tree(abce, mba->u.sc.heads[i].root, stackbase, stackidx, stackcap);
+          if (abce_unlikely(mba->u.sc.heads[i].root != NULL))
+          {
+            abce_mark_tree(abce, mba->u.sc.heads[i].root, stackbase, stackidx, stackcap);
+          }
         }
         break;
       case ABCE_T_IOS:

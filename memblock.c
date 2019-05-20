@@ -29,8 +29,10 @@ void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     {
       return NULL;
     }
-    if ((   abce->gcblocksz*1.0 > abce->lastgcblocksz*1.3
-         || abce->bytes_alloced*1.0 > abce->lastbytes_alloced*1.3
+    if ((   (abce->gcblocksz*1.0 > abce->lastgcblocksz*1.3
+            && abce->gcblocksz - abce->lastgcblocksz > 100*1000)
+         || (abce->bytes_alloced*1.0 > abce->lastbytes_alloced*1.3
+            && abce->bytes_alloced - abce->lastbytes_alloced > 1000*1000)
          || abce->gcblocksz >= abce->gcblockcap
          || abce->bytes_alloced > (abce->bytes_cap - newsz))
         && abce->in_engine)
