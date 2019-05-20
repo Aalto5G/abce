@@ -26,63 +26,6 @@ void abce_free_bcode(unsigned char *bcodebase, size_t limit)
   }
 }
 
-void abce_maybe_mv_obj_to_scratch(struct abce *abce, const struct abce_mb *obj)
-{
-  struct abce_mb_area *mba;
-
-  switch(obj->typ)
-  {
-    case ABCE_T_IOS:
-    case ABCE_T_S:
-    case ABCE_T_PB:
-    case ABCE_T_T:
-    case ABCE_T_A:
-    case ABCE_T_SC:
-      break;
-    default:
-      return; // static type
-  }
-  mba = obj->u.area;
-  if (--mba->refcnt)
-  {
-    return;
-  }
-  abce->gcblockbase[mba->locidx] = abce->gcblockbase[--abce->gcblocksz];
-  abce->gcblockbase[mba->locidx].u.area->locidx = mba->locidx;
-
-  switch (obj->typ)
-  {
-    case ABCE_T_IOS:
-      if (1)
-      {
-        fclose(mba->u.ios.f);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      return;
-    case ABCE_T_S:
-      if (1)
-      {
-        abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
-      }
-      return;
-    case ABCE_T_PB:
-      if (1)
-      {
-        abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      return;
-    case ABCE_T_T:
-    case ABCE_T_A:
-    case ABCE_T_SC:
-      break;
-    default:
-      abort();
-  }
-
-  abce->gcblockbase[--abce->scratchstart] = *obj;
-}
-
 
 void abce_init(struct abce *abce)
 {
