@@ -141,6 +141,9 @@ int amyplanyywrap(yyscan_t scanner)
 %token BREAK
 %token CONTINUE
 
+%token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET STRWORD STRWORDCNT STRWORDLIST
+
+
 %token DIV MUL ADD SUB SHL SHR NE EQ LOGICAL_AND LOGICAL_OR LOGICAL_NOT MOD BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR TRUE FALSE NIL ATQM TYPE
 
 
@@ -229,7 +232,7 @@ bodylines:
 ;
 
 statement:
-  lvalue EQUALS MINUS NEWLINE
+  lvalue EQUALS SUB NEWLINE
 {
   if ($1 != ABCE_OPCODE_DICTSET_MAINTAIN)
   {
@@ -869,6 +872,38 @@ expr0:
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TYPE); }
 | FALSE { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE); }
 | NIL { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NIL); }
+| STR_FROMCHR OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR_FROMCHR); }
+| STR_LOWER OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR_LOWER); }
+| STR_UPPER OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR_UPPER); }
+| STR_REVERSE OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR_REVERSE); }
+| STRCMP OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR_CMP); }
+| STRSTR OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTR); }
+| STRREP OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRREP); }
+| STRLISTJOIN OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLISTJOIN); }
+| STRAPPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRAPPEND); }
+| STRSTRIP OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTRIP); }
+| STRSUB OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSUB); }
+| STRGSUB OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGSUB); }
+| STRSET OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSET); }
+| STRWORD OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORD); }
+| STRWORDCNT OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
+| STRWORDLIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
 | lvalue
 {
   switch ((int)$1)
