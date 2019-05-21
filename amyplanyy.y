@@ -203,7 +203,6 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %type<d> maybe_atqm
 %type<d> dynstart
 %type<d> lexstart
-%type<d> maybeqmequals
 %type<d> varref_tail
 
 %start st
@@ -214,7 +213,6 @@ st: aplanrules;
 
 aplanrules:
 | aplanrules NEWLINE
-| aplanrules assignrule
 | aplanrules FUNCTION VARREF_LITERAL
 {
   amyplanyy->ctx = amyplan_locvarctx_alloc(NULL, 2, (size_t)-1, (size_t)-1);
@@ -609,92 +607,12 @@ maybe_bracketexprlist:
 }
 ;
 
-maybeqmequals: EQUALS {$$ = 0;} /* | QMEQUALS {$$ = 1;} */;
-
-assignrule:
-VARREF_LITERAL maybeqmequals
-{
-  size_t funloc = amyplanyy->abce.bytecodesz;
-  amyplanyy_add_fun_sym(amyplanyy, $1, $2, funloc);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_HEADER);
-  amyplanyy_add_double(amyplanyy, 0);
-}
-expr NEWLINE
-{
-  printf("Assigning to %s\n", $1);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
-  amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $1, strlen($1)));
-  free($1);
-}
-/*
-| VARREF_LITERAL PLUSEQUALS
-{
-  size_t funloc = amyplanyy->bytesz;
-  size_t oldloc = amyplanyy_add_fun_sym(amyplanyy, $1, 0, funloc);
-  if (oldloc == (size_t)-1)
-  {
-    printf("Can't find old symbol function\n");
-    YYABORT;
-  }
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_HEADER);
-  amyplanyy_add_double(amyplanyy, 0);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, oldloc);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STRINGTAB);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
-  // FIXME what if it's not a list?
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUP_NONRECURSIVE);
-  //amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUNIFY);
-  //amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  //amyplanyy_add_double(amyplanyy, 0); // arg cnt
-  //amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL);
-}
-expr NEWLINE
-{
-  printf("Plus-assigning to %s\n", $1);
-  // FIXME what if it's not a list?
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
-  amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $1, strlen($1)));
-  free($1);
-}
-*/
-;
-
 value:
-/*
-  STRING_LITERAL
-{
-  int64_t symid = abce_cache_add_str(&amyplanyy->abce, $1.str, $1.sz);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, symid);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  free($1.str);
-  $$ = 0;
-}
-| varref
-{
-  $$ = 0;
-}
-| dict
-{
-  $$ = 0;
-}
-| list
-{
-  $$ = 0;
-}
-| DELAYVAR OPEN_PAREN varref CLOSE_PAREN
-{
-  $$ = 0;
-}
-|*/ AT /* DELAYLISTEXPAND */ /* OPEN_PAREN */ expr /* CLOSE_PAREN */
+  AT expr
 {
   $$ = 1;
 }
-| /* DELAYEXPR */ /* OPEN_PAREN */ expr /* CLOSE_PAREN */ /* FIXME! */
+| expr
 {
   $$ = 0;
 }
@@ -1061,8 +979,7 @@ OPEN_BRACKET
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NEW_ARRAY);
 }
-maybe_valuelist
-CLOSE_BRACKET
+maybe_valuelist CLOSE_BRACKET
 ;
 
 dict:
@@ -1083,18 +1000,7 @@ dictlist:
 ;
 
 dictentry:
-  value
-/*
-STRING_LITERAL
-{
-  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $1.str, $1.sz);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, idx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  free($1.str);
-}
-*/
-COLON value
+  value COLON value
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTSET_MAINTAIN);
 }
@@ -1116,8 +1022,7 @@ valuelist:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPEND_MAINTAIN);
   }
 }
-| valuelist COMMA
-  valuelistentry
+| valuelist COMMA valuelistentry
 {
   if ($3)
   {
@@ -1131,14 +1036,7 @@ valuelist:
 ;
 
 valuelistentry:
-/*
-  AT varref
-{
-  $$ = 0;
-}
-|
-*/
-value
+  value
 {
   $$ = $1;
 };
