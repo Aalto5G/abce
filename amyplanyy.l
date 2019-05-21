@@ -59,6 +59,7 @@ struct amyplan_csnippet luaSnippet = {
 @pbnew    return PB_NEW;
 @scopeparent return SCOPE_PARENT;
 @scopenew return SCOPE_NEW;
+@scope    return SCOPE;
 @getscopedyn return GETSCOPE_DYN;
 @getscopelex return GETSCOPE_LEX;
 

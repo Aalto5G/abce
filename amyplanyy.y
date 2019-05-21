@@ -92,7 +92,7 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %token LT GT LE GE
 %token FUNCTION ENDFUNCTION LOCVAR
 
-%token DYNO LEXO IMMO DYN LEX IMM
+%token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
 %token D L I DO LO IO LOC
 %token APPEND APPEND_LIST
@@ -120,6 +120,7 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %type<d> maybe_arglist
 %type<d> maybe_atqm
 %type<d> dynstart
+%type<d> scopstart
 %type<d> lexstart
 %type<d> varref_tail
 
@@ -479,15 +480,31 @@ lvalue:
 {
   $$ = $4;
 }
+| scopstart
+{
+  $$ = $1;
+}
+| scopstart
+{
+  amyplanyy_add_byte(amyplanyy,
+    ($1 == ABCE_OPCODE_SCOPEVAR_SET) ? ABCE_OPCODE_SCOPEVAR : $1);
+}
+  maybe_bracketexprlist varref_tail
+{
+  $$ = $4;
+}
 | lexstart
 {
-  printf("LEX not supported yet\n");
-  abort(); // FIXME not supported yet
+  $$ = $1;
 }
-| lexstart maybe_bracketexprlist varref_tail
+| lexstart
 {
-  printf("LEX not supported yet\n");
-  abort(); // FIXME not supported yet
+  amyplanyy_add_byte(amyplanyy,
+    ($1 == ABCE_OPCODE_SCOPEVAR_SET) ? ABCE_OPCODE_SCOPEVAR : $1);
+}
+  maybe_bracketexprlist varref_tail
+{
+  $$ = $4;
 }
 | OPEN_PAREN expr CLOSE_PAREN maybe_bracketexprlist varref_tail
 {
@@ -526,6 +543,13 @@ dynstart:
   OPEN_BRACKET maybe_atqm expr CLOSE_BRACKET
 {
   $$ = $4;
+}
+;
+
+scopstart:
+  SCOPE OPEN_BRACKET expr COMMA maybe_atqm expr CLOSE_BRACKET
+{
+  $$ = $5;
 }
 ;
 
@@ -838,7 +862,6 @@ expr0:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_NEW);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
 }
-/* FIXME needs some syntax of actually manipulating scopes */
 | GETSCOPE_DYN OPEN_PAREN CLOSE_PAREN
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN); }
 | GETSCOPE_LEX OPEN_PAREN CLOSE_PAREN
