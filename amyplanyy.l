@@ -40,7 +40,10 @@ struct amyplan_csnippet luaSnippet = {
 %}
 
 @         return AT;
+@type     return TYPE;
+@[?]      return ATQM;
 @true     return TRUE;
+@nil      return NIL;
 @false    return FALSE;
 @print    return PRINT;
 @function return FUNCTION;

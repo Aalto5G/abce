@@ -141,7 +141,7 @@ int amyplanyywrap(yyscan_t scanner)
 %token BREAK
 %token CONTINUE
 
-%token DIV MUL ADD SUB SHL SHR NE EQ LOGICAL_AND LOGICAL_OR LOGICAL_NOT MOD BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR TRUE FALSE
+%token DIV MUL ADD SUB SHL SHR NE EQ LOGICAL_AND LOGICAL_OR LOGICAL_NOT MOD BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR TRUE FALSE NIL ATQM TYPE
 
 
 %token ERROR_TOK
@@ -151,6 +151,9 @@ int amyplanyywrap(yyscan_t scanner)
 %type<d> arglist
 %type<d> valuelistentry
 %type<d> maybe_arglist
+%type<d> maybe_atqm
+%type<d> dynstart
+%type<d> lexstart
 %type<d> maybeqmequals
 %type<d> varref_tail
 
@@ -226,11 +229,41 @@ bodylines:
 ;
 
 statement:
-  lvalue EQUALS expr NEWLINE
+  lvalue EQUALS MINUS NEWLINE
+{
+  if ($1 != ABCE_OPCODE_DICTSET_MAINTAIN)
+  {
+    printf("Can remove only from dict\n");
+    YYABORT;
+  }
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTDEL);
+}
+| lvalue EQUALS expr NEWLINE
 {
   if ($1 == ABCE_OPCODE_STRGET)
   {
     printf("Can't assign to string\n");
+    YYABORT;
+  }
+  if ($1 == ABCE_OPCODE_LISTPOP)
+  {
+    printf("Can't assign to pop query\n");
+    YYABORT;
+  }
+  if ($1 == ABCE_OPCODE_DICTHAS)
+  {
+    printf("Can't assign to dictionary query\n");
+    YYABORT;
+  }
+  if ($1 == ABCE_OPCODE_SCOPE_HAS)
+  {
+    printf("Can't assign to scope query\n");
+    YYABORT;
+  }
+  if (   $1 == ABCE_OPCODE_STRLEN || $1 == ABCE_OPCODE_LISTLEN
+      || $1 == ABCE_OPCODE_DICTLEN)
+  {
+    printf("Can't assign to length query (except for PB)\n");
     YYABORT;
   }
   amyplanyy_add_byte(amyplanyy, $1);
@@ -399,17 +432,41 @@ varref_tail:
 {
   $$ = ABCE_OPCODE_LISTSET;
 }
+| OPEN_BRACKET SUB CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_LISTPOP; // This is special. Can't assign to pop query.
+}
+| OPEN_BRACKET CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_LISTLEN; // This is special. Can't assign to length query.
+}
 | OPEN_BRACE expr CLOSE_BRACE
 {
   $$ = ABCE_OPCODE_DICTSET_MAINTAIN; // FIXME remember to pop!
+}
+| OPEN_BRACE CLOSE_BRACE
+{
+  $$ = ABCE_OPCODE_DICTLEN; // This is special. Can't assign to length query.
+}
+| OPEN_BRACE ATQM expr CLOSE_BRACE
+{
+  $$ = ABCE_OPCODE_DICTHAS; // This is special. Can't assign to "has" query.
 }
 | OPEN_BRACKET AT expr CLOSE_BRACKET
 {
   $$ = ABCE_OPCODE_STRGET; // This is special. Can't assign to string.
 }
+| OPEN_BRACKET AT CLOSE_BRACKET
+{
+  $$ = ABCE_OPCODE_STRLEN; // This is special. Can't assign to length query.
+}
 | OPEN_BRACE AT expr CLOSE_BRACE
 {
   $$ = ABCE_OPCODE_PBSET; // FIXME needs transfer size of operation
+}
+| OPEN_BRACE AT CLOSE_BRACE
+{
+  $$ = ABCE_OPCODE_PBSETLEN; // This is very special: CAN assign to length query
 }
 ;
 
@@ -428,11 +485,12 @@ lvalue:
 }
 | dynstart
 {
-  $$ = ABCE_OPCODE_SCOPEVAR_SET;
+  $$ = $1;
 }
 | dynstart
 {
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
+  amyplanyy_add_byte(amyplanyy,
+    ($1 == ABCE_OPCODE_SCOPEVAR_SET) ? ABCE_OPCODE_SCOPEVAR : $1);
 }
   maybe_bracketexprlist varref_tail
 {
@@ -454,13 +512,26 @@ lvalue:
 }
 ;
 
+maybe_atqm:
+{
+  $$ = ABCE_OPCODE_SCOPEVAR_SET;
+}
+| ATQM
+{
+  $$ = ABCE_OPCODE_SCOPE_HAS;
+}
+;
+
 lexstart:
   LEX
 {
   printf("LEX not supported yet\n");
   abort(); // FIXME not supported yet
 }
-  OPEN_BRACKET expr CLOSE_BRACKET
+  OPEN_BRACKET maybe_atqm expr CLOSE_BRACKET
+{
+  $$ = $4;
+}
 ;
 
 dynstart:
@@ -468,7 +539,10 @@ dynstart:
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
 }
-  OPEN_BRACKET expr CLOSE_BRACKET
+  OPEN_BRACKET maybe_atqm expr CLOSE_BRACKET
+{
+  $$ = $4;
+}
 ;
 
 maybe_bracketexprlist:
@@ -790,14 +864,11 @@ expr0:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, $1);
 }
-| TRUE
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_TRUE);
-}
-| FALSE
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE);
-}
+| TRUE { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_TRUE); }
+| TYPE OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TYPE); }
+| FALSE { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE); }
+| NIL { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NIL); }
 | lvalue
 {
   switch ((int)$1)
@@ -817,8 +888,26 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
+    case ABCE_OPCODE_PBSETLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
+      break;
     case ABCE_OPCODE_STRGET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    case ABCE_OPCODE_DICTHAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
+      break;
+    case ABCE_OPCODE_SCOPE_HAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
+      break;
+    case ABCE_OPCODE_STRLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
+      break;
+    case ABCE_OPCODE_LISTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
+      break;
+    case ABCE_OPCODE_DICTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
       break;
     default:
       printf("FIXME default1\n");
@@ -844,8 +933,26 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
+    case ABCE_OPCODE_PBSETLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
+      break;
     case ABCE_OPCODE_STRGET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    case ABCE_OPCODE_DICTHAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
+      break;
+    case ABCE_OPCODE_SCOPE_HAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
+      break;
+    case ABCE_OPCODE_STRLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
+      break;
+    case ABCE_OPCODE_LISTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
+      break;
+    case ABCE_OPCODE_DICTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
       break;
     default:
       printf("FIXME default2\n");
@@ -877,8 +984,26 @@ expr0:
     case ABCE_OPCODE_PBSET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
       break;
+    case ABCE_OPCODE_PBSETLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
+      break;
     case ABCE_OPCODE_STRGET:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    case ABCE_OPCODE_DICTHAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
+      break;
+    case ABCE_OPCODE_SCOPE_HAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
+      break;
+    case ABCE_OPCODE_STRLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
+      break;
+    case ABCE_OPCODE_LISTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
+      break;
+    case ABCE_OPCODE_DICTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
       break;
     default:
       printf("FIXME default3\n");
