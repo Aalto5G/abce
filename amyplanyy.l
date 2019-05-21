@@ -64,6 +64,8 @@ struct amyplan_csnippet luaSnippet = {
 @endif   return ENDIF;
 @while return WHILE;
 @endwhile return ENDWHILE;
+@once return ONCE;
+@endonce return ENDONCE;
 @break return BREAK;
 @continue return CONTINUE;
 @return  return RETURN;
