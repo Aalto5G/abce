@@ -1,22 +1,4 @@
-/*
-%code requires {
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-typedef void *yyscan_t;
-#endif
-#include "amyplanyy.h"
-#include <sys/types.h>
-}
-
-%define api.prefix {amyplanyy}
-*/
-
 %{
-
-/*
-#define YYSTYPE APLANYYSTYPE
-#define YYLTYPE APLANYYLTYPE
-*/
 
 #include "amyplanyy.h"
 #include "amyplanyyutils.h"
@@ -90,108 +72,41 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %lex-param {yyscan_t scanner}
 %parse-param {yyscan_t scanner}
 %parse-param {struct amyplanyy *amyplanyy}
-/* %locations */
 
 %union {
-  int i;
-  struct {
-    double d1;
-    double d2;
-  } d2;
   double d;
   char *s;
   struct amyplan_escaped_string str;
-  struct {
-    int i;
-    char *s;
-  } both;
-  struct {
-    uint8_t has_i:1;
-    uint8_t has_prio:1;
-    int prio;
-  } tokenoptstmp;
-  struct {
-    uint8_t i:1;
-    int prio;
-  } tokenopts;
 }
 
-/*
-%destructor { free ($$.str); } STRING_LITERAL
-%destructor { free ($$); } VARREF_LITERAL
-%destructor { free ($$); } PERCENTLUA_LITERAL
-*/
-
-
 %token <s> PERCENTLUA_LITERAL
-%token OPEN_BRACKET
-%token CLOSE_BRACKET
-%token OPEN_BRACE
-%token CLOSE_BRACE
-%token OPEN_PAREN
-%token CLOSE_PAREN
+%token OPEN_BRACKET CLOSE_BRACKET OPEN_BRACE CLOSE_BRACE OPEN_PAREN CLOSE_PAREN
 
-%token ATTAB
+%token AT ATTAB NEWLINE
 
-%token NEWLINE
-
-%token EQUALS
-/* %token PLUSEQUALS */
-/* %token QMEQUALS */
-%token COLON
-%token COMMA
+%token EQUALS COLON COMMA
 %token <str> STRING_LITERAL
 %token <d> NUMBER
 %token <s> VARREF_LITERAL
 %token MAYBE_CALL
-%token LT
-%token GT
-%token LE
-%token GE
-%token AT
-%token FUNCTION
-%token ENDFUNCTION
-%token LOCVAR
+%token LT GT LE GE
+%token FUNCTION ENDFUNCTION LOCVAR
 
-/*
-%token DELAYVAR
-%token DELAYEXPR
-%token DELAYLISTEXPAND
-*/
-%token DYNO
-%token LEXO
-%token IMMO
-%token DYN
-%token LEX
-%token IMM
-%token ELSE
-%token D
-%token L
-%token I
-%token DO
-%token LO
-%token IO
-%token LOC
-%token APPEND
-%token APPEND_LIST
-%token RETURN
-%token PRINT
+%token DYNO LEXO IMMO DYN LEX IMM
+%token IF ELSE ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
+%token D L I DO LO IO LOC
+%token APPEND APPEND_LIST
+%token RETURN PRINT
+
+%token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP
+%token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
+%token STRWORD STRWORDCNT STRWORDLIST
 
 
-%token IF
-%token ENDIF
-%token WHILE
-%token ENDWHILE
-%token ONCE
-%token ENDONCE
-%token BREAK
-%token CONTINUE
-
-%token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET STRWORD STRWORDCNT STRWORDLIST
-
-
-%token DIV MUL ADD SUB SHL SHR NE EQ LOGICAL_AND LOGICAL_OR LOGICAL_NOT MOD BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR TRUE FALSE NIL ATQM TYPE
-
+%token DIV MUL ADD SUB SHL SHR NE EQ MOD
+%token LOGICAL_AND LOGICAL_OR LOGICAL_NOT
+%token BITWISE_AND BITWISE_OR BITWISE_NOT BITWISE_XOR
+%token TRUE FALSE NIL ATQM TYPE
 
 %token ERROR_TOK
 
