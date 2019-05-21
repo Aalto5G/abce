@@ -45,12 +45,15 @@ DEP_CPP := $(patsubst %.cc,%.d,$(SRC_CPP))
 DEPGEN_LIB := $(patsubst %.c,%.d,$(GEN_LIB))
 DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
-.PHONY: all wc
+.PHONY: all wc wcparser
 
 all: amyplantest main locvartest treetest fiboefftest fibonaccitest bttest ret breaktest gctest
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
+
+wcparser:
+	wc -l $(LEX) $(YACC) amyplanyy.h amyplanyyutils.[ch] amyplanlocvarctx.[ch]
 
 #LUAINC:=/usr/include/lua5.3
 #LUALIB:=/usr/lib/x86_64-linux-gnu/liblua5.3.a
