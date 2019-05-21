@@ -39,6 +39,8 @@ struct amyplan_csnippet luaSnippet = {
 };
 %}
 
+@tostring return TOSTRING;
+@tonumber return TONUMBER;
 @stdout   return STDOUT; /* FIXME make these true streams */
 @stderr   return STDERR;
 @error    return ERROR;

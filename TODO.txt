@@ -5,9 +5,6 @@ INT_TO_UINT (expr)
 PBGET overhaul (expr)
 PBSET overhaul (stmt)
 
-TOSTRING
-TONUMBER
-
 DICTNEXT_SAFE
 LISTSPLICE
 

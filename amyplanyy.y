@@ -82,7 +82,7 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %token <s> PERCENTLUA_LITERAL
 %token OPEN_BRACKET CLOSE_BRACKET OPEN_BRACE CLOSE_BRACE OPEN_PAREN CLOSE_PAREN
 
-%token AT ATTAB NEWLINE
+%token AT ATTAB NEWLINE TOSTRING TONUMBER
 
 %token EQUALS COLON COMMA
 %token <str> STRING_LITERAL
@@ -495,7 +495,7 @@ lvalue:
 }
 | lexstart
 {
-  $$ = $1;
+  $$ = $1;
 }
 | lexstart
 {
@@ -504,7 +504,7 @@ lvalue:
 }
   maybe_bracketexprlist varref_tail
 {
-  $$ = $4;
+  $$ = $4;
 }
 | OPEN_PAREN expr CLOSE_PAREN maybe_bracketexprlist varref_tail
 {
@@ -855,6 +855,10 @@ expr0:
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUP_NONRECURSIVE); }
 | PB_NEW OPEN_PAREN CLOSE_PAREN
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NEW_PB); }
+| TOSTRING OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TOSTRING); }
+| TONUMBER OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TONUMBER); }
 | SCOPE_PARENT OPEN_PAREN expr CLOSE_PAREN
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_PARENT); }
 | SCOPE_NEW OPEN_PAREN expr COMMA expr CLOSE_PAREN
