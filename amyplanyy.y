@@ -574,8 +574,9 @@ maybe_atqm:
 lexstart:
   LEX
 {
-  printf("LEX not supported yet\n");
-  abort(); // FIXME not supported yet
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
 }
   OPEN_BRACKET maybe_atqm expr CLOSE_BRACKET
 {
