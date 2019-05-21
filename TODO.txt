@@ -1,5 +1,3 @@
-Overhaul set<->get translation for opcodes
-
 Add to Amyplan:
 
 UINT_TO_INT (expr)

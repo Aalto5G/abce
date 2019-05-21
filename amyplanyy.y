@@ -38,6 +38,52 @@ int amyplanyywrap(yyscan_t scanner)
         return 1;
 }
 
+void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
+{
+  switch ((int)set)
+  {
+    case ABCE_OPCODE_SET_STACK:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
+      break;
+    case ABCE_OPCODE_SCOPEVAR_SET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
+      break;
+    case ABCE_OPCODE_LISTSET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
+      break;
+    case ABCE_OPCODE_DICTSET_MAINTAIN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTGET);
+      break;
+    case ABCE_OPCODE_PBSET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
+      break;
+    case ABCE_OPCODE_PBSETLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
+      break;
+    case ABCE_OPCODE_STRGET:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
+      break;
+    case ABCE_OPCODE_DICTHAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
+      break;
+    case ABCE_OPCODE_SCOPE_HAS:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
+      break;
+    case ABCE_OPCODE_STRLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
+      break;
+    case ABCE_OPCODE_LISTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
+      break;
+    case ABCE_OPCODE_DICTLEN:
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
+      break;
+    default:
+      printf("FIXME default1\n");
+      abort();
+  }
+}
+
 %}
 
 %pure-parser
@@ -906,93 +952,11 @@ expr0:
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
 | lvalue
 {
-  switch ((int)$1)
-  {
-    case ABCE_OPCODE_SET_STACK:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
-      break;
-    case ABCE_OPCODE_SCOPEVAR_SET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
-      break;
-    case ABCE_OPCODE_LISTSET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
-      break;
-    case ABCE_OPCODE_DICTSET_MAINTAIN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTGET);
-      break;
-    case ABCE_OPCODE_PBSET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
-      break;
-    case ABCE_OPCODE_PBSETLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
-      break;
-    case ABCE_OPCODE_STRGET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
-      break;
-    case ABCE_OPCODE_DICTHAS:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
-      break;
-    case ABCE_OPCODE_SCOPE_HAS:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
-      break;
-    case ABCE_OPCODE_STRLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
-      break;
-    case ABCE_OPCODE_LISTLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
-      break;
-    case ABCE_OPCODE_DICTLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
-      break;
-    default:
-      printf("FIXME default1\n");
-      abort();
-  }
+  add_corresponding_get(amyplanyy, $1);
 }
 | lvalue
 {
-  switch ((int)$1)
-  {
-    case ABCE_OPCODE_SET_STACK:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
-      break;
-    case ABCE_OPCODE_SCOPEVAR_SET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
-      break;
-    case ABCE_OPCODE_LISTSET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
-      break;
-    case ABCE_OPCODE_DICTSET_MAINTAIN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTGET);
-      break;
-    case ABCE_OPCODE_PBSET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
-      break;
-    case ABCE_OPCODE_PBSETLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
-      break;
-    case ABCE_OPCODE_STRGET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
-      break;
-    case ABCE_OPCODE_DICTHAS:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
-      break;
-    case ABCE_OPCODE_SCOPE_HAS:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
-      break;
-    case ABCE_OPCODE_STRLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
-      break;
-    case ABCE_OPCODE_LISTLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
-      break;
-    case ABCE_OPCODE_DICTLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
-      break;
-    default:
-      printf("FIXME default2\n");
-      abort();
-  }
+  add_corresponding_get(amyplanyy, $1);
 }
   OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
@@ -1002,48 +966,7 @@ expr0:
 }
 | lvalue MAYBE_CALL
 {
-  switch ((int)$1)
-  {
-    case ABCE_OPCODE_SET_STACK:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
-      break;
-    case ABCE_OPCODE_SCOPEVAR_SET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPEVAR);
-      break;
-    case ABCE_OPCODE_LISTSET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTGET);
-      break;
-    case ABCE_OPCODE_DICTSET_MAINTAIN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTGET);
-      break;
-    case ABCE_OPCODE_PBSET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBGET);
-      break;
-    case ABCE_OPCODE_PBSETLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PBLEN);
-      break;
-    case ABCE_OPCODE_STRGET:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRGET);
-      break;
-    case ABCE_OPCODE_DICTHAS:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTHAS);
-      break;
-    case ABCE_OPCODE_SCOPE_HAS:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_HAS);
-      break;
-    case ABCE_OPCODE_STRLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLEN);
-      break;
-    case ABCE_OPCODE_LISTLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTLEN);
-      break;
-    case ABCE_OPCODE_DICTLEN:
-      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTLEN);
-      break;
-    default:
-      printf("FIXME default3\n");
-      abort();
-  }
+  add_corresponding_get(amyplanyy, $1);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
