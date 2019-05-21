@@ -22,3 +22,7 @@ MEMFILE_IOPEN
 FP_CLASSIFY
 JSON_ENCODE
 JSON_DECODE
+
+Syntax for setting dynamic scope
+
+Immediate evaluation
