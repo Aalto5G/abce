@@ -102,6 +102,9 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
 %token STRWORD STRWORDCNT STRWORDLIST
 
+%token STDOUT STDERR ERROR DUMP EXIT
+%token ABS ACOS ASIN ATAN CEIL COS SIN TAN EXP LOG SQRT
+%token DUP_NONRECURSIVE PB_NEW SCOPE_PARENT SCOPE_NEW GETSCOPE_DYN GETSCOPE_LEX
 
 %token DIV MUL ADD SUB SHL SHR NE EQ MOD
 %token LOGICAL_AND LOGICAL_OR LOGICAL_NOT
@@ -372,6 +375,24 @@ statement:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
 }
+| STDOUT OPEN_PAREN expr CLOSE_PAREN
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, 0);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_OUT);
+}
+| STDERR OPEN_PAREN expr CLOSE_PAREN
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, 1);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_OUT);
+}
+| ERROR OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ERROR); }
+| DUMP OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUMP); }
+| EXIT OPEN_PAREN CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXIT); }
 ;
 
 maybe_else:
@@ -784,6 +805,48 @@ expr0:
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
 | STRWORDLIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
+| ABS OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ABS); }
+| ACOS OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ACOS); }
+| ASIN OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ASIN); }
+| ATAN OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ATAN); }
+| CEIL OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CEIL); }
+| COS OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_COS); }
+| SIN OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SIN); }
+| TAN OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TAN); }
+| EXP OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXP); }
+| LOG OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LOG); }
+| SQRT OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SQRT); }
+| DUP_NONRECURSIVE OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUP_NONRECURSIVE); }
+| PB_NEW OPEN_PAREN CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NEW_PB); }
+| SCOPE_PARENT OPEN_PAREN expr CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_PARENT); }
+| SCOPE_NEW OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_NEW);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+}
+/* FIXME needs some syntax of actually manipulating scopes */
+| GETSCOPE_DYN OPEN_PAREN CLOSE_PAREN
+{ amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN); }
+| GETSCOPE_LEX OPEN_PAREN CLOSE_PAREN
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+}
 | lvalue
 {
   add_corresponding_get(amyplanyy, $1);

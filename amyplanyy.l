@@ -39,6 +39,29 @@ struct amyplan_csnippet luaSnippet = {
 };
 %}
 
+@stdout   return STDOUT; /* FIXME make these true streams */
+@stderr   return STDERR;
+@error    return ERROR;
+@dump     return DUMP;
+@exit     return EXIT;
+@abs      return ABS;
+@acos     return ACOS;
+@asin     return ASIN;
+@atan     return ATAN;
+@ceil     return CEIL;
+@cos      return COS;
+@sin      return SIN;
+@tan      return TAN;
+@exp      return EXP;
+@log      return LOG;
+@sqrt     return SQRT;
+@dupnonrec return DUP_NONRECURSIVE;
+@pbnew    return PB_NEW;
+@scopeparent return SCOPE_PARENT;
+@scopenew return SCOPE_NEW;
+@getscopedyn return GETSCOPE_DYN;
+@getscopelex return GETSCOPE_LEX;
+
 @         return AT;
 @type     return TYPE;
 @[?]      return ATQM;
