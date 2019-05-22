@@ -673,3 +673,37 @@ abce_fetch_i_tail(uint8_t ophi, uint16_t *ins, struct abce *abce, unsigned char 
     return -EILSEQ;
   }
 }
+
+void abce_maybe_mv_obj_to_scratch_tail(struct abce *abce, const struct abce_mb *obj)
+{
+  struct abce_mb_area *mba;
+  mba = obj->u.area;
+  switch (obj->typ)
+  {
+    case ABCE_T_IOS:
+      if (1)
+      {
+        fclose(mba->u.ios.f);
+        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+      }
+      return;
+    case ABCE_T_S:
+      if (1)
+      {
+        abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
+      }
+      return;
+    case ABCE_T_PB:
+      if (1)
+      {
+        abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
+        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+      }
+      return;
+    case ABCE_T_T:
+    case ABCE_T_A:
+    case ABCE_T_SC:
+    default:
+      abort();
+  }
+}

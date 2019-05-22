@@ -1124,7 +1124,9 @@ static inline void abce_err_free(struct abce *abce, struct abce_err *err)
 
 void abce_free_gcblock_one(struct abce *abce, size_t locidx);
 
-static inline __attribute__((always_inline)) void abce_maybe_mv_obj_to_scratch(struct abce *abce, const struct abce_mb *obj)
+void abce_maybe_mv_obj_to_scratch_tail(struct abce *abce, const struct abce_mb *obj);
+
+static inline void abce_maybe_mv_obj_to_scratch(struct abce *abce, const struct abce_mb *obj)
 {
   struct abce_mb_area *mba;
 
@@ -1143,24 +1145,9 @@ static inline __attribute__((always_inline)) void abce_maybe_mv_obj_to_scratch(s
   switch (obj->typ)
   {
     case ABCE_T_IOS:
-      if (1)
-      {
-        fclose(mba->u.ios.f);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
-      return;
     case ABCE_T_S:
-      if (1)
-      {
-        abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
-      }
-      return;
     case ABCE_T_PB:
-      if (1)
-      {
-        abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
-        abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
-      }
+      abce_maybe_mv_obj_to_scratch_tail(abce, obj);
       return;
     case ABCE_T_T:
     case ABCE_T_A:
