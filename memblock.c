@@ -196,6 +196,7 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
   mba->refcnt = 1;
   abce_maybe_mv_obj_to_scratch(abce, &obj);
 
+  // FIXME what if there is a pointer to obj itself?
   while (abce->scratchstart < abce->gcblockcap)
   {
     obj = abce->gcblockbase[abce->scratchstart++];
