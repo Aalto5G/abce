@@ -199,6 +199,7 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
   while (abce->scratchstart < abce->gcblockcap)
   {
     obj = abce->gcblockbase[abce->scratchstart++];
+    mba = obj.u.area;
     switch (obj.typ)
     {
       case ABCE_T_T:
