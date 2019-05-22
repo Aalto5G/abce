@@ -324,6 +324,8 @@ void abce_free(struct abce *abce)
   }
   abce->sp = 0;
 
+  abce_err_free(abce, &abce->err);
+
   abce->in_engine = 1; // to make GC work
   abce_gc(abce);
 
@@ -342,7 +344,6 @@ void abce_free(struct abce *abce)
   abce_free_stack(abce->gcblockbase, abce->gcblockcap);
   abce->gcblockbase = NULL;
   abce->gcblockcap = 0;
-  abce_err_free(abce, &abce->err);
 }
 
 struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
