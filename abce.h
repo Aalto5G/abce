@@ -92,7 +92,7 @@ static inline void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mb
   }
 }
 
-static inline void abce_mb_refdn_typ(struct abce *abce, struct abce_mb *mb, enum abce_type typ)
+static inline int abce_is_dynamic_type(enum abce_type typ)
 {
   switch (typ)
   {
@@ -102,10 +102,18 @@ static inline void abce_mb_refdn_typ(struct abce *abce, struct abce_mb *mb, enum
     case ABCE_T_S:
     case ABCE_T_PB:
     case ABCE_T_SC:
-      abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
-      break;
+      return 1;
     default:
-      break;
+      return 0;
+  }
+}
+
+
+static inline void abce_mb_refdn_typ(struct abce *abce, struct abce_mb *mb, enum abce_type typ)
+{
+  if (abce_is_dynamic_type(typ))
+  {
+    abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
   }
   mb->typ = ABCE_T_N;
   mb->u.d = 0.0;
@@ -114,18 +122,9 @@ static inline void abce_mb_refdn_typ(struct abce *abce, struct abce_mb *mb, enum
 
 static inline void abce_mb_refdn(struct abce *abce, struct abce_mb *mb)
 {
-  switch (mb->typ)
+  if (abce_is_dynamic_type(mb->typ))
   {
-    case ABCE_T_T:
-    case ABCE_T_IOS:
-    case ABCE_T_A:
-    case ABCE_T_S:
-    case ABCE_T_PB:
-    case ABCE_T_SC:
-      abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
-      break;
-    default:
-      break;
+    abce_mb_arearefdn(abce, &mb->u.area, mb->typ);
   }
   mb->typ = ABCE_T_N;
   mb->u.d = 0.0;
@@ -141,14 +140,9 @@ abce_mb_refup_noinline(struct abce *abce, const struct abce_mb *mb);
 static inline struct abce_mb
 abce_mb_refup(struct abce *abce, const struct abce_mb *mb)
 {
-  switch (mb->typ)
+  if (abce_is_dynamic_type(mb->typ))
   {
-    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS:
-    case ABCE_T_A: case ABCE_T_SC: case ABCE_T_PB:
-      mb->u.area->refcnt++;
-      break;
-    default:
-      break;
+    mb->u.area->refcnt++;
   }
   return *mb;
 }
@@ -562,15 +556,12 @@ static inline int abce_add_byte(struct abce *abce, unsigned char byte)
 static inline struct abce_mb_area*
 abce_mb_arearefup(struct abce *abce, const struct abce_mb *mb)
 {
-  switch (mb->typ)
+  if (!abce_is_dynamic_type(mb->typ))
   {
-    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS:
-    case ABCE_T_A: case ABCE_T_SC: case ABCE_T_PB:
-      mb->u.area->refcnt++;
-      return mb->u.area;
-    default:
-      abort();
+    abort();
   }
+  mb->u.area->refcnt++;
+  return mb->u.area;
 }
 
 static inline struct abce_mb
@@ -584,17 +575,14 @@ abce_mb_refuparea(struct abce *abce, struct abce_mb_area *mba,
     mb.u.d = 0;
     return mb;
   }
-  switch (typ)
+  if (!abce_is_dynamic_type(typ))
   {
-    case ABCE_T_T: case ABCE_T_S: case ABCE_T_IOS:
-    case ABCE_T_A: case ABCE_T_SC: case ABCE_T_PB:
-      mb.typ = typ;
-      mb.u.area = mba;
-      mba->refcnt++;
-      return mb;
-    default:
-      abort();
+    abort();
   }
+  mb.typ = typ;
+  mb.u.area = mba;
+  mba->refcnt++;
+  return mb;
 }
 
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz);
@@ -1140,17 +1128,9 @@ static inline __attribute__((always_inline)) void abce_maybe_mv_obj_to_scratch(s
 {
   struct abce_mb_area *mba;
 
-  switch(obj->typ)
+  if (!abce_is_dynamic_type(obj->typ))
   {
-    case ABCE_T_IOS:
-    case ABCE_T_S:
-    case ABCE_T_PB:
-    case ABCE_T_T:
-    case ABCE_T_A:
-    case ABCE_T_SC:
-      break;
-    default:
-      return; // static type
+    return; // static type
   }
   mba = obj->u.area;
   if (--mba->refcnt)
