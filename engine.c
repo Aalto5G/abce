@@ -33,105 +33,39 @@ static inline void abce_maybeabort()
     } \
   }
 
-#define GETBOOLEAN(dbl, idx) \
+#define GETORVERIFY1(fun, idx) \
   if(1) { \
-    int _getdbl_rettmp = abce_getboolean((dbl), abce, (idx)); \
+    int _getdbl_rettmp = fun(abce, (idx)); \
     if (_getdbl_rettmp != 0) \
     { \
       ret = _getdbl_rettmp; \
       break; \
     } \
   }
-#define GETFUNADDR(dbl, idx) \
+
+#define GETGENERIC(fun, val, idx) \
   if(1) { \
-    int _getdbl_rettmp = abce_getfunaddr((dbl), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
+    int _getgen_rettmp = fun((val), abce, (idx)); \
+    if (_getgen_rettmp != 0) \
     { \
-      ret = _getdbl_rettmp; \
+      ret = _getgen_rettmp; \
       break; \
     } \
   }
-#define VERIFYADDR(idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_verifyaddr(abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETDBL(dbl, idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getdbl((dbl), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETBP(idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getbp(abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETIP(idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getip(abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETMB(mb, idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getmb((mb), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETMBSC(mb, idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getmbsc((mb), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETMBAR(mb, idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getmbar((mb), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETMBPB(mb, idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getmbpb((mb), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
-#define GETMBSTR(mb, idx) \
-  if(1) { \
-    int _getdbl_rettmp = abce_getmbstr((mb), abce, (idx)); \
-    if (_getdbl_rettmp != 0) \
-    { \
-      ret = _getdbl_rettmp; \
-      break; \
-    } \
-  }
+
+#define VERIFYADDR(idx) GETORVERIFY1(abce_verifyaddr, idx)
+
+#define GETBOOLEAN(dbl, idx) GETGENERIC(abce_getboolean, dbl, idx)
+#define GETFUNADDR(dbl, idx) GETGENERIC(abce_getfunaddr, dbl, idx)
+#define GETDBL(dbl, idx) GETGENERIC(abce_getdbl, dbl, idx)
+#define GETBP(idx) GETORVERIFY1(abce_getbp, idx)
+#define GETIP(idx) GETORVERIFY1(abce_getip, idx)
+#define GETMB(mb, idx) GETGENERIC(abce_getmb, mb, idx)
+#define GETMBSC(mb, idx) GETGENERIC(abce_getmbsc, mb, idx)
+#define GETMBAR(mb, idx) GETGENERIC(abce_getmbar, mb, idx)
+#define GETMBPB(mb, idx) GETGENERIC(abce_getmbpb, mb, idx)
+#define GETMBSTR(mb, idx) GETGENERIC(abce_getmbstr, mb, idx)
+
 #if POPABORTS
 #define POP() \
   if(1) { \
@@ -986,6 +920,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb mbsc;
       GETMBSC(&mbsc, -1);
       POP();
+      // FIXME what if it's null?
       mbscparent = abce_mb_refuparea(abce, mbsc.u.area->u.sc.parent, ABCE_T_SC);
       abce_push_mb(abce, &mbscparent);
       abce_mb_refdn(abce, &mbsc);
