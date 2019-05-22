@@ -336,7 +336,7 @@ static inline int abce_getmb(struct abce_mb *mb, struct abce *abce, int64_t idx)
   *mb = abce_mb_refup(abce, mbptr);
   return 0;
 }
-static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t idx)
+static inline int abce_getmbtyped(struct abce_mb *mb, struct abce *abce, int64_t idx, enum abce_type typ)
 {
   const struct abce_mb *mbptr;
   size_t addr;
@@ -345,74 +345,32 @@ static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t id
     return -EOVERFLOW;
   }
   mbptr = &abce->stackbase[addr];
-  if (abce_unlikely(mbptr->typ != ABCE_T_SC))
+  if (abce_unlikely(mbptr->typ != typ))
   {
-    abce->err.code = ABCE_E_EXPECT_SCOPE;
+    abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
     abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
   *mb = abce_mb_refup(abce, mbptr);
   return 0;
+}
+static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t idx)
+{
+  return abce_getmbtyped(mb, abce, idx, ABCE_T_SC);
 }
 static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
-  const struct abce_mb *mbptr;
-  size_t addr;
-  if (abce_calc_addr(&addr, abce, idx) != 0)
-  {
-    return -EOVERFLOW;
-  }
-  mbptr = &abce->stackbase[addr];
-  if (abce_unlikely(mbptr->typ != ABCE_T_A))
-  {
-    abce->err.code = ABCE_E_EXPECT_ARRAY;
-    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
-    abce->err.val2 = idx;
-    return -EINVAL;
-  }
-  *mb = abce_mb_refup(abce, mbptr);
-  return 0;
+  return abce_getmbtyped(mb, abce, idx, ABCE_T_A);
 }
 static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
-  const struct abce_mb *mbptr;
-  size_t addr;
-  if (abce_calc_addr(&addr, abce, idx) != 0)
-  {
-    return -EOVERFLOW;
-  }
-  mbptr = &abce->stackbase[addr];
-  if (abce_unlikely(mbptr->typ != ABCE_T_PB))
-  {
-    abce->err.code = ABCE_E_EXPECT_PB;
-    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
-    abce->err.val2 = idx;
-    return -EINVAL;
-  }
-  *mb = abce_mb_refup(abce, mbptr);
-  return 0;
+  return abce_getmbtyped(mb, abce, idx, ABCE_T_PB);
 }
 static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
-  const struct abce_mb *mbptr;
-  size_t addr;
-  if (abce_calc_addr(&addr, abce, idx) != 0)
-  {
-    return -EOVERFLOW;
-  }
-  mbptr = &abce->stackbase[addr];
-  if (abce_unlikely(mbptr->typ != ABCE_T_S))
-  {
-    abce->err.code = ABCE_E_EXPECT_STR;
-    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
-    abce->err.val2 = idx;
-    return -EINVAL;
-  }
-  *mb = abce_mb_refup(abce, mbptr);
-  return 0;
+  return abce_getmbtyped(mb, abce, idx, ABCE_T_S);
 }
-
 static inline int abce_verifyaddr(struct abce *abce, int64_t idx)
 {
   size_t addr;
