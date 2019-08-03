@@ -261,18 +261,92 @@ void abce_gc(struct abce *abce)
   stackbase = NULL;
   stackcap = 0;
 
+  // Set all references to 0 for unmarked objects and what they may refer
   i = 0;
   while (i < abce->gcblocksz)
   {
     if (abce->gcblockbase[i].u.area->locidx != (size_t)-1)
     {
-      abce_mb_gc_free(abce, abce->gcblockbase[i].u.area, abce->gcblockbase[i].typ);
-      //abce->gcblockbase[i] = abce->gcblockbase[--abce->gcblocksz];
+      abce_mb_gc_refdn(abce, abce->gcblockbase[i].u.area, abce->gcblockbase[i].typ);
+    }
+    i++;
+  }
+
+  i = 0;
+  while (i < abce->gcblocksz)
+  {
+    if (abce->gcblockbase[i].u.area->locidx != (size_t)-1)
+    {
+      enum abce_type typ = abce->gcblockbase[i].typ;
+      struct abce_mb_area *mba = abce->gcblockbase[i].u.area;
+      // All unmarked objects must be freed
+      if (mba->refcnt != 0)
+      {
+        printf("refcnt is not 0: %d\n", (int)mba->refcnt);
+        abort();
+      }
+      if (mba->locidx != i)
+      {
+        printf("locidx invalid %d %d\n", (int)mba->locidx, (int)i);
+        abort();
+      }
+      abce->gcblockbase[i] = abce->gcblockbase[--abce->gcblocksz];
+      abce->gcblockbase[i].u.area->locidx = i;
+      switch (typ)
+      {
+        case ABCE_T_T:
+          // Ok, this might be better (faster)
+          while (mba->u.tree.tree.root != NULL)
+          {
+            struct abce_mb_rb_entry *mbe =
+              ABCE_CONTAINER_OF(mba->u.tree.tree.root,
+                           struct abce_mb_rb_entry, n);
+            abce_rb_tree_nocmp_delete(&mba->u.tree.tree,
+                                 mba->u.tree.tree.root);
+            abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
+          }
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+          break;
+        case ABCE_T_IOS:
+          fclose(mba->u.ios.f);
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+          break;
+        case ABCE_T_A:
+          abce->alloc(mba->u.ar.mbs, mba->u.ar.capacity*sizeof(*mba->u.ar.mbs), 0, &abce->alloc_baton);
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+          break;
+        case ABCE_T_S:
+          abce->alloc(mba, sizeof(*mba) + mba->u.str.size + 1, 0, &abce->alloc_baton);
+          break;
+        case ABCE_T_PB:
+          abce->alloc(mba->u.pb.buf, mba->u.pb.capacity, 0, &abce->alloc_baton);
+          abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
+          break;
+        case ABCE_T_SC:
+          for (i = 0; i < mba->u.sc.size; i++)
+          {
+            // Ok, this might be better (faster)
+            while (mba->u.sc.heads[i].root != NULL)
+            {
+              struct abce_mb_rb_entry *mbe =
+                ABCE_CONTAINER_OF(mba->u.sc.heads[i].root,
+                             struct abce_mb_rb_entry, n);
+              abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
+                                   mba->u.sc.heads[i].root);
+              abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
+            }
+          }
+          abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
+          break;
+        default:
+          abort();
+      }
       continue;
     }
     i++;
   }
 
+  // Unmark
   for (i = 0; i < abce->gcblocksz; i++)
   {
     abce->gcblockbase[i].u.area->locidx = i;

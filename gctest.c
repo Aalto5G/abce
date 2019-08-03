@@ -28,9 +28,10 @@ int main(int argc, char **argv)
   //amyplanyy.abce.gcblockcap = ;
   amyplanyy.abce.in_engine = 1;
 
-  for (i = 0; i < 1000*1000; i++)
+  for (i = 0; i < 10*1000*1000; i++)
   {
-    abce_mb_create_tree(&amyplanyy.abce);
+    struct abce_mb mb = abce_mb_create_tree(&amyplanyy.abce);
+    mb.u.area->refcnt = 0; // Mandatory so that we don't crash
   }
 
   amyplanyy_free(&amyplanyy);

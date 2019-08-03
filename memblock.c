@@ -10,6 +10,7 @@
 #include "abcelikely.h"
 #include "abceopcodes.h"
 #include "abce.h"
+#include "abcetrees.h"
 
 void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
 {
@@ -188,6 +189,69 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   return mb;
 }
 
+// Down-reference all objects pointed to by this object without freeing anything
+void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
+{
+  struct abce_mb obj = {.u = {.area = mba}, .typ = typ};
+  const struct abce_mb *key, *val;
+  const struct abce_mb nil = {.typ = ABCE_T_N};
+  size_t i;
+  if (!abce_is_dynamic_type(typ))
+  {
+    abort();
+  }
+  switch (typ)
+  {
+    case ABCE_T_T:
+      key = &nil;
+      while (abce_tree_get_next(abce, &key, &val, &obj, key) == 0)
+      {
+        abce_mb_gc_refdn(abce, key->u.area, key->typ);
+        if (abce_is_dynamic_type(val->typ))
+        {
+          abce_mb_gc_refdn(abce, val->u.area, val->typ);
+        }
+      }
+      break;
+    case ABCE_T_A:
+      for (i = 0; i < mba->u.ar.size; i++)
+      {
+        if (abce_is_dynamic_type(mba->u.ar.mbs[i].typ))
+        {
+          abce_mb_gc_refdn(abce, mba->u.ar.mbs[i].u.area, mba->u.ar.mbs[i].typ);
+        }
+      }
+      break;
+
+    case ABCE_T_SC:
+      if (mba->u.sc.parent)
+      {
+        abce_mb_gc_refdn(abce, mba->u.sc.parent, ABCE_T_SC);
+      }
+      for (i = 0; i < mba->u.sc.size; i++)
+      {
+        key = &nil;
+        while (abce_scope_bucket_get_next(&key, &val, &mba->u.sc.heads[i], key) == 0)
+        {
+          abce_mb_gc_refdn(abce, key->u.area, key->typ);
+          if (abce_is_dynamic_type(val->typ))
+          {
+            abce_mb_gc_refdn(abce, val->u.area, val->typ);
+          }
+        }
+      }
+      break;
+
+    case ABCE_T_S:
+    case ABCE_T_IOS:
+    case ABCE_T_PB:
+      break;
+    default:
+      abort();
+  }
+  //abce_mb_do_arearefdn(abce, mbap, typ);
+}
+
 void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
 {
   size_t i;
@@ -196,7 +260,6 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
   mba->refcnt = 1;
   abce_maybe_mv_obj_to_scratch(abce, &obj);
 
-  // FIXME what if there is a pointer to obj itself?
   while (abce->scratchstart < abce->gcblockcap)
   {
     obj = abce->gcblockbase[abce->scratchstart++];

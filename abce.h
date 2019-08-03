@@ -77,6 +77,8 @@ static inline int abce_add_double(struct abce *abce, double dbl)
     abce->bytecode, &abce->bytecodesz, abce->bytecodecap, dbl);
 }
 
+void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ);
+
 void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ);
 
 static inline void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ)
@@ -1135,6 +1137,11 @@ static inline void abce_maybe_mv_obj_to_scratch(struct abce *abce, const struct 
     return; // static type
   }
   mba = obj->u.area;
+  if (mba->refcnt == 0) // already freed
+  {
+    abort();
+    return;
+  }
   if (--mba->refcnt)
   {
     return;
