@@ -35,7 +35,7 @@ int main(int argc, char **argv)
   //abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_DUMP);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
-  amyplanyy.abce.ip = -tmpsiz-100;
+  amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
 
   if (abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz) != 0)
   {

@@ -1317,7 +1317,7 @@ static int abce_bt_gather(struct abce *abce, unsigned char *addcode, size_t adds
 int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   // code:
-  const size_t guard = 100;
+  const size_t guard = ABCE_GUARD;
   int ret = -EAGAIN;
   double argcnt;
   int64_t new_ip;
@@ -1426,7 +1426,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
         }
         case ABCE_OPCODE_CALL:
         {
-          const size_t guard = 100;
+          const size_t guard = ABCE_GUARD;
           //uint16_t ins2;
           uint8_t inshi;
           //uint8_t inslo;
@@ -2064,7 +2064,7 @@ outpbset:
         }
         case ABCE_OPCODE_JMP:
         {
-          const size_t guard = 100;
+          const size_t guard = ABCE_GUARD;
           double d;
           GETDBL(&d, -1);
           POP();
@@ -2083,7 +2083,7 @@ outpbset:
         }
         case ABCE_OPCODE_IF_NOT_JMP:
         {
-          const size_t guard = 100;
+          const size_t guard = ABCE_GUARD;
           int b;
           double d;
           /* Note the clever order of arguments. This allows code within a
@@ -2698,7 +2698,7 @@ outpbset:
           if (mb.typ == ABCE_T_F)
           {
 #if 0
-            const size_t guard = 100;
+            const size_t guard = ABCE_GUARD;
             double argcnt = 0.0;
             int64_t new_ip;
             uint16_t ins2;

@@ -987,10 +987,14 @@ void abce_free_bt(struct abce *abce);
 
 void abce_free(struct abce *abce);
 
+enum {
+  ABCE_GUARD = 100,
+};
+
 static inline int
 abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
-  const size_t guard = 100;
+  const size_t guard = ABCE_GUARD;
   if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard))))
   {
@@ -1033,7 +1037,7 @@ static inline void abce_get_dbl(double *dbl, const void *src)
 static inline int
 abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
-  const size_t guard = 100;
+  const size_t guard = ABCE_GUARD;
   if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip+8 <= abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip+8 <= -(int64_t)guard))))
   {
