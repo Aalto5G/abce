@@ -231,7 +231,7 @@ void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_typ
       for (i = 0; i < mba->u.sc.size; i++)
       {
         key = &nil;
-        while (abce_scope_bucket_get_next(&key, &val, &mba->u.sc.heads[i], key) == 0)
+        while (abce_rbtree_get_next(&key, &val, &mba->u.sc.heads[i], key) == 0)
         {
           abce_mb_gc_refdn(abce, key->u.area, key->typ);
           if (abce_is_dynamic_type(val->typ))
