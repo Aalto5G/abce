@@ -565,7 +565,7 @@ int abceapi_scopevarset(struct abce *abce)
 int abceapi_call(struct abce *abce)
 {
   unsigned char bcode[1] = {ABCE_OPCODE_CALL};
-  struct abce_err err_old = abce->err;
+  //struct abce_err err_old = abce->err;
   int ret;
   abce_free_bt(abce);
   ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
@@ -574,7 +574,7 @@ int abceapi_call(struct abce *abce)
 int abceapi_call_if_fun(struct abce *abce)
 {
   unsigned char bcode[1] = {ABCE_OPCODE_CALL_IF_FUN};
-  struct abce_err err_old = abce->err;
+  //struct abce_err err_old = abce->err;
   int ret;
   abce_free_bt(abce);
   ret = abce_engine(abce, bcode, sizeof(bcode)) == 0;
