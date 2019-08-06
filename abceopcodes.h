@@ -1,5 +1,5 @@
-#ifndef _OPCODESONLY_H_
-#define _OPCODESONLY_H_
+#ifndef _ABCEOPCODES_H_
+#define _ABCEOPCODES_H_
 
 enum abce_opcode {
   ABCE_OPCODE_NOP = 0,
