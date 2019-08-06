@@ -149,14 +149,16 @@ abce_mb_refup(struct abce *abce, const struct abce_mb *mb)
   return *mb;
 }
 
-static inline int abce_cache_add(struct abce *abce, const struct abce_mb *mb)
+static inline int64_t abce_cache_add(struct abce *abce, const struct abce_mb *mb)
 {
+  int64_t res;
   if (abce->cachesz >= abce->cachecap)
   {
     return -EOVERFLOW;
   }
+  res = abce->cachesz;
   abce->cachebase[abce->cachesz++] = abce_mb_refup(abce, mb);
-  return 0;
+  return res;
 }
 
 
