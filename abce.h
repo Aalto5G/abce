@@ -61,7 +61,7 @@ static inline int abce_set_double(struct abce *abce, size_t idx, double dbl)
 static inline int
 abce_add_double_alt(void *bcode, size_t *bsz, size_t cap, double dbl)
 {
-  unsigned char *bytecode = bcode;
+  unsigned char *bytecode = (unsigned char*)bcode;
   if ((*bsz) + 8 > cap)
   {
     return -EFAULT;
@@ -506,7 +506,7 @@ static inline int abce_push_fun(struct abce *abce, double fun_addr)
 static inline int
 abce_add_ins_alt(void *bcode, size_t *bsz, size_t cap, uint16_t ins)
 {
-  unsigned char *bytecode = bcode;
+  unsigned char *bytecode = (unsigned char*)bcode;
   if (ins >= 2048)
   {
     if ((*bsz) + 3 > cap)
