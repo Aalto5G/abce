@@ -116,3 +116,86 @@ int abce_sc_put_val_str(
   abce->alloc(e, sizeof(*e), 0, &abce->alloc_baton);
   return ret;
 }
+
+int abce_sc_put_val_str_old(
+  struct abce *abce,
+  const struct abce_mb *mb, const char *str, const struct abce_mb *pval,
+  struct abce_mb *mbold)
+{
+  struct abce_mb_area *mba = mb->u.area;
+  uint32_t hashval;
+  struct abce_mb_rb_entry *e;
+  struct abce_mb key;
+  size_t hashloc;
+  int ret;
+  struct abce_rb_tree_node *n;
+
+  if (mb->typ != ABCE_T_SC)
+  {
+    abort();
+  }
+  hashval = abce_str_hash(str);
+  hashloc = hashval & (mba->u.sc.size - 1);
+
+  key = abce_mb_create_string(abce, str, strlen(str));
+  if (key.typ == ABCE_T_N)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = strlen(str);
+    if (mbold)
+    {
+      mbold->typ = ABCE_T_N;
+    }
+    return -ENOMEM;
+  }
+
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, &key);
+  if (n != NULL)
+  {
+    struct abce_mb_rb_entry *e;
+    abce_mb_refdn(abce, &key);
+    e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+    if (mbold)
+    {
+      *mbold = e->val; // no refdn or refup, transfer of ownership
+    }
+    else
+    {
+      abce_mb_refdn(abce, &e->val);
+    }
+    e->val = abce_mb_refup(abce, pval);
+    return 0;
+  }
+
+  e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);
+  if (e == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*e);
+    if (mbold)
+    {
+      mbold->typ = ABCE_T_N;
+    }
+    return -ENOMEM;
+  }
+  e->key = key;
+  e->val = abce_mb_refup(abce, pval);
+  ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+                                      abce_str_cmp_sym, NULL, &e->n);
+  if (ret == 0)
+  {
+    if (mbold)
+    {
+      mbold->typ = ABCE_T_N;
+    }
+    return 0;
+  }
+  abce_mb_refdn(abce, &e->key);
+  abce_mb_refdn(abce, &e->val);
+  abce->alloc(e, sizeof(*e), 0, &abce->alloc_baton);
+  if (mbold)
+  {
+    mbold->typ = ABCE_T_N;
+  }
+  return ret;
+}
