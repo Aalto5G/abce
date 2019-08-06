@@ -117,10 +117,10 @@ int abce_sc_put_val_str(
   return ret;
 }
 
-int abce_sc_put_val_str_old(
+int abce_sc_put_val_str_maybe_old(
   struct abce *abce,
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval,
-  struct abce_mb *mbold)
+  int maybe, struct abce_mb *mbold)
 {
   struct abce_mb_area *mba = mb->u.area;
   uint32_t hashval;
@@ -163,8 +163,15 @@ int abce_sc_put_val_str_old(
     {
       abce_mb_refdn(abce, &e->val);
     }
-    e->val = abce_mb_refup(abce, pval);
-    return 0;
+    if (!maybe)
+    {
+      e->val = abce_mb_refup(abce, pval);
+      return 0;
+    }
+    else
+    {
+      return -EEXIST;
+    }
   }
 
   e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);

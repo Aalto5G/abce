@@ -21,10 +21,10 @@ int abce_sc_put_val_str(
   struct abce *abce,
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval);
 
-int abce_sc_put_val_str_old(
+int abce_sc_put_val_str_maybe_old(
   struct abce *abce,
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval,
-  struct abce_mb *mbold);
+  int maybe, struct abce_mb *mbold);
 
 #ifdef __cplusplus
 };
