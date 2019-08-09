@@ -149,11 +149,16 @@ locvarlines:
   amyplan_locvarctx_add(amyplanyy->ctx, $3);
   free($3);
 }
+| locvarlines NEWLINE
 ;
 
 bodylines:
-| bodylines statement
-| bodylines NEWLINE
+| statement bodylinescont
+;
+
+bodylinescont:
+| bodylinescont statement
+| bodylinescont NEWLINE
 ;
 
 statement:
@@ -263,7 +268,7 @@ statement:
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
 }
-  bodylines
+  bodylinescont
 {
   amyplanyy_set_double(amyplanyy, $<d>6, amyplanyy->abce.bytecodesz);
   $<d>$ = $<d>6; // For overwrite by maybe_else
@@ -289,7 +294,7 @@ statement:
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
 }
-  bodylines
+  bodylinescont
   ENDWHILE NEWLINE
 {
   struct amyplan_locvarctx *ctx = amyplanyy->ctx->parent;
@@ -320,7 +325,7 @@ statement:
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
 }
-  bodylines
+  bodylinescont
   ENDONCE NEWLINE
 {
   struct amyplan_locvarctx *ctx = amyplanyy->ctx->parent;
@@ -367,7 +372,7 @@ maybe_else:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
   amyplanyy_set_double(amyplanyy, $<d>0, amyplanyy->abce.bytecodesz); // Overwrite
 }
-bodylines
+bodylinescont
 {
   amyplanyy_set_double(amyplanyy, $<d>3, amyplanyy->abce.bytecodesz);
 }
