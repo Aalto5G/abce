@@ -153,6 +153,7 @@ locvarlines:
 
 bodylines:
 | bodylines statement
+| bodylines NEWLINE
 ;
 
 statement:
