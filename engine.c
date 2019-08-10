@@ -1403,7 +1403,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
     if (abce_unlikely(abce->ins_budget_fn != NULL))
     {
       int ret2;
-      ret2 = abce->ins_budget_fn(&abce->ins_budget_baton, ins);
+      ret2 = abce->ins_budget_fn(abce, &abce->ins_budget_baton, ins);
       if (ret2)
       {
         ret = ret2;

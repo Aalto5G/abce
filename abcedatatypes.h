@@ -121,7 +121,7 @@ struct abce {
   size_t lastgcblocksz;
   int trusted;
   // Stack and registers
-  int (*ins_budget_fn)(void **pbaton, uint16_t ins);
+  int (*ins_budget_fn)(struct abce*, void **pbaton, uint16_t ins);
   void *ins_budget_baton;
   size_t bytes_alloced;
   size_t bytes_cap;

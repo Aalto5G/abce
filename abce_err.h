@@ -59,6 +59,7 @@ enum abce_errcode {
   ABCE_E_INTCONVERT_SZ_NOT_UINT = 54, // value: sz
   ABCE_E_INTCONVERT_SZ_NOTSUP = 55, // value: sz
   ABCE_E_TIME_BUDGET_EXCEEDED = 56,
+  ABCE_E_INS_NOT_PERMITTED = 57, // value: ins
 };
 
 #endif
