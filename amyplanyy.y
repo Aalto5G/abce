@@ -21,10 +21,15 @@ int amyplanyywrap(yyscan_t scanner)
         return 1;
 }
 
-void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
+void add_corresponding_get(struct amyplanyy *amyplanyy, double get)
 {
-  uint16_t get = get_corresponding_get(set);
-  amyplanyy_add_byte(amyplanyy, get);
+  uint16_t uget = (uint16_t)get;
+  amyplanyy_add_byte(amyplanyy, uget);
+}
+void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
+{
+  uint16_t uset = (uint16_t)get_corresponding_set((uint16_t)get);
+  amyplanyy_add_byte(amyplanyy, uset);
 }
 
 %}
@@ -84,6 +89,7 @@ void add_corresponding_get(struct amyplanyy *amyplanyy, double set)
 %type<d> scopstart
 %type<d> lexstart
 %type<d> varref_tail
+%type<d> varref
 
 %start st
 
@@ -193,14 +199,19 @@ statement:
     printf("Can't assign to scope query\n");
     YYABORT;
   }
+  if ($1 == ABCE_OPCODE_PUSH_FROM_CACHE)
+  {
+    printf("Can't assign to immediate varref\n");
+    YYABORT;
+  }
   if (   $1 == ABCE_OPCODE_STRLEN || $1 == ABCE_OPCODE_LISTLEN
       || $1 == ABCE_OPCODE_DICTLEN)
   {
     printf("Can't assign to length query (except for PB)\n");
     YYABORT;
   }
-  amyplanyy_add_byte(amyplanyy, $1);
-  if ($1 == ABCE_OPCODE_DICTSET_MAINTAIN)
+  add_corresponding_set(amyplanyy, $1);
+  if ($1 == ABCE_OPCODE_DICTGET) // prev. changes from GET to SET_MAINTAIN
   {
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
   }
@@ -381,7 +392,7 @@ bodylinescont
 varref_tail:
   OPEN_BRACKET expr CLOSE_BRACKET
 {
-  $$ = ABCE_OPCODE_LISTSET;
+  $$ = ABCE_OPCODE_LISTGET;
 }
 | OPEN_BRACKET SUB CLOSE_BRACKET
 {
@@ -393,7 +404,7 @@ varref_tail:
 }
 | OPEN_BRACE expr CLOSE_BRACE
 {
-  $$ = ABCE_OPCODE_DICTSET_MAINTAIN; // FIXME remember to pop!
+  $$ = ABCE_OPCODE_DICTGET;
 }
 | OPEN_BRACE CLOSE_BRACE
 {
@@ -413,22 +424,22 @@ varref_tail:
 }
 | OPEN_BRACE AT expr CLOSE_BRACE
 {
-  $$ = ABCE_OPCODE_PBSET; // FIXME needs transfer size of operation
+  $$ = ABCE_OPCODE_PBGET; // FIXME needs transfer size of operation
 }
 | OPEN_BRACE AT CLOSE_BRACE
 {
-  $$ = ABCE_OPCODE_PBSETLEN; // This is very special: CAN assign to length query
+  $$ = ABCE_OPCODE_PBLEN; // This is very special: CAN assign to length query
 }
 ;
 
 lvalue:
   varref
 {
-  $$ = ABCE_OPCODE_SET_STACK;
+  $$ = $1;
 }
 | varref
 {
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
+  amyplanyy_add_byte(amyplanyy, $1);
 }
   maybe_bracketexprlist varref_tail
 {
@@ -440,8 +451,7 @@ lvalue:
 }
 | dynstart
 {
-  amyplanyy_add_byte(amyplanyy,
-    ($1 == ABCE_OPCODE_SCOPEVAR_SET) ? ABCE_OPCODE_SCOPEVAR : $1);
+  amyplanyy_add_byte(amyplanyy, $1);
 }
   maybe_bracketexprlist varref_tail
 {
@@ -453,8 +463,7 @@ lvalue:
 }
 | scopstart
 {
-  amyplanyy_add_byte(amyplanyy,
-    ($1 == ABCE_OPCODE_SCOPEVAR_SET) ? ABCE_OPCODE_SCOPEVAR : $1);
+  amyplanyy_add_byte(amyplanyy, $1);
 }
   maybe_bracketexprlist varref_tail
 {
@@ -466,8 +475,7 @@ lvalue:
 }
 | lexstart
 {
-  amyplanyy_add_byte(amyplanyy,
-    ($1 == ABCE_OPCODE_SCOPEVAR_SET) ? ABCE_OPCODE_SCOPEVAR : $1);
+  amyplanyy_add_byte(amyplanyy, $1);
 }
   maybe_bracketexprlist varref_tail
 {
@@ -481,7 +489,7 @@ lvalue:
 
 maybe_atqm:
 {
-  $$ = ABCE_OPCODE_SCOPEVAR_SET;
+  $$ = ABCE_OPCODE_SCOPEVAR;
 }
 | ATQM
 {
@@ -561,42 +569,84 @@ varref:
     abort();
   }
   free($1);
+  $$ = ABCE_OPCODE_PUSH_STACK;
 }
 | DO VARREF_LITERAL
 {
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($2);
-  printf("DO not supported yet\n");
-  abort();
+  $$ = ABCE_OPCODE_SCOPEVAR_NONRECURSIVE;
 }
 | LO VARREF_LITERAL
 {
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+
+  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($2);
-  printf("LO not supported yet\n");
-  abort();
+  $$ = ABCE_OPCODE_SCOPEVAR_NONRECURSIVE;
 }
 | IO VARREF_LITERAL
 {
+  const struct abce_mb *mb2 =
+    abce_sc_get_rec_str(&amyplanyy->abce.dynscope, $2, 0);
+  if (mb2 == NULL)
+  {
+    printf("Variable %s not found\n", $2);
+    YYABORT;
+  }
+  int64_t idx = abce_cache_add(&amyplanyy->abce, mb2);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
   free($2);
-  printf("IO not supported yet\n");
-  abort();
+  $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
 }
 | D VARREF_LITERAL
 {
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+
+  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($2);
-  printf("D not supported yet\n");
-  abort();
+  $$ = ABCE_OPCODE_SCOPEVAR;
 }
 | L VARREF_LITERAL
 {
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+
+  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
   free($2);
-  printf("L not supported yet\n");
-  abort();
+  $$ = ABCE_OPCODE_SCOPEVAR;
 }
 | I VARREF_LITERAL
 {
+  const struct abce_mb *mb2 =
+    abce_sc_get_rec_str(&amyplanyy->abce.dynscope, $2, 1);
+  if (mb2 == NULL)
+  {
+    printf("Variable %s not found\n", $2);
+    YYABORT;
+  }
+  int64_t idx = abce_cache_add(&amyplanyy->abce, mb2);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
   free($2);
-  printf("I not supported yet\n");
-  abort();
+  $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
 }
 ;
 
