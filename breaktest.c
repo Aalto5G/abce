@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
   abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
-    abce_sc_get_rec_str_fun(&amyplanyy.abce.dynscope, "fiboeff"));
+    abce_sc_get_rec_str_fun(&amyplanyy.abce.dynscope, "fiboeff", 1));
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
   abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), 100); // arg

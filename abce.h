@@ -846,35 +846,35 @@ static inline const struct abce_mb *abce_sc_get_myval_str(
 }
 
 const struct abce_mb *abce_sc_get_rec_mb_area(
-  const struct abce_mb_area *mba, const struct abce_mb *it);
+  const struct abce_mb_area *mba, const struct abce_mb *it, int rec);
 
 static inline const struct abce_mb *
-abce_sc_get_rec_mb(const struct abce_mb *mb, const struct abce_mb *it)
+abce_sc_get_rec_mb(const struct abce_mb *mb, const struct abce_mb *it, int rec)
 {
   if (mb->typ != ABCE_T_SC)
   {
     abort();
   }
-  return abce_sc_get_rec_mb_area(mb->u.area, it);
+  return abce_sc_get_rec_mb_area(mb->u.area, it, rec);
 }
 
 const struct abce_mb *abce_sc_get_rec_str_area(
-  const struct abce_mb_area *mba, const char *str);
+  const struct abce_mb_area *mba, const char *str, int rec);
 
 static inline const struct abce_mb *
-abce_sc_get_rec_str(const struct abce_mb *mb, const char *str)
+abce_sc_get_rec_str(const struct abce_mb *mb, const char *str, int rec)
 {
   if (mb->typ != ABCE_T_SC)
   {
     abort();
   }
-  return abce_sc_get_rec_str_area(mb->u.area, str);
+  return abce_sc_get_rec_str_area(mb->u.area, str, rec);
 }
 
 static inline int64_t
-abce_sc_get_rec_str_fun(const struct abce_mb *mb, const char *str)
+abce_sc_get_rec_str_fun(const struct abce_mb *mb, const char *str, int rec)
 {
-  const struct abce_mb *mb2 = abce_sc_get_rec_str(mb, str);
+  const struct abce_mb *mb2 = abce_sc_get_rec_str(mb, str, rec);
   if (mb2 == NULL || mb2->typ != ABCE_T_F)
   {
     abort();

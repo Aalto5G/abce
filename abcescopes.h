@@ -8,10 +8,10 @@ extern "C" {
 #endif
 
 const struct abce_mb *abce_sc_get_rec_mb_area(
-  const struct abce_mb_area *mba, const struct abce_mb *it);
+  const struct abce_mb_area *mba, const struct abce_mb *it, int rec);
 
 const struct abce_mb *abce_sc_get_rec_str_area(
-  const struct abce_mb_area *mba, const char *str);
+  const struct abce_mb_area *mba, const char *str, int rec);
 
 int abce_sc_replace_val_mb(
   struct abce *abce,

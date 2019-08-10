@@ -85,6 +85,66 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
   int ret = 0;
   switch (ins)
   {
+    case ABCE_OPCODE_SCOPEVAR_NONRECURSIVE:
+    {
+      struct abce_mb mbsc, mbit;
+      const struct abce_mb *ptr;
+      GETMBSC(&mbsc, -2);
+      GETMB(&mbit, -1);
+      if (abce_unlikely(mbit.typ != ABCE_T_S))
+      {
+        abce->err.code = ABCE_E_EXPECT_STR;
+        abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+        abce->err.val2 = -2;
+        abce_mb_refdn(abce, &mbit);
+        abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
+        return -EINVAL;
+      }
+      POP();
+      POP();
+      ptr = abce_sc_get_rec_mb(&mbsc, &mbit, 0);
+      if (abce_unlikely(ptr == NULL))
+      {
+        abce->err.code = ABCE_E_SCOPEVAR_NOT_FOUND;
+        abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+        abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
+        abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
+        return -ENOENT;
+      }
+      if (abce_push_mb(abce, ptr) != 0)
+      {
+        abce_maybeabort();
+      }
+      abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
+      abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
+      return 0;
+    }
+    case ABCE_OPCODE_SCOPE_HAS_NONRECURSIVE:
+    {
+      struct abce_mb mbsc, mbit;
+      const struct abce_mb *ptr;
+      GETMBSC(&mbsc, -2);
+      GETMB(&mbit, -1);
+      if (abce_unlikely(mbit.typ != ABCE_T_S))
+      {
+        abce->err.code = ABCE_E_EXPECT_STR;
+        abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+        abce->err.val2 = -2;
+        abce_mb_refdn(abce, &mbit);
+        abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
+        return -EINVAL;
+      }
+      POP();
+      POP();
+      ptr = abce_sc_get_rec_mb(&mbsc, &mbit, 0);
+      if (abce_push_boolean(abce, ptr != NULL) != 0)
+      {
+        abce_maybeabort();
+      }
+      abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
+      abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
+      return 0;
+    }
     case ABCE_OPCODE_DUMP:
     {
       struct abce_mb mb;
@@ -2556,7 +2616,7 @@ outpbset:
           }
           POP();
           POP();
-          ptr = abce_sc_get_rec_mb(&mbsc, &mbit);
+          ptr = abce_sc_get_rec_mb(&mbsc, &mbit, 1);
           if (abce_unlikely(ptr == NULL))
           {
             abce->err.code = ABCE_E_SCOPEVAR_NOT_FOUND;
@@ -2592,7 +2652,7 @@ outpbset:
           }
           POP();
           POP();
-          ptr = abce_sc_get_rec_mb(&mbsc, &mbit);
+          ptr = abce_sc_get_rec_mb(&mbsc, &mbit, 1);
           if (abce_push_boolean(abce, ptr != NULL) != 0)
           {
             abce_maybeabort();
