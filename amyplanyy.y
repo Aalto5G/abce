@@ -559,19 +559,39 @@ varref:
   VARREF_LITERAL
 {
   int64_t locvar;
-  locvar = amyplan_locvarctx_search_rec(amyplanyy->ctx, $1);
-  if (locvar >= 0)
+  if (amyplanyy->ctx == NULL)
   {
+    // Outside of function, search for immediate symbol
+    // Doesn't really happen with standard syntax, but somebody may embed it
+    const struct abce_mb *mb2 =
+      abce_sc_get_rec_str(&get_abce(amyplanyy)->dynscope, $1, 1);
+    if (mb2 == NULL)
+    {
+      printf("Variable %s not found\n", $1);
+      YYABORT;
+    }
+    int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-    amyplanyy_add_double(amyplanyy, locvar);
+    amyplanyy_add_double(amyplanyy, idx);
+    free($1);
+    $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
   }
   else
   {
-    printf("var %s not found\n", $1);
-    abort();
+    locvar = amyplan_locvarctx_search_rec(amyplanyy->ctx, $1);
+    if (locvar >= 0)
+    {
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+      amyplanyy_add_double(amyplanyy, locvar);
+    }
+    else
+    {
+      printf("var %s not found\n", $1);
+      abort();
+    }
+    free($1);
+    $$ = ABCE_OPCODE_PUSH_STACK;
   }
-  free($1);
-  $$ = ABCE_OPCODE_PUSH_STACK;
 }
 | DO VARREF_LITERAL
 {
