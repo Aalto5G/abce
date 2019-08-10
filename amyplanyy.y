@@ -32,6 +32,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
   amyplanyy_add_byte(amyplanyy, uset);
 }
 
+#define get_abce(stiryy) (&((stiryy)->abce))
+
 %}
 
 %pure-parser
@@ -105,7 +107,7 @@ aplanrules:
 }
 OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
 {
-  size_t funloc = amyplanyy->abce.bytecodesz;
+  size_t funloc = get_abce(amyplanyy)->bytecodesz;
   amyplanyy_add_fun_sym(amyplanyy, $3, 0, funloc);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_HEADER);
   amyplanyy_add_double(amyplanyy, amyplanyy->ctx->args);
@@ -275,32 +277,32 @@ statement:
 | IF OPEN_PAREN expr CLOSE_PAREN NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  $<d>$ = amyplanyy->abce.bytecodesz;
+  $<d>$ = get_abce(amyplanyy)->bytecodesz;
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
 }
   bodylinescont
 {
-  amyplanyy_set_double(amyplanyy, $<d>6, amyplanyy->abce.bytecodesz);
+  amyplanyy_set_double(amyplanyy, $<d>6, get_abce(amyplanyy)->bytecodesz);
   $<d>$ = $<d>6; // For overwrite by maybe_else
 }
   maybe_else
   ENDIF NEWLINE
 | WHILE
 {
-  $<d>$ = amyplanyy->abce.bytecodesz; // startpoint
+  $<d>$ = get_abce(amyplanyy)->bytecodesz; // startpoint
 }
   OPEN_PAREN expr CLOSE_PAREN NEWLINE
 {
   struct amyplan_locvarctx *ctx =
-    amyplan_locvarctx_alloc(amyplanyy->ctx, 0, amyplanyy->abce.bytecodesz, $<d>2);
+    amyplan_locvarctx_alloc(amyplanyy->ctx, 0, get_abce(amyplanyy)->bytecodesz, $<d>2);
   if (ctx == NULL)
   {
     printf("Out of memory\n");
     YYABORT;
   }
   amyplanyy->ctx = ctx;
-  $<d>$ = amyplanyy->abce.bytecodesz; // breakpoint
+  $<d>$ = get_abce(amyplanyy)->bytecodesz; // breakpoint
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
@@ -314,24 +316,24 @@ statement:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, $<d>2);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
-  amyplanyy_set_double(amyplanyy, $<d>7 + 1, amyplanyy->abce.bytecodesz);
+  amyplanyy_set_double(amyplanyy, $<d>7 + 1, get_abce(amyplanyy)->bytecodesz);
 }
 | ONCE
 {
-  $<d>$ = amyplanyy->abce.bytecodesz; // startpoint
+  $<d>$ = get_abce(amyplanyy)->bytecodesz; // startpoint
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_TRUE);
 }
   NEWLINE
 {
   struct amyplan_locvarctx *ctx =
-    amyplan_locvarctx_alloc(amyplanyy->ctx, 0, amyplanyy->abce.bytecodesz, $<d>2);
+    amyplan_locvarctx_alloc(amyplanyy->ctx, 0, get_abce(amyplanyy)->bytecodesz, $<d>2);
   if (ctx == NULL)
   {
     printf("Out of memory\n");
     YYABORT;
   }
   amyplanyy->ctx = ctx;
-  $<d>$ = amyplanyy->abce.bytecodesz; // breakpoint
+  $<d>$ = get_abce(amyplanyy)->bytecodesz; // breakpoint
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
@@ -342,7 +344,7 @@ statement:
   struct amyplan_locvarctx *ctx = amyplanyy->ctx->parent;
   free(amyplanyy->ctx);
   amyplanyy->ctx = ctx;
-  amyplanyy_set_double(amyplanyy, $<d>4 + 1, amyplanyy->abce.bytecodesz);
+  amyplanyy_set_double(amyplanyy, $<d>4 + 1, get_abce(amyplanyy)->bytecodesz);
 }
 | APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN NEWLINE
 {
@@ -378,14 +380,14 @@ maybe_else:
 | ELSE NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  $<d>$ = amyplanyy->abce.bytecodesz;
+  $<d>$ = get_abce(amyplanyy)->bytecodesz;
   amyplanyy_add_double(amyplanyy, -50); // to be overwritten
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
-  amyplanyy_set_double(amyplanyy, $<d>0, amyplanyy->abce.bytecodesz); // Overwrite
+  amyplanyy_set_double(amyplanyy, $<d>0, get_abce(amyplanyy)->bytecodesz); // Overwrite
 }
 bodylinescont
 {
-  amyplanyy_set_double(amyplanyy, $<d>3, amyplanyy->abce.bytecodesz);
+  amyplanyy_set_double(amyplanyy, $<d>3, get_abce(amyplanyy)->bytecodesz);
 }
 ;
 
@@ -501,7 +503,7 @@ lexstart:
   LEX
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
 }
   OPEN_BRACKET maybe_atqm expr CLOSE_BRACKET
@@ -574,7 +576,7 @@ varref:
 | DO VARREF_LITERAL
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
-  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -584,10 +586,10 @@ varref:
 | LO VARREF_LITERAL
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
 
-  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -597,13 +599,13 @@ varref:
 | IO VARREF_LITERAL
 {
   const struct abce_mb *mb2 =
-    abce_sc_get_rec_str(&amyplanyy->abce.dynscope, $2, 0);
+    abce_sc_get_rec_str(&get_abce(amyplanyy)->dynscope, $2, 0);
   if (mb2 == NULL)
   {
     printf("Variable %s not found\n", $2);
     YYABORT;
   }
-  int64_t idx = abce_cache_add(&amyplanyy->abce, mb2);
+  int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   free($2);
@@ -613,7 +615,7 @@ varref:
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
 
-  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -623,10 +625,10 @@ varref:
 | L VARREF_LITERAL
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
 
-  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $2, strlen($2));
+  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -636,13 +638,13 @@ varref:
 | I VARREF_LITERAL
 {
   const struct abce_mb *mb2 =
-    abce_sc_get_rec_str(&amyplanyy->abce.dynscope, $2, 1);
+    abce_sc_get_rec_str(&get_abce(amyplanyy)->dynscope, $2, 1);
   if (mb2 == NULL)
   {
     printf("Variable %s not found\n", $2);
     YYABORT;
   }
-  int64_t idx = abce_cache_add(&amyplanyy->abce, mb2);
+  int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   free($2);
@@ -798,7 +800,7 @@ expr0:
 | list maybe_bracketexprlist
 | STRING_LITERAL
 {
-  int64_t idx = abce_cache_add_str(&amyplanyy->abce, $1.str, $1.sz);
+  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $1.str, $1.sz);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, idx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -888,7 +890,7 @@ expr0:
 | GETSCOPE_LEX OPEN_PAREN CLOSE_PAREN
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, amyplanyy->abce.dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
 }
 | lvalue
