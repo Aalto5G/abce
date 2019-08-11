@@ -565,20 +565,16 @@ varref:
   int64_t locvar;
   if (amyplanyy->ctx == NULL)
   {
-    // Outside of function, search for immediate symbol
+    // Outside of function, search for dynamic symbol
     // Doesn't really happen with standard syntax, but somebody may embed it
-    const struct abce_mb *mb2 =
-      abce_sc_get_rec_str(&get_abce(amyplanyy)->dynscope, $1, 1);
-    if (mb2 == NULL)
-    {
-      printf("Variable %s not found\n", $1);
-      YYABORT;
-    }
-    int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+
+    int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $1, strlen($1));
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     amyplanyy_add_double(amyplanyy, idx);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
     free($1);
-    $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
+    $$ = ABCE_OPCODE_SCOPEVAR;
   }
   else
   {
