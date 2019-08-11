@@ -2,6 +2,8 @@
 #define _ABCE_H_
 
 #include "abcedatatypes.h"
+#include <unistd.h>
+#include <endian.h>
 
 #ifdef __cplusplus
 extern "C" {

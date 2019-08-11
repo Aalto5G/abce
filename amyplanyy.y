@@ -8,7 +8,6 @@
 #include "abcescopes.h"
 #include "amyplanlocvarctx.h"
 #include "amyplan.h"
-#include <arpa/inet.h>
 
 void amyplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct amyplanyy *amyplanyy, const char *str)
 {

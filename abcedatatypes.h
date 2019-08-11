@@ -6,8 +6,6 @@
 #include <math.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <unistd.h>
-#include <endian.h>
 #include "abcerbtree.h"
 #include "abcemurmur.h"
 #include "abcecontainerof.h"
