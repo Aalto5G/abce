@@ -37,11 +37,12 @@ int abce_strgsub_mb(struct abce *abce,
     return retval;
   }
   *res = abce_mb_create_string(abce, resstr, ressz);
+  // After this point, we can no longer allocate memory because GC can crash...
   if (res->typ == ABCE_T_N)
   {
     return -ENOMEM;
   }
-  abce->alloc(resstr, rescap, 0, &abce->alloc_baton);
+  abce->alloc(resstr, rescap, 0, &abce->alloc_baton); // ..except this is free()
   return 0;
 }
 

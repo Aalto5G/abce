@@ -130,6 +130,7 @@ struct abce {
   size_t sp;
   size_t bp;
   int64_t ip;
+  struct abce_mb oneblock;
   // Byte code
   unsigned char *bytecode;
   size_t bytecodesz;

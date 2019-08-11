@@ -57,6 +57,7 @@ void abce_init(struct abce *abce)
   abce->bytecodecap = 32*1024*1024;
   abce->bytecode = abce_alloc_bcode(abce->bytecodecap);
   abce->bytecodesz = 0;
+  abce->oneblock.typ = ABCE_T_N;
 
   abce->cachecap = 1024*1024;
   abce->cachebase = abce_alloc_stack(abce->cachecap);
@@ -243,6 +244,10 @@ void abce_gc(struct abce *abce)
   }
   stackcap = abce->gcblocksz + safety_margin;
   stackbase = abce_alloc_gcqueue(stackcap);
+  if (abce->oneblock.typ != ABCE_T_N)
+  {
+    abce_mark_mb(abce, &abce->oneblock, stackbase, &stackidx, stackcap);
+  }
   abce_mark_mb(abce, &abce->dynscope, stackbase, &stackidx, stackcap);
   abce_mark_mb(abce, &abce->err.mb, stackbase, &stackidx, stackcap);
   for (i = 0; i < abce->sp; i++)
@@ -283,6 +288,7 @@ void abce_gc(struct abce *abce)
       if (mba->refcnt != 0)
       {
         printf("refcnt is not 0: %d\n", (int)mba->refcnt);
+        printf("type: %d\n", (int)abce->gcblockbase[i].typ);
         abort();
       }
       if (mba->locidx != i)
@@ -366,6 +372,10 @@ void abce_free_bt(struct abce *abce)
 void abce_free(struct abce *abce)
 {
   size_t i;
+  if (abce->oneblock.typ != ABCE_T_N)
+  {
+    abort();
+  }
   abce_mb_refdn(abce, &abce->dynscope);
 #if 0
   for (i = 0; i < sizeof(abce->strcache)/sizeof(*abce->strcache); i++)

@@ -312,9 +312,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbneedle);
         return rettmp;
       }
-      POP();
-      POP();
-      POP();
       rettmp = abce_strgsub_mb(abce, &res, &mbhaystack, &mbneedle, &mbsub);
       if (rettmp != 0)
       {
@@ -323,6 +320,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbsub);
         return rettmp;
       }
+      POP(); // do this late to avoid C-only refs to abce objs, confusing GC
+      POP();
+      POP();
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbsub);
@@ -392,9 +392,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = end;
         return -ERANGE;
       }
-      POP();
-      POP();
-      POP();
       res = abce_mb_create_string(abce,
                                   mbbase.u.area->u.str.buf + (size_t)start,
                                   end - start);
@@ -402,6 +399,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         return -ENOMEM;
       }
+      POP(); // right before push to avoid GC crashes
+      POP();
+      POP();
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -420,13 +420,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = ch;
         return -EINVAL;
       }
-      POP();
       chch = (char)(unsigned char)ch;
       res = abce_mb_create_string(abce, &chch, 1);
       if (res.typ == ABCE_T_N)
       {
         return -ENOMEM;
       }
+      POP(); // right before push to avoid GC crashes
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       return 0;
@@ -439,8 +439,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTR(&mbextend, -1);
       GETMBSTR(&mbbase, -2);
-      POP();
-      POP();
       res = abce_mb_concat_string(abce,
                                   mbbase.u.area->u.str.buf,
                                   mbbase.u.area->u.str.size,
@@ -452,6 +450,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbextend);
         return -ENOMEM;
       }
+      POP(); // Careful with GC!
+      POP();
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -483,7 +483,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
 
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTR(&mbbase, -1);
-      POP();
       res = abce_mb_create_string(abce,
                                   mbbase.u.area->u.str.buf,
                                   mbbase.u.area->u.str.size);
@@ -496,6 +495,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         res.u.area->u.str.buf[i] = tolower((unsigned char)res.u.area->u.str.buf[i]);
       }
+      POP(); // right before push to avoid GC crashes
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -508,7 +508,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
 
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTR(&mbbase, -1);
-      POP();
       res = abce_mb_create_string(abce,
                                   mbbase.u.area->u.str.buf,
                                   mbbase.u.area->u.str.size);
@@ -521,6 +520,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         res.u.area->u.str.buf[i] = toupper((unsigned char)res.u.area->u.str.buf[i]);
       }
+      POP(); // right before push to avoid GC crashes
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -557,9 +557,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbbase);
         return -EINVAL;
       }
-      POP();
-      POP();
-      POP();
       res = abce_mb_create_string(abce,
                                   mbbase.u.area->u.str.buf,
                                   mbbase.u.area->u.str.size);
@@ -569,6 +566,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -ENOMEM;
       }
       res.u.area->u.str.buf[(uint64_t)loc] = (char)(unsigned char)ch;
+      POP(); // right before push to avoid GC crashes
+      POP();
+      POP();
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -612,8 +612,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTR(&mbsep, -1);
       GETMBSTR(&mbbase, -2);
-      POP();
-      POP();
       mbar = abce_mb_create_array(abce);
       if (mbar.typ == ABCE_T_N)
       {
@@ -621,15 +619,19 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbsep);
         return -ENOMEM;
       }
+      abce->oneblock = abce_mb_refup(abce, &mbar); // make it visible to GC
       abce_word_iter_init(&it, mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
                           mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size);
       while (!abce_word_iter_at_end(&it))
       {
+        // Here we have to be careful. We allocate memblocks, but we add them immediately
+        // to the array, so if GC can see the array, GC can see our memblocks.
         mbit = abce_mb_create_string(abce, 
                                      mbbase.u.area->u.str.buf + it.start,
                                      it.end - it.start);
         if (mbit.typ == ABCE_T_N)
         {
+          abce_mb_refdn(abce, &abce->oneblock);
           abce_mb_refdn(abce, &mbbase);
           abce_mb_refdn(abce, &mbsep);
           abce_mb_refdn(abce, &mbar);
@@ -637,6 +639,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         }
         if (abce_mb_array_append(abce, &mbar, &mbit) != 0)
         {
+          abce_mb_refdn(abce, &abce->oneblock);
           abce_mb_refdn(abce, &mbbase);
           abce_mb_refdn(abce, &mbsep);
           abce_mb_refdn(abce, &mbar);
@@ -646,10 +649,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbit);
         abce_word_iter_next(&it);
       }
+      POP(); // Do this late to avoid confusing GC
+      POP();
       if (abce_push_mb(abce, &mbar) != 0)
       {
         abort();
       }
+      abce_mb_refdn(abce, &abce->oneblock);
       abce_mb_refdn(abce, &mbbase);
       abce_mb_refdn(abce, &mbsep);
       abce_mb_refdn(abce, &mbar);
@@ -682,9 +688,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       GETMBSTR(&mbsep, -2);
       GETMBSTR(&mbbase, -3);
-      POP();
-      POP();
-      POP();
       abce_word_iter_init(&it, mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
                           mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size);
       while (!abce_word_iter_at_end(&it))
@@ -700,6 +703,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
             abce_mb_refdn(abce, &mbsep);
             return -ENOMEM;
           }
+          POP(); // right before push to avoid GC crashes
+          POP();
+          POP();
           if (abce_push_mb(abce, &mbit) != 0)
           {
             abort();
@@ -768,7 +774,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb res, mbbase;
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTR(&mbbase, -1);
-      POP();
       res = abce_mb_create_string(abce,
                                   mbbase.u.area->u.str.buf,
                                   mbbase.u.area->u.str.size);
@@ -784,6 +789,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           mbbase.u.area->u.str.buf[mbbase.u.area->u.str.size-i-1];
         mbbase.u.area->u.str.buf[mbbase.u.area->u.str.size-i-1] = tmp;
       }
+      POP(); // right before push to avoid GC crashes
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -805,8 +811,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -EINVAL;
       }
       GETMBSTR(&mbbase, -2);
-      POP();
-      POP();
       res = abce_mb_rep_string(abce,
                                mbbase.u.area->u.str.buf,
                                mbbase.u.area->u.str.size,
@@ -816,6 +820,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbbase);
         return -ENOMEM;
       }
+      POP(); // Careful with GC!
+      POP();
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -858,8 +864,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBAR(&mbar, -1);
       GETMBSTR(&mbjoiner, -2);
-      POP();
-      POP();
       for (i = 0; i < mbar.u.area->u.ar.size; i++)
       {
         const struct abce_mb *mb = &mbar.u.area->u.ar.mbs[i];
@@ -889,6 +893,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbjoiner);
         return -ENOMEM;
       }
+      POP(); // Do this late to avoid confusing the GC
+      POP();
       abce_push_mb(abce, &mbres);
       abce_mb_refdn(abce, &mbres);
       abce_mb_refdn(abce, &mbar);
@@ -901,7 +907,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       double dbl;
       struct abce_mb mbres;
       GETDBL(&dbl, -1);
-      POP();
       if (snprintf(buf, sizeof(buf), "%g", dbl) >= sizeof(buf))
       {
         abort();
@@ -911,6 +916,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         return -ENOMEM;
       }
+      POP(); // right before push to avoid GC crashes
       abce_push_mb(abce, &mbres);
       abce_mb_refdn(abce, &mbres);
       return 0;
@@ -950,8 +956,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTR(&mbsep, -1);
       GETMBSTR(&mbbase, -2);
-      POP();
-      POP();
       abce_strip(mbbase.u.area->u.str.buf, mbbase.u.area->u.str.size,
                  mbsep.u.area->u.str.buf, mbsep.u.area->u.str.size,
                  &start, &end);
@@ -968,6 +972,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_refdn(abce, &mbsep);
         return -ENOMEM;
       }
+      POP(); // right before push to avoid GC crashes
+      POP();
       abce_push_mb(abce, &res);
       abce_mb_refdn(abce, &res);
       abce_mb_refdn(abce, &mbbase);
@@ -995,8 +1001,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb mbscparent;
       GETBOOLEAN(&holey, -1);
       GETMBSC(&mbscparent, -2);
-      POP();
-      POP();
       mbscnew =
         abce_mb_create_scope(abce, ABCE_DEFAULT_SCOPE_SIZE, &mbscparent, holey);
       if (mbscnew.typ == ABCE_T_N)
@@ -1005,6 +1009,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -ENOMEM;
       }
       locidx = mbscnew.u.area->u.sc.locidx;
+      POP(); // do this late to avoid confusing GC
+      POP();
       abce_push_double(abce, locidx);
       abce_mb_refdn(abce, &mbscnew);
       abce_mb_refdn(abce, &mbscparent);
@@ -1099,7 +1105,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb mbnew;
       size_t i;
       GETMB(&mbold, -1);
-      POP();
       if (abce_unlikely(mbold.typ != ABCE_T_A && mbold.typ != ABCE_T_T)) // FIXME T_PB
       {
         abce->err.code = ABCE_E_EXPECT_ARRAY_OR_TREE; // FIXME split
@@ -1115,19 +1120,23 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbold);
           return -ENOMEM;
         }
+        abce->oneblock = abce_mb_refup(abce, &mbnew); // make it visible to GC
         for (i = 0; i < mbold.u.area->u.ar.size; i++)
         {
           if (abce_mb_array_append(abce, &mbnew, &mbold.u.area->u.ar.mbs[i]) != 0)
           {
+            abce_mb_refdn(abce, &abce->oneblock);
             abce_mb_refdn(abce, &mbold);
             abce_mb_refdn(abce, &mbnew);
             return -ENOMEM;
           }
         }
+        POP(); // right before push to avoid GC crashes
         if (abce_push_mb(abce, &mbnew) != 0)
         {
           abort();
         }
+        abce_mb_refdn(abce, &abce->oneblock);
         abce_mb_refdn(abce, &mbold);
         abce_mb_refdn(abce, &mbnew);
         return 0;
@@ -1142,20 +1151,24 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbold);
           return -ENOMEM;
         }
+        abce->oneblock = abce_mb_refup(abce, &mbnew); // make it visible to GC
         key = &nil;
         while (abce_tree_get_next(abce, &key, &val, &mbold, key) == 0)
         {
           if (abce_tree_set_str(abce, &mbold, key, val) != 0)
           {
+            abce_mb_refdn(abce, &abce->oneblock);
             abce_mb_refdn(abce, &mbnew);
             abce_mb_refdn(abce, &mbold);
             return -ENOMEM;
           }
         }
+        POP(); // right before push to avoid GC crashes
         if (abce_push_mb(abce, &mbnew) != 0)
         {
           abort();
         }
+        abce_mb_refdn(abce, &abce->oneblock);
         abce_mb_refdn(abce, &mbold);
         abce_mb_refdn(abce, &mbnew);
       }
@@ -2567,11 +2580,11 @@ outpbset:
           struct abce_mb mbar;
           GETMBAR(&mbar, -2);
           GETMB(&mb, -1); // can't fail if GETMBAR succeeded
-          POP();
           if (abce_mb_array_append(abce, &mbar, &mb) != 0)
           {
             ret = -ENOMEM;
           }
+          POP(); // do this late to avoid confusing GC
           abce_mb_refdn_typ(abce, &mbar, ABCE_T_T);
           abce_mb_refdn(abce, &mb);
           break;
@@ -2700,13 +2713,13 @@ outpbset:
           GETMB(&mbt, -3);
           GETMB(&mbstr, -2);
           GETMB(&mbval, -1);
-          POP();
-          POP();
           if (abce_tree_set_str(abce, &mbt, &mbstr, &mbval) != 0)
           {
             ret = -ENOMEM;
             // No break: we want to call all refdn statements
           }
+          POP(); // do this late to avoid confusing GC
+          POP();
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           abce_mb_refdn(abce, &mbval);
