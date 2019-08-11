@@ -2863,15 +2863,15 @@ outpbset:
           GETMB(&mbsc, -3);
           GETMB(&mbs, -2);
           GETMB(&mbv, -1);
-          POP();
-          POP();
-          POP();
           rettmp = abce_sc_replace_val_mb(abce, &mbsc, &mbs, &mbv);
           if (rettmp != 0)
           {
             ret = rettmp;
             // No break: we want to call all refdn statements
           }
+          POP(); // Do this late to avoid confusing GC
+          POP();
+          POP();
           abce_mb_refdn_typ(abce, &mbs, ABCE_T_S);
           abce_mb_refdn(abce, &mbv);
           abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -2884,8 +2884,6 @@ outpbset:
           VERIFYMB(-1, ABCE_T_S);
           GETMB(&mbt, -2);
           GETMB(&mbstr, -1);
-          POP();
-          POP();
           if (abce_unlikely(abce_tree_del_str(abce, &mbt, &mbstr) != 0))
           {
             abce->err.code = ABCE_E_TREE_ENTRY_NOT_FOUND;
@@ -2893,6 +2891,8 @@ outpbset:
             ret = -ENOENT;
             // No break: we want to call all refdn statements
           }
+          POP(); // Just in case deleting allocates memory, do this late
+          POP();
           abce_mb_refdn_typ(abce, &mbt, ABCE_T_T);
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
