@@ -84,6 +84,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token TRUE FALSE NIL ATQM TYPE
 
 %token ERROR_TOK
+%token DUMMY_TOK1
+%token DUMMY_TOK2
 
 %type<d> value
 %type<d> lvalue
@@ -378,6 +380,7 @@ statement:
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUMP); }
 | EXIT OPEN_PAREN CLOSE_PAREN
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXIT); }
+| custom_stmt
 ;
 
 maybe_else:
@@ -995,6 +998,7 @@ expr0:
   free($3.str);
   abort();
 }
+| custom_expr0
 ;
 
 maybe_arglist:
@@ -1103,3 +1107,6 @@ valuelistentry:
 {
   $$ = $1;
 };
+
+custom_stmt: DUMMY_TOK1;
+custom_expr0: DUMMY_TOK2;
