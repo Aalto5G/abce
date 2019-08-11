@@ -21,6 +21,10 @@ int amyplanyywrap(yyscan_t scanner)
         return 1;
 }
 
+static inline int is_autocall(struct amyplanyy *amyplanyy)
+{
+  return 0;
+}
 void add_corresponding_get(struct amyplanyy *amyplanyy, double get)
 {
   uint16_t uget = (uint16_t)get;
@@ -1044,8 +1048,19 @@ dictlist:
 ;
 
 dictentry:
-  value COLON value
+  value COLON
 {
+  if (is_autocall(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
+  }
+}
+  value
+{
+  if (is_autocall(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
+  }
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTSET_MAINTAIN);
 }
 ;
@@ -1057,6 +1072,10 @@ maybe_valuelist:
 valuelist:
   valuelistentry
 {
+  if (is_autocall(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
+  }
   if ($1)
   {
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
@@ -1068,6 +1087,10 @@ valuelist:
 }
 | valuelist COMMA valuelistentry
 {
+  if (is_autocall(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
+  }
   if ($3)
   {
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
