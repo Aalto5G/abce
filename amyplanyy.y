@@ -5,6 +5,7 @@
 #include "amyplanyy.tab.h"
 #include "amyplanyy.lex.h"
 #include "abceopcodes.h"
+#include "abcescopes.h"
 #include "amyplanlocvarctx.h"
 #include "amyplan.h"
 #include <arpa/inet.h>
@@ -56,7 +57,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 %token AT ATTAB NEWLINE TOSTRING TONUMBER
 
-%token EQUALS COLON COMMA
+%token EQUALS QMEQUALS PLUSEQUALS COLON COMMA
 %token <str> STRING_LITERAL
 %token <d> NUMBER
 %token <s> VARREF_LITERAL
@@ -98,6 +99,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %type<d> lexstart
 %type<d> varref_tail
 %type<d> varref
+%type<d> maybe_maybe_call
+%type<d> maybeqmequals
 
 %start st
 
@@ -107,6 +110,7 @@ st: aplanrules;
 
 aplanrules:
 | aplanrules NEWLINE
+| aplanrules assignrule
 | aplanrules FUNCTION VARREF_LITERAL
 {
   amyplanyy->ctx = amyplan_locvarctx_alloc(NULL, 2, (size_t)-1, (size_t)-1);
@@ -132,6 +136,115 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   free($3);
   amyplan_locvarctx_free(amyplanyy->ctx);
   amyplanyy->ctx = NULL;
+}
+;
+
+maybeqmequals: EQUALS {$$ = 0;} | QMEQUALS {$$ = 1;} ;
+maybe_maybe_call: {$$ = 0;} | MAYBE_CALL {$$ = 1;};
+
+assignrule:
+  VARREF_LITERAL maybe_maybe_call maybeqmequals
+{
+  size_t funloc = get_abce(amyplanyy)->bytecodesz;
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_HEADER);
+  amyplanyy_add_double(amyplanyy, 0);
+  $<d>$ = funloc;
+}
+expr NEWLINE
+{
+  unsigned char tmpbuf[256] = {};
+  size_t tmpsiz = 0;
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
+  amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $1, strlen($1)));
+  amyplanyy_add_fun_sym(amyplanyy, $1, $3, $<d>4);
+
+  if (!$2)
+  {
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
+    abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+      abce_sc_get_rec_str_fun(&get_abce(amyplanyy)->dynscope, $1, 1));
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL_IF_FUN);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+
+    get_abce(amyplanyy)->ip = -tmpsiz-ABCE_GUARD;
+    if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
+    {
+      printf("Error executing bytecode for var %s\n", $1);
+      printf("error %d\n", get_abce(amyplanyy)->err.code);
+      YYABORT;
+    }
+    if (get_abce(amyplanyy)->sp != 1)
+    {
+      abort();
+    }
+    struct abce_mb key = abce_mb_create_string(get_abce(amyplanyy), $1, strlen($1));
+    abce_sc_replace_val_mb(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope, &key, &get_abce(amyplanyy)->stackbase[0]);
+    abce_mb_refdn(get_abce(amyplanyy), &key);
+    abce_pop(get_abce(amyplanyy));
+  }
+
+  free($1);
+}
+| VARREF_LITERAL maybe_maybe_call PLUSEQUALS
+{
+  size_t funloc = get_abce(amyplanyy)->bytecodesz;
+  size_t oldloc = amyplanyy_add_fun_sym(amyplanyy, $1, 0, funloc); // FIXME move later
+  if (oldloc == (size_t)-1)
+  {
+    printf("Can't find old symbol function for %s\n", $1);
+    YYABORT;
+  }
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_HEADER);
+  amyplanyy_add_double(amyplanyy, 0);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, oldloc);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
+  // FIXME what if it's not a list?
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUP_NONRECURSIVE);
+}
+expr NEWLINE
+{
+  unsigned char tmpbuf[256] = {};
+  size_t tmpsiz = 0;
+  size_t symidx;
+  printf("Plus-assigning to %s\n", $1);
+  // FIXME what if it's not a list?
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
+  symidx = amyplan_symbol_add(amyplanyy, $1, strlen($1));
+  amyplanyy_add_double(amyplanyy, symidx);
+
+  if (!$2)
+  {
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
+    abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+      abce_sc_get_rec_str_fun(&get_abce(amyplanyy)->dynscope, $1, 1));
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL_IF_FUN);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+
+    get_abce(amyplanyy)->ip = -tmpsiz-ABCE_GUARD;
+    if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
+    {
+      printf("Error executing bytecode for var %s\n", $1);
+      printf("error %d\n", get_abce(amyplanyy)->err.code);
+      YYABORT;
+    }
+    if (get_abce(amyplanyy)->sp != 1)
+    {
+      abort();
+    }
+    struct abce_mb key = abce_mb_create_string(get_abce(amyplanyy), $1, strlen($1));
+    abce_sc_replace_val_mb(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope, &key, &get_abce(amyplanyy)->stackbase[0]);
+    abce_mb_refdn(get_abce(amyplanyy), &key);
+    abce_pop(get_abce(amyplanyy));
+  }
+
+  free($1);
 }
 ;
 

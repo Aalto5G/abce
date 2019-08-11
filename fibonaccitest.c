@@ -2,9 +2,11 @@
 #include "amyplanyyutils.h"
 
 char *str =
+  "$A ?= 3\n"
+  "$B<> = 1\n"
   "@function $fibonacci($x)\n"
-  "  @if($x<3)\n"
-  "    @return 1\n"
+  "  @if($x<@D$A)\n"
+  "    @return @D$B<>\n"
   "  @endif\n"
   "  @return @dyn[\"fibonacci\"]($x - 1) + @dyn[\"fibonacci\"]($x - 2)\n"
   "@endfunction\n";
