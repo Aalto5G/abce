@@ -1,0 +1,46 @@
+Note about fragility: garbage collector runs only when in engine. However, the
+engine has to be programmed carefully. For example, consider this instruction
+handler:
+
+        case ABCE_OPCODE_APPEND_MAINTAIN:
+        {
+          struct abce_mb mb;
+          struct abce_mb mbar;
+          GETMBAR(&mbar, -2);
+          GETMB(&mb, -1); // can't fail if GETMBAR succeeded
+          POP();
+          if (abce_mb_array_append(abce, &mbar, &mb) != 0)
+          {
+            ret = -ENOMEM;
+          }
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_T);
+          abce_mb_refdn(abce, &mb);
+          break;
+        }
+
+Seems correct, doesn't it? However, it contains a bug. The GETMBAR gets a
+reference to the array, up-referencing it. Then POP() down-references it. Its
+reference may be 1 here, with the only reference being in the C language stack.
+Then abce_mb_array_append is called, which might invoke the garbage collector.
+The garbage collector notices there is an unreferenced (because the only
+reference is in the C language stack) object with reference count not equal to
+0 after GC. Thus, the GC may call abort(). The fix is this:
+
+        case ABCE_OPCODE_APPEND_MAINTAIN:
+        {
+          struct abce_mb mb;
+          struct abce_mb mbar;
+          GETMBAR(&mbar, -2);
+          GETMB(&mb, -1); // can't fail if GETMBAR succeeded
+          if (abce_mb_array_append(abce, &mbar, &mb) != 0)
+          {
+            ret = -ENOMEM;
+          }
+          POP(); // do this late to avoid confusing GC
+          abce_mb_refdn_typ(abce, &mbar, ABCE_T_T);
+          abce_mb_refdn(abce, &mb);
+          break;
+        }
+
+There is also abce->oneblock that allows one temporary block to be stored in
+such a manner that GC sees it.
