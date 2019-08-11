@@ -4,8 +4,9 @@
 #include "abce_err.h"
 #include <errno.h>
 
-int noio_restrict_fn(struct abce *abce, void **pbaton, uint16_t ins)
+int noio_restrict_fn(void **pbaton, uint16_t ins)
 {
+  struct abce *abce = ABCE_CONTAINER_OF(pbaton, struct abce, ins_budget_baton);
   // a blacklist of disallowed instructions
   switch (ins)
   {
