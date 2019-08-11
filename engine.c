@@ -1019,15 +1019,18 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-1, ABCE_T_A);
       GETMBAR(&mbar, -2);
       GETMBAR(&mbar2, -1);
-      POP();
-      for (i = 0; i < mbar.u.area->u.ar.size; i++)
+      // NB: Here we need to be very careful. We can't pop mbar2 until we
+      //     are in a point where memory alloc cannot happen. Otherwise GC
+      //     complains about reference count not being 0.
+      for (i = 0; i < mbar2.u.area->u.ar.size; i++)
       {
-        if (abce_mb_array_append(abce, &mbar, &mbar.u.area->u.ar.mbs[i]) != 0)
+        if (abce_mb_array_append(abce, &mbar, &mbar2.u.area->u.ar.mbs[i]) != 0)
         {
           ret = -ENOMEM;
           break;
         }
       }
+      POP();
       abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
       abce_mb_refdn_typ(abce, &mbar2, ABCE_T_A);
       break;
@@ -1515,7 +1518,11 @@ calltrailer:
           }
           if (abce_unlikely(abce_push_bp(abce) != 0))
           {
-            abort(); // Can't fail, we just popped one value
+            ret = -EOVERFLOW;
+            break;
+            // Can fail in case of ABCE_OPCODE_CALL_IF_FUN
+            //printf("Cannot fail\n");
+            //abort(); // Can't fail, we just popped one value
           }
           if (abce_unlikely(abce_push_ip(abce) != 0))
           {
@@ -2765,7 +2772,7 @@ outpbset:
             int rettmp;
 #endif
             GETFUNADDR(&new_ip, -1);
-            POP();
+            //POP(); // funcall address popped by RET instruction
             argcnt = 0.0;
             goto calltrailer;
 #if 0
