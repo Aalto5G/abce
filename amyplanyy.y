@@ -87,6 +87,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token ERROR_TOK
 %token DUMMY_TOK1
 %token DUMMY_TOK2
+%token DUMMY_TOK3
 
 %type<d> value
 %type<d> lvalue
@@ -137,6 +138,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   amyplan_locvarctx_free(amyplanyy->ctx);
   amyplanyy->ctx = NULL;
 }
+| aplanrules custom_rule
 ;
 
 maybeqmequals: EQUALS {$$ = 0;} | QMEQUALS {$$ = 1;} ;
@@ -1223,3 +1225,4 @@ valuelistentry:
 
 custom_stmt: DUMMY_TOK1;
 custom_expr0: DUMMY_TOK2;
+custom_rule: DUMMY_TOK3;
