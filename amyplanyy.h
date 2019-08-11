@@ -1,5 +1,5 @@
-#ifndef _APLANYY_H_
-#define _APLANYY_H_
+#ifndef _AMYPLANYY_H_
+#define _AMYPLANYY_H_
 
 #include <stddef.h>
 #include <stdio.h>

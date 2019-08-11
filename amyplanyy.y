@@ -14,7 +14,7 @@ void amyplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct amyplanyy *amy
 {
         //fprintf(stderr, "error: %s at line %d col %d\n",str, yylloc->first_line, yylloc->first_column);
         // FIXME we need better location info!
-        fprintf(stderr, "aplan error: %s at line %d col %d\n", str, amyplanyyget_lineno(scanner), amyplanyyget_column(scanner));
+        fprintf(stderr, "amyplan error: %s at line %d col %d\n", str, amyplanyyget_lineno(scanner), amyplanyyget_column(scanner));
 }
 
 int amyplanyywrap(yyscan_t scanner)
@@ -107,12 +107,12 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 %%
 
-st: aplanrules;
+st: amyplanrules;
 
-aplanrules:
-| aplanrules NEWLINE
-| aplanrules assignrule
-| aplanrules FUNCTION VARREF_LITERAL
+amyplanrules:
+| amyplanrules NEWLINE
+| amyplanrules assignrule
+| amyplanrules FUNCTION VARREF_LITERAL
 {
   amyplanyy->ctx = amyplan_locvarctx_alloc(NULL, 2, (size_t)-1, (size_t)-1);
 }
@@ -138,7 +138,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   amyplan_locvarctx_free(amyplanyy->ctx);
   amyplanyy->ctx = NULL;
 }
-| aplanrules custom_rule
+| amyplanrules custom_rule
 ;
 
 maybeqmequals: EQUALS {$$ = 0;} | QMEQUALS {$$ = 1;} ;

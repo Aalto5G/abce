@@ -11,8 +11,8 @@
 #include "amyplanyy.tab.h"
 
 /*
-#define YYSTYPE APLANYYSTYPE
-#define YYLTYPE APLANYYLTYPE
+#define YYSTYPE AMYPLANYYSTYPE
+#define YYLTYPE AMYPLANYYLTYPE
 */
 
 /*

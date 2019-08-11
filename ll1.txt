@@ -8,12 +8,12 @@ STATEMENT -> LVALUE equals EXPR newline
 the return value of an expression by @ignore.
 
 
-ST -> APLANRULES .
+ST -> AMYPLANRULES .
 
-APLANRULES ->
-            | newline APLANRULES
+AMYPLANRULES ->
+            | newline AMYPLANRULES
             | function varref_literal open_paren MAYBE_PARLIST close_paren newline
-              FUNLINES endfunction newline APLANRULES .
+              FUNLINES endfunction newline AMYPLANRULES .
 
 MAYBE_PARLIST -> | PARLIST .
 PARLIST -> varref_literal PARLISTTAIL .

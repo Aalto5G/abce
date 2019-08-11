@@ -33,10 +33,10 @@ what's lacking in Lua:
 
 We want to create a programming language that can be embedded to another LALR
 parsed file that has its own set of tokens. This means all variables must use
-sigils ($) and so must all reserved words (@). Operators in Aplan are the
+sigils ($) and so must all reserved words (@). Operators in Amyplan are the
 standard C ones, so most configuration and programming language related lexer
 grammars probably can support these operators. If not, the programmer can
-create a custom variant of Aplan with different operators.
+create a custom variant of Amyplan with different operators.
 
 Design criteria
 - Bytecode engine that fits to L1 cache
