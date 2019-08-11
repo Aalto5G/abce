@@ -477,23 +477,23 @@ statement:
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
 }
-| STDOUT OPEN_PAREN expr CLOSE_PAREN
+| STDOUT OPEN_PAREN expr CLOSE_PAREN NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, 0);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_OUT);
 }
-| STDERR OPEN_PAREN expr CLOSE_PAREN
+| STDERR OPEN_PAREN expr CLOSE_PAREN NEWLINE
 {
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
   amyplanyy_add_double(amyplanyy, 1);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_OUT);
 }
-| ERROR OPEN_PAREN expr CLOSE_PAREN
+| ERROR OPEN_PAREN expr CLOSE_PAREN NEWLINE
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ERROR); }
-| DUMP OPEN_PAREN expr CLOSE_PAREN
+| DUMP OPEN_PAREN expr CLOSE_PAREN NEWLINE
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUMP); }
-| EXIT OPEN_PAREN CLOSE_PAREN
+| EXIT OPEN_PAREN CLOSE_PAREN NEWLINE
 { amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXIT); }
 | custom_stmt
 ;
