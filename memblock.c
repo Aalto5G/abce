@@ -154,6 +154,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   }
   mba->u.sc.size = capacity;
   mba->u.sc.holey = holey;
+  mba->u.sc.userdata = NULL;
   if (parent)
   {
     if (parent->typ == ABCE_T_N)

@@ -33,11 +33,13 @@ struct abce_mb_tree {
 };
 struct abce_mb_scope {
   int holey;
+  void *userdata;
   struct abce_mb_area *parent;
   size_t size;
   size_t locidx;
   struct abce_rb_tree_nocmp heads[0];
 };
+
 struct abce_mb_array {
   struct abce_mb *mbs;
   size_t capacity;
@@ -149,6 +151,23 @@ struct abce {
   size_t btsz;
   struct abce_mb *btbase;
 };
+
+static inline void abce_scope_set_userdata(struct abce_mb *mb, void *userdata)
+{
+  if (mb->typ != ABCE_T_SC)
+  {
+    abort();
+  }
+  mb->u.area->u.sc.userdata = userdata;
+}
+static inline void *abce_scope_get_userdata(struct abce_mb *mb)
+{
+  if (mb->typ != ABCE_T_SC)
+  {
+    abort();
+  }
+  return mb->u.area->u.sc.userdata;
+}
 
 #ifdef __cplusplus
 };
