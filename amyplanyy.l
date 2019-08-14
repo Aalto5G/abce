@@ -81,6 +81,12 @@ struct amyplan_csnippet luaSnippet = {
 @DO     return DO;
 @LO     return LO;
 @IO     return IO;
+@DP     return DP;
+@LP     return LP;
+@IP     return IP;
+@DPO     return DPO;
+@LPO     return LPO;
+@IPO     return IPO;
 @dyn   return DYN;
 @lex   return LEX;
 @imm   return IMM;

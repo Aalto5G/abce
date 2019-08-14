@@ -69,6 +69,8 @@ static inline void amyplanyy_init(struct amyplanyy *yy)
   yy->ctx = NULL;
 }
 
+// static inline void amyplanyy_get_parent_scope(
+
 static inline size_t amyplan_symbol_add(struct amyplanyy *amyplanyy, const char *symbol, size_t symlen)
 {
   return abce_cache_add_str(&amyplanyy->abce, symbol, symlen);

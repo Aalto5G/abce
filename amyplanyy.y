@@ -66,7 +66,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
-%token D L I DO LO IO LOC
+%token D L I DO LO IO DP LP IP DPO LPO IPO LOC
 %token APPEND APPEND_LIST
 %token RETURN PRINT
 
@@ -101,6 +101,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %type<d> varref
 %type<d> maybe_maybe_call
 %type<d> maybeqmequals
+%type<d> scopetype
 
 %start st
 
@@ -710,29 +711,6 @@ varref:
     $$ = ABCE_OPCODE_PUSH_STACK;
   }
 }
-| DO VARREF_LITERAL
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
-  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, idx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  free($2);
-  $$ = ABCE_OPCODE_SCOPEVAR_NONRECURSIVE;
-}
-| LO VARREF_LITERAL
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-
-  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, idx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  free($2);
-  $$ = ABCE_OPCODE_SCOPEVAR_NONRECURSIVE;
-}
 | IO VARREF_LITERAL
 {
   const struct abce_mb *mb2 =
@@ -748,30 +726,6 @@ varref:
   free($2);
   $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
 }
-| D VARREF_LITERAL
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
-
-  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, idx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  free($2);
-  $$ = ABCE_OPCODE_SCOPEVAR;
-}
-| L VARREF_LITERAL
-{
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-
-  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-  amyplanyy_add_double(amyplanyy, idx);
-  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  free($2);
-  $$ = ABCE_OPCODE_SCOPEVAR;
-}
 | I VARREF_LITERAL
 {
   const struct abce_mb *mb2 =
@@ -786,6 +740,125 @@ varref:
   amyplanyy_add_double(amyplanyy, idx);
   free($2);
   $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
+}
+| IP VARREF_LITERAL
+{
+  if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
+  {
+    printf("No parent scope, can't use immediate parent reference\n");
+    YYABORT;
+  }
+  struct abce_mb mb1 = {.typ = ABCE_T_SC, .u = {.area = get_abce(amyplanyy)->dynscope.u.area->u.sc.parent}};
+  const struct abce_mb *mb2 = abce_sc_get_rec_str(&mb1, $2, 1);
+  if (mb2 == NULL)
+  {
+    printf("Variable %s not found\n", $2);
+    YYABORT;
+  }
+  int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  free($2);
+  $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
+}
+| IPO VARREF_LITERAL
+{
+  if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
+  {
+    printf("No parent scope, can't use immediate parent reference\n");
+    YYABORT;
+  }
+  struct abce_mb mb1 = {.typ = ABCE_T_SC, .u = {.area = get_abce(amyplanyy)->dynscope.u.area->u.sc.parent}};
+  const struct abce_mb *mb2 = abce_sc_get_rec_str(&mb1, $2, 0);
+  if (mb2 == NULL)
+  {
+    printf("Variable %s not found\n", $2);
+    YYABORT;
+  }
+  int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  free($2);
+  $$ = ABCE_OPCODE_PUSH_FROM_CACHE;
+}
+| scopetype VARREF_LITERAL
+{
+  int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, idx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  free($2);
+  if ($1)
+  {
+    $$ = ABCE_OPCODE_SCOPEVAR_NONRECURSIVE;
+  }
+  else
+  {
+    $$ = ABCE_OPCODE_SCOPEVAR;
+  }
+}
+;
+
+scopetype:
+  LP
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
+  {
+    printf("No parent scope, can't use lexical parent reference\n");
+    YYABORT;
+  }
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.parent->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  $$ = 0;
+}
+| LPO
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
+  {
+    printf("No parent scope, can't use lexical parent reference\n");
+    YYABORT;
+  }
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.parent->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  $$ = 1;
+}
+| L
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  $$ = 0;
+}
+| LO
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  $$ = 1;
+}
+| DP
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_PARENT);
+  $$ = 0;
+}
+| D
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+  $$ = 0;
+}
+| DO
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+  $$ = 1;
+}
+| DPO
+{
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_PARENT);
+  $$ = 1;
 }
 ;
 
