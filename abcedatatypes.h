@@ -111,6 +111,7 @@ struct abce_err {
 
 struct abce {
   int in_engine;
+  int do_check_heap_on_gc;
   struct abce_err err;
   void *(*alloc)(void *old, size_t oldsz, size_t newsz, void **pbaton);
   int (*trap)(void **pbaton, uint16_t ins, unsigned char *addcode, size_t addsz);

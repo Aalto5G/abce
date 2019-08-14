@@ -1,4 +1,5 @@
 #include "abce.h"
+#include "abcetrees.h"
 
 struct abce_mb *abce_alloc_stack(size_t limit)
 {
@@ -31,6 +32,7 @@ void abce_init(struct abce *abce)
 {
   memset(abce, 0, sizeof(*abce));
   abce->in_engine = 0;
+  abce->do_check_heap_on_gc = 0;
   abce->lastbytes_alloced = 0;
   abce->lastgcblocksz = 0;
   abce->trusted = 1;
@@ -218,6 +220,19 @@ void abce_mark_mb(struct abce *abce, const struct abce_mb *mb,
   }
 }
 
+size_t *abce_alloc_refcs(size_t limit)
+{
+  return mmap(NULL, abce_topages(limit * sizeof(size_t)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+}
+
+void abce_free_refcs(size_t *stackbase, size_t limit)
+{
+  if (munmap(stackbase, abce_topages(limit * sizeof(size_t))) != 0)
+  {
+    abort();
+  }
+}
+
 struct abce_gcqe *abce_alloc_gcqueue(size_t limit)
 {
   return mmap(NULL, abce_topages(limit * sizeof(struct abce_gcqe)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
@@ -231,6 +246,149 @@ void abce_free_gcqueue(struct abce_gcqe *stackbase, size_t limit)
   }
 }
 
+void abce_check_heap_object(struct abce *abce, size_t *stackbase, struct abce_mb *mb)
+{
+  if (!abce_is_dynamic_type(mb->typ))
+  {
+    return;
+  }
+  stackbase[mb->u.area->locidx]++;
+}
+
+void abce_deep_check_heap_object(struct abce *abce, size_t *stackbase, struct abce_mb *mb)
+{
+  struct abce_mb obj;
+  const struct abce_mb *key, *val;
+  const struct abce_mb nil = {.typ = ABCE_T_N};
+  size_t i;
+
+  if (!abce_is_dynamic_type(mb->typ))
+  {
+    abort();
+  }
+
+  switch (mb->typ)
+  {
+    case ABCE_T_T:
+      key = &nil;
+      while (abce_tree_get_next(abce, &key, &val, &obj, key) == 0)
+      {
+        if (!abce_is_dynamic_type(key->typ))
+        {
+          abort();
+        }
+        stackbase[key->u.area->locidx]++;
+        if (abce_is_dynamic_type(val->typ))
+        {
+          stackbase[val->u.area->locidx]++;
+        }
+      }
+      break;
+    case ABCE_T_A:
+      for (i = 0; i < mb->u.area->u.ar.size; i++)
+      {
+        if (abce_is_dynamic_type(mb->u.area->u.ar.mbs[i].typ))
+        {
+          stackbase[mb->u.area->u.ar.mbs[i].u.area->locidx]++;
+        }
+      }
+      break;
+
+    case ABCE_T_SC:
+      if (mb->u.area->u.sc.parent)
+      {
+        stackbase[mb->u.area->u.sc.parent->locidx]++;
+      }
+      for (i = 0; i < mb->u.area->u.sc.size; i++)
+      {
+        key = &nil;
+        while (abce_rbtree_get_next(&key, &val, &mb->u.area->u.sc.heads[i], key) == 0)
+        {
+          if (!abce_is_dynamic_type(key->typ))
+          {
+            abort();
+          }
+          stackbase[key->u.area->locidx]++;
+          if (abce_is_dynamic_type(val->typ))
+          {
+            stackbase[val->u.area->locidx]++;
+          }
+        }
+      }
+      break;
+
+    case ABCE_T_S:
+    case ABCE_T_IOS:
+    case ABCE_T_PB:
+      break;
+    default:
+      abort();
+  }
+}
+
+void abce_check_heap(struct abce *abce)
+{
+  const size_t safety_margin = 100;
+  size_t *stackbase;
+  size_t stackcap;
+  size_t i;
+
+  stackcap = abce->gcblocksz + safety_margin;
+  stackbase = abce_alloc_refcs(stackcap);
+
+  if (abce->oneblock.typ != ABCE_T_N)
+  {
+    abce_check_heap_object(abce, stackbase, &abce->oneblock);
+  }
+  abce_check_heap_object(abce, stackbase, &abce->dynscope);
+  abce_check_heap_object(abce, stackbase, &abce->err.mb);
+  for (i = 0; i < abce->sp; i++)
+  {
+    abce_check_heap_object(abce, stackbase, &abce->stackbase[i]);
+  }
+  for (i = 0; i < abce->cachesz; i++)
+  {
+    abce_check_heap_object(abce, stackbase, &abce->cachebase[i]);
+  }
+  for (i = 0; i < abce->btsz; i++)
+  {
+    abce_check_heap_object(abce, stackbase, &abce->btbase[i]);
+  }
+
+  i = 0;
+  while (i < abce->gcblocksz)
+  {
+    if (abce->gcblockbase[i].u.area->locidx == (size_t)-1)
+    {
+      abort();
+    }
+    abce_deep_check_heap_object(abce, stackbase, &abce->gcblockbase[i]);
+    i++;
+  }
+  i = 0;
+  while (i < abce->gcblocksz)
+  {
+    if (abce->gcblockbase[i].u.area->locidx == (size_t)-1)
+    {
+      abort();
+    }
+    if (abce->gcblockbase[i].u.area->refcnt !=
+        stackbase[abce->gcblockbase[i].u.area->locidx])
+    {
+      printf("Explained refcnt %zu, actual %zu\n",
+             (size_t)stackbase[abce->gcblockbase[i].u.area->locidx],
+             (size_t)abce->gcblockbase[i].u.area->refcnt);
+      printf("type: %d\n", abce->gcblockbase[i].typ);
+      abort();
+    }
+    i++;
+  }
+
+  abce_free_refcs(stackbase, stackcap);
+  stackbase = NULL;
+  stackcap = 0;
+}
+
 void abce_gc(struct abce *abce)
 {
   size_t i;
@@ -241,6 +399,10 @@ void abce_gc(struct abce *abce)
   if (!abce->in_engine)
   {
     return;
+  }
+  if (abce->do_check_heap_on_gc)
+  {
+    abce_check_heap(abce);
   }
   stackcap = abce->gcblocksz + safety_margin;
   stackbase = abce_alloc_gcqueue(stackcap);
@@ -287,7 +449,7 @@ void abce_gc(struct abce *abce)
       // All unmarked objects must be freed
       if (mba->refcnt != 0)
       {
-        printf("refcnt is not 0: %d\n", (int)mba->refcnt);
+        printf("refcnt is not 0: %p: %d\n", mba, (int)mba->refcnt);
         printf("type: %d\n", (int)abce->gcblockbase[i].typ);
         abort();
       }
@@ -297,7 +459,10 @@ void abce_gc(struct abce *abce)
         abort();
       }
       abce->gcblockbase[i] = abce->gcblockbase[--abce->gcblocksz];
-      abce->gcblockbase[i].u.area->locidx = i;
+      if (abce->gcblockbase[i].u.area->locidx != (size_t)-1)
+      {
+        abce->gcblockbase[i].u.area->locidx = i;
+      }
       switch (typ)
       {
         case ABCE_T_T:

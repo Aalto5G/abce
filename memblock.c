@@ -190,6 +190,19 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   return mb;
 }
 
+void abce_mb_gc_refdn2(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
+{
+  if (!abce_is_dynamic_type(typ))
+  {
+    abort();
+  }
+  if (mba->refcnt == 0)
+  {
+    abort();
+  }
+  mba->refcnt--;
+}
+
 // Down-reference all objects pointed to by this object without freeing anything
 void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
 {
@@ -207,10 +220,10 @@ void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_typ
       key = &nil;
       while (abce_tree_get_next(abce, &key, &val, &obj, key) == 0)
       {
-        abce_mb_gc_refdn(abce, key->u.area, key->typ);
+        abce_mb_gc_refdn2(abce, key->u.area, key->typ);
         if (abce_is_dynamic_type(val->typ))
         {
-          abce_mb_gc_refdn(abce, val->u.area, val->typ);
+          abce_mb_gc_refdn2(abce, val->u.area, val->typ);
         }
       }
       break;
@@ -219,7 +232,7 @@ void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_typ
       {
         if (abce_is_dynamic_type(mba->u.ar.mbs[i].typ))
         {
-          abce_mb_gc_refdn(abce, mba->u.ar.mbs[i].u.area, mba->u.ar.mbs[i].typ);
+          abce_mb_gc_refdn2(abce, mba->u.ar.mbs[i].u.area, mba->u.ar.mbs[i].typ);
         }
       }
       break;
@@ -227,17 +240,17 @@ void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_typ
     case ABCE_T_SC:
       if (mba->u.sc.parent)
       {
-        abce_mb_gc_refdn(abce, mba->u.sc.parent, ABCE_T_SC);
+        abce_mb_gc_refdn2(abce, mba->u.sc.parent, ABCE_T_SC);
       }
       for (i = 0; i < mba->u.sc.size; i++)
       {
         key = &nil;
         while (abce_rbtree_get_next(&key, &val, &mba->u.sc.heads[i], key) == 0)
         {
-          abce_mb_gc_refdn(abce, key->u.area, key->typ);
+          abce_mb_gc_refdn2(abce, key->u.area, key->typ);
           if (abce_is_dynamic_type(val->typ))
           {
-            abce_mb_gc_refdn(abce, val->u.area, val->typ);
+            abce_mb_gc_refdn2(abce, val->u.area, val->typ);
           }
         }
       }

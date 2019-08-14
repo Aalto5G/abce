@@ -25,11 +25,54 @@ int main(int argc, char **argv)
   fclose(f);
   //amyplanyy.abce.gcblockcap = ;
   amyplanyy.abce.in_engine = 1;
+  //amyplanyy.abce.do_check_heap_on_gc = 1;
+
+  //abce_gc(&amyplanyy.abce);
 
   for (i = 0; i < 10*1000*1000; i++)
   {
-    struct abce_mb mb = abce_mb_create_tree(&amyplanyy.abce);
-    mb.u.area->refcnt = 0; // Mandatory so that we don't crash
+    struct abce_mb mb1, mb2;
+    mb1 = abce_mb_create_array(&amyplanyy.abce);
+    if (mb1.typ == ABCE_T_N)
+    {
+      abort();
+    }
+    if (abce_push_mb(&amyplanyy.abce, &mb1) != 0)
+    {
+      abort();
+    }
+    abce_mb_refdn(&amyplanyy.abce, &mb1);
+    mb2 = abce_mb_create_array(&amyplanyy.abce);
+    if (mb2.typ == ABCE_T_N)
+    {
+      abort();
+    }
+    if (abce_push_mb(&amyplanyy.abce, &mb2) != 0)
+    {
+      abort();
+    }
+    abce_mb_refdn(&amyplanyy.abce, &mb2);
+    if (abce_mb_array_append(&amyplanyy.abce,
+                             &amyplanyy.abce.stackbase[0],
+                             &amyplanyy.abce.stackbase[1]) != 0)
+    {
+      abort();
+    }
+    if (abce_mb_array_append(&amyplanyy.abce,
+                             &amyplanyy.abce.stackbase[1],
+                             &amyplanyy.abce.stackbase[0]) != 0)
+    {
+      abort();
+    }
+    if (abce_pop(&amyplanyy.abce) != 0)
+    {
+      abort();
+    }
+    if (abce_pop(&amyplanyy.abce) != 0)
+    {
+      abort();
+    }
+    //abce_gc(&amyplanyy.abce);
   }
 
   amyplanyy_free(&amyplanyy);
