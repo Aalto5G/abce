@@ -2860,7 +2860,7 @@ outpbset:
           int rettmp;
           VERIFYMB(-3, ABCE_T_SC);
           VERIFYMB(-2, ABCE_T_S);
-          GETMB(&mbsc, -3); // FIXME GC doesn't see these refs!!!
+          GETMB(&mbsc, -3);
           GETMB(&mbs, -2);
           GETMB(&mbv, -1);
           rettmp = abce_sc_replace_val_mb(abce, &mbsc, &mbs, &mbv);
