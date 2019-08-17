@@ -114,6 +114,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 st: amyplanrules;
 
+/* Start of copypaste */
+
 amyplanrules:
 | amyplanrules NEWLINE
 | amyplanrules assignrule
@@ -1346,6 +1348,8 @@ valuelistentry:
 {
   $$ = $1;
 };
+
+/* End of copypaste */
 
 custom_stmt: DUMMY_TOK1;
 custom_expr0: DUMMY_TOK2;
