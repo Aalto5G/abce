@@ -32,7 +32,7 @@ void abce_init(struct abce *abce)
 {
   memset(abce, 0, sizeof(*abce));
   abce->in_engine = 0;
-  abce->do_check_heap_on_gc = 0;
+  abce->do_check_heap_on_gc = 0; // Warning: setting this to 1 WILL crash!
   abce->lastbytes_alloced = 0;
   abce->lastgcblocksz = 0;
   abce->trusted = 1;
