@@ -64,6 +64,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token LT GT LE GE
 %token FUNCTION ENDFUNCTION LOCVAR
 
+%token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
+
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
 %token D L I DO LO IO DP LP IP DPO LPO IPO LOC
@@ -102,6 +104,9 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %type<d> maybe_maybe_call
 %type<d> maybeqmequals
 %type<d> scopetype
+%type<d> beginscope
+%type<s> maybe_name
+
 
 %start st
 
@@ -138,8 +143,55 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   amyplan_locvarctx_free(amyplanyy->ctx);
   amyplanyy->ctx = NULL;
 }
+| amyplanrules
+  beginscope maybe_name NEWLINE
+{
+  size_t oldscopeidx = get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx;
+  struct abce_mb oldscope;
+  struct abce_mb key;
+  void *ud = abce_scope_get_userdata(&get_abce(amyplanyy)->dynscope);
+
+  if ($3)
+  {
+    key = abce_mb_create_string(get_abce(amyplanyy), $3, strlen($3));
+  }
+  else
+  {
+    key.typ = ABCE_T_N;
+  }
+  abce_push_mb(get_abce(amyplanyy), &key); // for GC to see it
+
+  oldscope = get_abce(amyplanyy)->dynscope;
+  oldscopeidx = oldscope.u.area->u.sc.locidx;
+  get_abce(amyplanyy)->dynscope = abce_mb_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);
+
+  if (get_abce(amyplanyy)->dynscope.typ == ABCE_T_N)
+  {
+    abort();
+  }
+  if ($3)
+  {
+    abce_sc_replace_val_mb(get_abce(amyplanyy), &oldscope, &key, &get_abce(amyplanyy)->dynscope);
+  }
+  abce_scope_set_userdata(&get_abce(amyplanyy)->dynscope, ud);
+  abce_pop(get_abce(amyplanyy));
+  if ($3)
+  {
+    abce_mb_refdn(get_abce(amyplanyy), &key);
+  }
+  abce_mb_refdn(get_abce(amyplanyy), &oldscope);
+  $<d>$ = oldscopeidx;
+}
+  amyplanrules
+  ENDSCOPE NEWLINE
+{
+  get_abce(amyplanyy)->dynscope = abce_mb_refup(get_abce(amyplanyy), &get_abce(amyplanyy)->cachebase[(size_t)$<d>5]);
+}
 | amyplanrules custom_rule
 ;
+
+beginscope: BEGINSCOPE {$$ = 0;} | BEGINHOLEYSCOPE {$$ = 1;} ;
+maybe_name: {$$ = NULL;} | VARREF_LITERAL {$$ = $1; } ;
 
 maybeqmequals: EQUALS {$$ = 0;} | QMEQUALS {$$ = 1;} ;
 maybe_maybe_call: {$$ = 0;} | MAYBE_CALL {$$ = 1;};

@@ -64,6 +64,9 @@ struct amyplan_csnippet luaSnippet = {
 @scope    return SCOPE;
 @getscopedyn return GETSCOPE_DYN;
 @getscopelex return GETSCOPE_LEX;
+@beginscope return BEGINSCOPE;
+@beginholeyscope return BEGINHOLEYSCOPE;
+@endscope return ENDSCOPE;
 
 @         return AT;
 @type     return TYPE;

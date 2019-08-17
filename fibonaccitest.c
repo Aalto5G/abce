@@ -4,6 +4,18 @@
 char *str =
   "$A ?= 3\n"
   "$B<> = 1\n"
+  "@beginscope\n"
+  "  $B<> = 222\n" // not visible
+  "@endscope\n"
+  "@beginscope $SC\n"
+  "  $B<> = 333\n" // not visible
+  "@endscope\n"
+  "@beginholeyscope\n"
+  "  $B<> = 444\n" // not visible
+  "@endscope\n"
+  "@beginholeyscope $SCH\n"
+  "  $B<> = 555\n" // not visible
+  "@endscope\n"
   "@function $fibonacci($x)\n"
   "  @if($x<@D$A)\n"
   "    @return @D$B<>\n"
@@ -38,8 +50,16 @@ int main(int argc, char **argv)
   abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), 1); // arg cnt
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_DUMP);
+  //abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_POP);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
+#if 0
+  for (i = 0; i < 30000; i++)
+  {
+    amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
+    abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz);
+  }
+#endif
   amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
 
   printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz));
