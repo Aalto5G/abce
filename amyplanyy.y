@@ -266,7 +266,6 @@ expr NEWLINE
   unsigned char tmpbuf[256] = {};
   size_t tmpsiz = 0;
   size_t symidx;
-  printf("Plus-assigning to %s\n", $1);
   // FIXME what if it's not a list?
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPENDALL_MAINTAIN);
   amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
