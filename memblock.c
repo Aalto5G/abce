@@ -332,7 +332,15 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
       case ABCE_T_SC:
         if (1)
         {
-          abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC);
+#if 1
+          struct abce_mb objparent = {.u = {.area = mba->u.sc.parent}, .typ = ABCE_T_SC};
+          if (mba->u.sc.parent)
+          {
+            abce_maybe_mv_obj_to_scratch(abce, &objparent);
+          }
+#else
+          abce_mb_arearefdn(abce, &mba->u.sc.parent, ABCE_T_SC); // FIXME very suspicious!
+#endif
           for (i = 0; i < mba->u.sc.size; i++)
           {
             // Ok, this might be better (faster)
