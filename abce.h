@@ -1192,6 +1192,8 @@ static inline void abce_setup_mb_for_gc(struct abce *abce, struct abce_mb_area *
 
 void abce_gc(struct abce *abce);
 
+void abce_compact(struct abce *abce);
+
 #ifdef __cplusplus
 };
 #endif

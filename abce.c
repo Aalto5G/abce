@@ -1,9 +1,39 @@
 #include "abce.h"
 #include "abcetrees.h"
 
+void *do_mmap_madvise(size_t bytes)
+{
+  void *ptr;
+  bytes = abce_topages(bytes);
+  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0);
+  if (ptr && ptr != MAP_FAILED)
+  {
+    madvise(ptr, bytes, MADV_DONTNEED);
+  }
+  if (ptr == MAP_FAILED)
+  {
+    return NULL;
+  }
+  return ptr;
+}
+
+void do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
+{
+  char *ptr2;
+  int errno_save;
+  bytes_total = abce_topages(bytes_total);
+  bytes_in_use = abce_topages(bytes_in_use);
+  ptr2 = ptr;
+  ptr2 += bytes_in_use;
+  errno_save = errno;
+  munmap(ptr2, bytes_total - bytes_in_use);
+  errno = errno_save;
+  // don't report errors
+}
+
 struct abce_mb *abce_alloc_stack(size_t limit)
 {
-  return mmap(NULL, abce_topages(limit * sizeof(struct abce_mb)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  return do_mmap_madvise(abce_topages(limit * sizeof(struct abce_mb)));
 }
 
 void abce_free_stack(struct abce_mb *stackbase, size_t limit)
@@ -16,7 +46,7 @@ void abce_free_stack(struct abce_mb *stackbase, size_t limit)
 
 unsigned char *abce_alloc_bcode(size_t limit)
 {
-  return mmap(NULL, abce_topages(limit), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  return do_mmap_madvise(abce_topages(limit));
 }
 
 void abce_free_bcode(unsigned char *bcodebase, size_t limit)
@@ -27,6 +57,24 @@ void abce_free_bcode(unsigned char *bcodebase, size_t limit)
   }
 }
 
+void abce_compact(struct abce *abce)
+{
+  do_mmap_compact(abce->stackbase,
+                  abce->sp * sizeof(struct abce_mb),
+                  abce->stacklimit * sizeof(struct abce_mb));
+  do_mmap_compact(abce->gcblockbase,
+                  abce->gcblocksz * sizeof(struct abce_mb),
+                  abce->gcblockcap * sizeof(struct abce_mb));
+  do_mmap_compact(abce->btbase,
+                  abce->btsz * sizeof(struct abce_mb),
+                  abce->btcap * sizeof(struct abce_mb));
+  do_mmap_compact(abce->bytecode,
+                  abce->bytecodesz,
+                  abce->bytecodecap);
+  do_mmap_compact(abce->cachebase,
+                  abce->cachesz * sizeof(struct abce_mb),
+                  abce->cachecap * sizeof(struct abce_mb));
+}
 
 void abce_init(struct abce *abce)
 {
@@ -222,7 +270,7 @@ void abce_mark_mb(struct abce *abce, const struct abce_mb *mb,
 
 size_t *abce_alloc_refcs(size_t limit)
 {
-  return mmap(NULL, abce_topages(limit * sizeof(size_t)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  return do_mmap_madvise(abce_topages(limit * sizeof(size_t)));
 }
 
 void abce_free_refcs(size_t *stackbase, size_t limit)
@@ -235,7 +283,7 @@ void abce_free_refcs(size_t *stackbase, size_t limit)
 
 struct abce_gcqe *abce_alloc_gcqueue(size_t limit)
 {
-  return mmap(NULL, abce_topages(limit * sizeof(struct abce_gcqe)), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  return do_mmap_madvise(abce_topages(limit * sizeof(struct abce_gcqe)));
 }
 
 void abce_free_gcqueue(struct abce_gcqe *stackbase, size_t limit)
