@@ -234,6 +234,7 @@ Recursion is supported:
 
 ...but not always the fastest option:
 
+```
 @function $fiboeff($x)
   @locvar $table = [1, 1, 1]
   @locvar $y = 3
@@ -243,3 +244,4 @@ Recursion is supported:
   @endwhile
   @return $table[$x]
 @endfunction
+```
