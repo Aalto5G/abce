@@ -335,7 +335,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce->err.mb.typ = ABCE_T_D;
       abce->err.mb.u.d = ins;
       return -ENOTSUP;
-    case ABCE_OPCODE_FUN_HEADER:
     case ABCE_OPCODE_FUN_TRAILER:
       abce->err.code = ABCE_E_RUN_INTO_FUNC;
       return -EACCES;
@@ -2897,6 +2896,9 @@ outpbset:
           abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
           break;
         }
+        case ABCE_OPCODE_FUN_HEADER:
+          abce->err.code = ABCE_E_RUN_INTO_FUNC;
+          return -EACCES;
         default:
         {
           //printf("Invalid instruction %d\n", (int)ins);
