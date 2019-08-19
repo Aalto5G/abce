@@ -66,8 +66,8 @@ code that is not permanently stored to memory.
 Example program that calculates 1+1:
 
 ```
-PUSH\_DBL, 1
-PUSH\_DBL, 1
+PUSH_DBL, 1
+PUSH_DBL, 1
 ADD
 DUMP
 ```
@@ -76,23 +76,23 @@ Another example program that stores an array `[[1,2],[3,4]]` to the dynamic
 scope to variable `$AR`:
 
 ```
-GETSCOPE\_DYN
-PUSH\_DBL, addressof("AR")
-PUSH\_FROM\_CACHE
-PUSH\_NEW\_ARRAY
-PUSH\_NEW\_ARRAY
-PUSH\_DBL, 1
-APPEND\_MAINTAIN
-PUSH\_DBL, 2
-APPEND\_MAINTAIN
-APPEND\_MAINTAIN
-PUSH\_NEW\_ARRAY
-PUSH\_DBL, 3
-APPEND\_MAINTAIN
-PUSH\_DBL, 4
-APPEND\_MAINTAIN
-APPEND\_MAINTAIN
-SCOPEVAR\_SET
+GETSCOPE_DYN
+PUSH_DBL, addressof("AR")
+PUSH_FROM_CACHE
+PUSH_NEW_ARRAY
+PUSH_NEW_ARRAY
+PUSH_DBL, 1
+APPEND_MAINTAIN
+PUSH_DBL, 2
+APPEND_MAINTAIN
+APPEND_MAINTAIN
+PUSH_NEW_ARRAY
+PUSH_DBL, 3
+APPEND_MAINTAIN
+PUSH_DBL, 4
+APPEND_MAINTAIN
+APPEND_MAINTAIN
+SCOPEVAR_SET
 ```
 
 where `addressof("AR")` denotes the address of `"AR"` in the object cache. An
