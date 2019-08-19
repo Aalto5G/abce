@@ -424,7 +424,7 @@ static inline int abce_push_boolean(struct abce *abce, int boolean)
     abce->err.mb.u.d = boolean;
     return -EOVERFLOW;
   }
-  abce->stackbase[abce->sp].typ = ABCE_T_D;
+  abce->stackbase[abce->sp].typ = ABCE_T_B;
   abce->stackbase[abce->sp].u.d = boolean ? 1.0 : 0.0;
   abce->sp++;
   return 0;
