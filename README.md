@@ -245,3 +245,41 @@ Recursion is supported:
   @return $table[$x]
 @endfunction
 ```
+
+List entries can be popped:
+
+```
+# Returns 5
+@function $LPOP()
+  @locvar $b = [4,5]
+  @return $b[-]
+@endfunction
+```
+
+List length can be queried:
+
+```
+# Returns 2
+@function $LLEN()
+  @locvar $b = [4,5]
+  @return $b[]
+@endfunction
+```
+
+Even dictionary length can be queried:
+```
+# returns 3
+@function $DLEN()
+  @locvar $d = {"a": 3, "b": 4, "c": 5}
+  @return $d{}
+@endfunction
+```
+
+Dictionary entry existence can be checked:
+```
+# returns @true
+@function $DQUERY()
+  @locvar $d = {"a": 3, "b": 4, "c": 5}
+  @return $d{@?"c"}
+@endfunction
+```
