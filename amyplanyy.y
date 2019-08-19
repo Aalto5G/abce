@@ -69,6 +69,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token FUNCTION ENDFUNCTION LOCVAR
 
 %token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
+%token FOR ENDFOR
 
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
@@ -384,16 +385,16 @@ locvarlines:
 ;
 
 bodylines:
-| statement bodylinescont
+| statement NEWLINE bodylinescont
 ;
 
 bodylinescont:
-| bodylinescont statement
+| bodylinescont statement NEWLINE
 | bodylinescont NEWLINE
 ;
 
 statement:
-  lvalue EQUALS SUB NEWLINE
+  lvalue EQUALS SUB
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -405,7 +406,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTDEL);
   }
 }
-| lvalue EQUALS expr NEWLINE
+| lvalue EQUALS expr
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -447,7 +448,7 @@ statement:
     }
   }
 }
-| RETURN expr NEWLINE
+| RETURN expr
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -458,7 +459,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RETEX2);
   }
 }
-| BREAK NEWLINE
+| BREAK
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -469,7 +470,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
   }
 }
-| CONTINUE NEWLINE
+| CONTINUE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -479,7 +480,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
   }
 }
-| BREAK NUMBER NEWLINE
+| BREAK NUMBER
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -497,7 +498,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
   }
 }
-| CONTINUE NUMBER NEWLINE
+| CONTINUE NUMBER
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -514,7 +515,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
   }
 }
-| expr NEWLINE
+| expr
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -540,7 +541,70 @@ statement:
   }
 }
   maybe_else
-  ENDIF NEWLINE
+  ENDIF
+| FOR OPEN_PAREN statement COMMA
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    $<d>$ = get_abce(amyplanyy)->bytecodesz; // midpoint, $5
+  }
+}
+  expr
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    $<d>$ = get_abce(amyplanyy)->bytecodesz; // addressof_breakpoint, $7
+    amyplanyy_add_double(amyplanyy, -50); // to be overwritten
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+  }
+}
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    $<d>$ = get_abce(amyplanyy)->bytecodesz; // startpoint, $8
+  }
+}
+  COMMA statement CLOSE_PAREN NEWLINE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    struct amyplan_locvarctx *ctx;
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, $<d>5); // addressof_midpoint
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+    ctx =
+      amyplan_locvarctx_alloc(amyplanyy->ctx, 0, get_abce(amyplanyy)->bytecodesz, $<d>8);
+    if (ctx == NULL)
+    {
+      printf("Out of memory\n");
+      YYABORT;
+    }
+    amyplanyy->ctx = ctx;
+    amyplanyy_set_double(amyplanyy, $<d>7, get_abce(amyplanyy)->bytecodesz);
+    $<d>$ = get_abce(amyplanyy)->bytecodesz; // breakpoint
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  }
+}
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    $<d>$ = get_abce(amyplanyy)->bytecodesz;
+    amyplanyy_add_double(amyplanyy, -50); // addressof_endpoint, $14
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
+  }
+}
+  bodylinescont
+  ENDFOR
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, $<d>8); // addressof_startpoint
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+    amyplanyy_set_double(amyplanyy, $<d>14, get_abce(amyplanyy)->bytecodesz);
+  }
+}
 | WHILE
 {
   if (amyplanyy_do_emit(amyplanyy))
@@ -567,7 +631,7 @@ statement:
   }
 }
   bodylinescont
-  ENDWHILE NEWLINE
+  ENDWHILE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -607,7 +671,7 @@ statement:
   }
 }
   bodylinescont
-  ENDONCE NEWLINE
+  ENDONCE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -617,7 +681,7 @@ statement:
     amyplanyy_set_double(amyplanyy, $<d>4 + 1, get_abce(amyplanyy)->bytecodesz);
   }
 }
-| APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN NEWLINE
+| APPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -625,7 +689,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
   }
 }
-| APPEND_LIST OPEN_PAREN expr COMMA expr CLOSE_PAREN NEWLINE
+| APPEND_LIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -633,7 +697,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
   }
 }
-| STDOUT OPEN_PAREN expr CLOSE_PAREN NEWLINE
+| STDOUT OPEN_PAREN expr CLOSE_PAREN
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -642,7 +706,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_OUT);
   }
 }
-| STDERR OPEN_PAREN expr CLOSE_PAREN NEWLINE
+| STDERR OPEN_PAREN expr CLOSE_PAREN
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -651,11 +715,11 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_OUT);
   }
 }
-| ERROR OPEN_PAREN expr CLOSE_PAREN NEWLINE
+| ERROR OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ERROR); }
-| DUMP OPEN_PAREN expr CLOSE_PAREN NEWLINE
+| DUMP OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUMP); }
-| EXIT OPEN_PAREN CLOSE_PAREN NEWLINE
+| EXIT OPEN_PAREN CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXIT); }
 | custom_stmt
 ;
