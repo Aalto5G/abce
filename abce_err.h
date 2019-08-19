@@ -60,6 +60,7 @@ enum abce_errcode {
   ABCE_E_INTCONVERT_SZ_NOTSUP = 55, // value: sz
   ABCE_E_TIME_BUDGET_EXCEEDED = 56,
   ABCE_E_INS_NOT_PERMITTED = 57, // value: ins
+  ABCE_E_LAST = 0x7FFFFFFF, // unused
 };
 
 #endif
