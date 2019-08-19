@@ -1939,6 +1939,7 @@ outpbset:
             abce->err.code = ABCE_E_INDEX_NOT_INT;
             abce->err.mb.typ = ABCE_T_D;
             abce->err.mb.u.d = loc;
+            abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
             ret = -EINVAL;
             break;
           }
@@ -1948,6 +1949,7 @@ outpbset:
             abce->err.code = ABCE_E_INDEX_OOB;
             abce->err.mb.typ = ABCE_T_D;
             abce->err.mb.u.d = loc;
+            abce_mb_refdn_typ(abce, &mbstr, ABCE_T_S);
             ret = -ERANGE;
             break;
           }
@@ -1973,6 +1975,7 @@ outpbset:
             abce->err.mb.typ = ABCE_T_D;
             abce->err.mb.u.d = loc;
             ret = -EINVAL;
+            abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
             break;
           }
           locint = loc;
@@ -1982,6 +1985,7 @@ outpbset:
             abce->err.mb.typ = ABCE_T_D;
             abce->err.mb.u.d = loc;
             ret = -ERANGE;
+            abce_mb_refdn_typ(abce, &mbar, ABCE_T_A);
             break;
           }
           if (abce_push_mb(abce, &mbar.u.area->u.ar.mbs[locint]) != 0)
