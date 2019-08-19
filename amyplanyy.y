@@ -184,7 +184,8 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
 
     if (get_abce(amyplanyy)->dynscope.typ == ABCE_T_N)
     {
-      abort();
+      fprintf(stderr, "out of memory\n");
+      YYABORT;
     }
     if ($3)
     {
@@ -241,6 +242,10 @@ expr NEWLINE
 
     if (!$2)
     {
+      if (get_abce(amyplanyy)->sp != 0)
+      {
+        abort();
+      }
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
       abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
         abce_sc_get_rec_str_fun(&get_abce(amyplanyy)->dynscope, $1, 1));
@@ -305,6 +310,10 @@ expr NEWLINE
 
     if (!$2)
     {
+      if (get_abce(amyplanyy)->sp != 0)
+      {
+        abort();
+      }
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
       abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
         abce_sc_get_rec_str_fun(&get_abce(amyplanyy)->dynscope, $1, 1));
@@ -887,7 +896,7 @@ varref:
       else
       {
         printf("var %s not found\n", $1);
-        abort();
+        YYABORT;
       }
       free($1);
       $$ = ABCE_OPCODE_PUSH_STACK;
@@ -1439,66 +1448,81 @@ expr0:
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  abort();
+  fprintf(stderr, "unsupported syntax\n");
+  YYABORT;
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist
 {
+  fprintf(stderr, "unsupported syntax\n");
   free($3.str);
-  abort();
+  YYABORT;
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
+  fprintf(stderr, "unsupported syntax\n");
   free($3.str);
-  abort();
+  YYABORT;
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
+  fprintf(stderr, "unsupported syntax\n");
   free($3.str);
-  abort();
+  YYABORT;
 }
 | custom_expr0
 ;
