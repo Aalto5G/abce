@@ -195,6 +195,7 @@ Lists can be appended to:
   @append($a, $b)
   @appendlist($a, $c)
   @return $a
+@endfunction
 ```
 
 List appending can be done also inline with `@`:
@@ -204,6 +205,7 @@ List appending can be done also inline with `@`:
   @locvar $b = [4,5]
   @locvar $a = [1,2,3, @$b]
   @return $a
+@endfunction
 ```
 
 Dictionaries can be constructed inline and edited, and the `= -` syntax can be
@@ -215,6 +217,7 @@ used to remove entries:
   $d{"d"} = 6
   $d{"a"} = -
   @return $d
+@endfunction
 ```
 
 Recursion is supported:
