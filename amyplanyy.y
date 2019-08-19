@@ -599,6 +599,10 @@ statement:
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
+    struct amyplan_locvarctx *ctx = amyplanyy->ctx->parent;
+    free(amyplanyy->ctx);
+    amyplanyy->ctx = ctx;
+
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     amyplanyy_add_double(amyplanyy, $<d>8); // addressof_startpoint
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
