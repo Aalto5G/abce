@@ -1,28 +1,31 @@
 #include <stdlib.h>
 #include "amyplanyyutils.h"
 
+#define INCLUDE_ELSE 0 // Adjust this to check with and without @else
+
 char *str =
   "@function $if($x0,$x1,$x2,$x3,$x4,$x5,$x6)\n"
+  "  @locvar $locvar = 8\n"
   "  @if ($x0)\n"
-  "    @return 0\n"
+  "    $locvar = 0\n"
   "  @elseif ($x1)\n"
-  "    @return 1\n"
+  "    $locvar = 1\n"
   "  @elseif ($x2)\n"
-  "    @return 2\n"
+  "    $locvar = 2\n"
   "  @elseif ($x3)\n"
-  "    @return 3\n"
+  "    $locvar = 3\n"
   "  @elseif ($x4)\n"
-  "    @return 4\n"
+  "    $locvar = 4\n"
   "  @elseif ($x5)\n"
-  "    @return 5\n"
+  "    $locvar = 5\n"
   "  @elseif ($x6)\n"
-  "    @return 6\n"
-#if 0 // Adjust this to check with and without @else
+  "    $locvar = 6\n"
+#if INCLUDE_ELSE
   "  @else\n"
-  "    @return 7\n"
+  "    $locvar = 7\n"
 #endif
   "  @endif\n"
-  "  @return 7\n"
+  "  @return $locvar\n"
   "@endfunction\n";
 
 int same_in_c(int *x)
@@ -35,7 +38,11 @@ int same_in_c(int *x)
       return i;
     }
   }
+#if INCLUDE_ELSE
   return 7;
+#else
+  return 8;
+#endif
 }
 
 int main(int argc, char **argv)
