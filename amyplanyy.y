@@ -1164,7 +1164,7 @@ scopetype:
 expr: expr11;
 
 expr1:
-  expr0
+  expr0_or_string
 | LOGICAL_NOT expr1
 {
   if (amyplanyy_do_emit(amyplanyy))
@@ -1355,8 +1355,22 @@ expr11:
 }
 ;
 
+expr0_or_string:
+  expr0_without_string
+| STRING_LITERAL
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $1.str, $1.sz);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, idx);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
+  }
+  free($1.str);
+}
+;
 
-expr0:
+expr0_without_string:
   OPEN_PAREN expr CLOSE_PAREN
 | OPEN_PAREN expr CLOSE_PAREN OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
@@ -1376,17 +1390,6 @@ expr0:
 }
 | dict maybe_bracketexprlist
 | list maybe_bracketexprlist
-| STRING_LITERAL
-{
-  if (amyplanyy_do_emit(amyplanyy))
-  {
-    int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $1.str, $1.sz);
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-    amyplanyy_add_double(amyplanyy, idx);
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-  }
-  free($1.str);
-}
 | NUMBER
 {
   if (amyplanyy_do_emit(amyplanyy))
