@@ -72,7 +72,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token FOR ENDFOR
 
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
-%token IF ELSE ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
+%token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
 %token D L I DO LO IO DP LP IP DPO LPO IPO LOC
 %token APPEND APPEND_LIST
 %token RETURN PRINT
@@ -540,6 +540,7 @@ statement:
     $<d>$ = $<d>6; // For overwrite by maybe_else
   }
 }
+  maybe_elseifs
   maybe_else
   ENDIF
 | FOR OPEN_PAREN statement COMMA
@@ -726,6 +727,42 @@ statement:
 | EXIT OPEN_PAREN CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXIT); }
 | custom_stmt
+;
+
+maybe_elseifs:
+{
+  $<d>$ = $<d>0;
+}
+| maybe_elseifs ELSEIF
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    $<d>$ = get_abce(amyplanyy)->bytecodesz;
+    amyplanyy_add_double(amyplanyy, -50); // to be overwritten
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+    amyplanyy_set_double(amyplanyy, $<d>1, get_abce(amyplanyy)->bytecodesz); // Overwrite, mid1
+  }
+}
+  OPEN_PAREN expr CLOSE_PAREN NEWLINE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    $<d>$ = get_abce(amyplanyy)->bytecodesz;
+    amyplanyy_add_double(amyplanyy, -50); // to be overwritten, FIXME!
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
+  }
+}
+  bodylinescont
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_set_double(amyplanyy, $<d>8, get_abce(amyplanyy)->bytecodesz);
+    amyplanyy_set_double(amyplanyy, $<d>3, get_abce(amyplanyy)->bytecodesz);
+  }
+  $<d>$ = $<d>8; // for overwrite by maybe_else
+}
 ;
 
 maybe_else:
