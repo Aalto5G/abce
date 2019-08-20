@@ -2,23 +2,41 @@
 #include "amyplanyyutils.h"
 
 char *str =
-  "@function $if($x)\n"
-  "  @if (@false)\n"
-  "    @dump(1)\n"
-  "  @elseif (@false)\n"
-  "    @dump(2)\n"
-  "  @elseif (@false)\n"
-  "    @dump(3)\n"
-  "  @elseif (@false)\n"
-  "    @dump(4)\n"
-  "  @elseif (@true)\n"
-  "    @dump(5)\n"
-#if 0
+  "@function $if($x0,$x1,$x2,$x3,$x4,$x5,$x6)\n"
+  "  @if ($x0)\n"
+  "    @return 0\n"
+  "  @elseif ($x1)\n"
+  "    @return 1\n"
+  "  @elseif ($x2)\n"
+  "    @return 2\n"
+  "  @elseif ($x3)\n"
+  "    @return 3\n"
+  "  @elseif ($x4)\n"
+  "    @return 4\n"
+  "  @elseif ($x5)\n"
+  "    @return 5\n"
+  "  @elseif ($x6)\n"
+  "    @return 6\n"
+#if 0 // Adjust this to check with and without @else
   "  @else\n"
-  "    @dump(6)\n"
+  "    @return 7\n"
 #endif
   "  @endif\n"
+  "  @return 7\n"
   "@endfunction\n";
+
+int same_in_c(int *x)
+{
+  size_t i;
+  for (i = 0; i < 7; i++)
+  {
+    if (x[i])
+    {
+      return i;
+    }
+  }
+  return 7;
+}
 
 int main(int argc, char **argv)
 {
@@ -26,7 +44,8 @@ int main(int argc, char **argv)
   struct amyplanyy amyplanyy = {};
   unsigned char tmpbuf[1024] = {0};
   size_t tmpsiz = 0;
-  size_t i;
+  //size_t i;
+  int x[7];
 
   amyplanyy_init(&amyplanyy);
 
@@ -37,18 +56,52 @@ int main(int argc, char **argv)
   amyplanyydoparse(f, &amyplanyy);
   fclose(f);
 
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
-  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
-    abce_sc_get_rec_str_fun(&amyplanyy.abce.dynscope, "if", 1));
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
-  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), 10); // arg
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
-  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), 1); // arg cnt
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_DUMP);
-  //abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_POP);
-  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+  for (x[0] = 0; x[0] < 2; x[0]++)
+  for (x[1] = 0; x[1] < 2; x[1]++)
+  for (x[2] = 0; x[2] < 2; x[2]++)
+  for (x[3] = 0; x[3] < 2; x[3]++)
+  for (x[4] = 0; x[4] < 2; x[4]++)
+  for (x[5] = 0; x[5] < 2; x[5]++)
+  for (x[6] = 0; x[6] < 2; x[6]++)
+  {
+    tmpsiz = 0;
+    amyplanyy.abce.sp = 0;
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
+    abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+      abce_sc_get_rec_str_fun(&amyplanyy.abce.dynscope, "if", 1));
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
+
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[0] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[1] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[2] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[3] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[4] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[5] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
+                     x[6] ? ABCE_OPCODE_PUSH_TRUE : ABCE_OPCODE_PUSH_FALSE);
+
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
+    abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), 7); // arg cnt
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
+    //abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_DUMP);
+    //abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_POP);
+    abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+    printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz));
+    printf("sp %zu\n", amyplanyy.abce.sp);
+    printf("num %g\n", amyplanyy.abce.stackbase[0].u.d);
+    printf("same_in_c %d\n", same_in_c(x));
+    if ((int)amyplanyy.abce.stackbase[0].u.d != same_in_c(x))
+    {
+      abort();
+    }
+    printf("\n");
+  }
 
 #if 0
   for (i = 0; i < 30000; i++)
@@ -56,13 +109,13 @@ int main(int argc, char **argv)
     amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
     abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz);
   }
-#endif
 
   amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
 
   printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz));
   printf("actual err %d\n", (int)amyplanyy.abce.err.code);
   printf("actual typ %d\n", (int)amyplanyy.abce.err.mb.typ);
+#endif
 
   // FIXME doesn't support long instructions
 #if 0
