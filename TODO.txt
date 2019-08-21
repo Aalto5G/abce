@@ -1,3 +1,5 @@
+Add to Amyplan: shortcutting booleans
+
 Add to Amyplan: @elseif syntax
 
 Abstract away mmap calls
