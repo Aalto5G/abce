@@ -3,13 +3,28 @@
 
 #include "abcedatatypes.h"
 #include <unistd.h>
-#include <endian.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton);
+
+static inline int is_little_endian(void)
+{
+  double d;
+  memcpy(&d, "\x00\x00\x00\x00\x00\x00I@", 8);
+  if (d == 50.0)
+  {
+    return 1;
+  }
+  memcpy(&d, "@I\x00\x00\x00\x00\x00\x00", 8);
+  if (d == 50.0)
+  {
+    return 0;
+  }
+  abort(); // Not IEEE 754
+}
 
 static inline uint16_t abce_bswap16(uint16_t u16)
 {
@@ -33,20 +48,18 @@ static inline void abce_put_dbl(double dbl, void *dest)
 {
   uint64_t u64;
   memcpy(&u64, &dbl, sizeof(u64));
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  u64 =
-    ((u64 & 0xFF00000000000000ULL) >> 56) |
-    ((u64 & 0x00FF000000000000ULL) >> 40) |
-    ((u64 & 0x0000FF0000000000ULL) >> 24) |
-    ((u64 & 0x000000FF00000000ULL) >>  8) |
-    ((u64 & 0x00000000FF000000ULL) <<  8) |
-    ((u64 & 0x0000000000FF0000ULL) << 24) |
-    ((u64 & 0x000000000000FF00ULL) << 40) |
-    ((u64 & 0x00000000000000FFULL) << 56);
-#elif __BYTE_ORDER == __BIG_ENDIAN
-#else
-#error "Unsupported endianess"
-#endif
+  if (is_little_endian())
+  {
+    u64 =
+      ((u64 & 0xFF00000000000000ULL) >> 56) |
+      ((u64 & 0x00FF000000000000ULL) >> 40) |
+      ((u64 & 0x0000FF0000000000ULL) >> 24) |
+      ((u64 & 0x000000FF00000000ULL) >>  8) |
+      ((u64 & 0x00000000FF000000ULL) <<  8) |
+      ((u64 & 0x0000000000FF0000ULL) << 24) |
+      ((u64 & 0x000000000000FF00ULL) << 40) |
+      ((u64 & 0x00000000000000FFULL) << 56);
+  }
   memcpy(dest, &u64, sizeof(u64));
 }
 
@@ -1020,20 +1033,18 @@ static inline void abce_get_dbl(double *dbl, const void *src)
 {
   uint64_t u64;
   memcpy(&u64, src, sizeof(u64));
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  u64 =
-    ((u64 & 0xFF00000000000000ULL) >> 56) |
-    ((u64 & 0x00FF000000000000ULL) >> 40) |
-    ((u64 & 0x0000FF0000000000ULL) >> 24) |
-    ((u64 & 0x000000FF00000000ULL) >>  8) |
-    ((u64 & 0x00000000FF000000ULL) <<  8) |
-    ((u64 & 0x0000000000FF0000ULL) << 24) |
-    ((u64 & 0x000000000000FF00ULL) << 40) |
-    ((u64 & 0x00000000000000FFULL) << 56);
-#elif __BYTE_ORDER == __BIG_ENDIAN
-#else
-#error "Unsupported endianess"
-#endif
+  if (is_little_endian())
+  {
+    u64 =
+      ((u64 & 0xFF00000000000000ULL) >> 56) |
+      ((u64 & 0x00FF000000000000ULL) >> 40) |
+      ((u64 & 0x0000FF0000000000ULL) >> 24) |
+      ((u64 & 0x000000FF00000000ULL) >>  8) |
+      ((u64 & 0x00000000FF000000ULL) <<  8) |
+      ((u64 & 0x0000000000FF0000ULL) << 24) |
+      ((u64 & 0x000000000000FF00ULL) << 40) |
+      ((u64 & 0x00000000000000FFULL) << 56);
+  }
   memcpy(dbl, &u64, sizeof(u64));
 }
 
