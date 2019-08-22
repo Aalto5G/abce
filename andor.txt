@@ -1,0 +1,20 @@
+a && b
+
+a                         || stack: a
+TOP                       || stack: a a
+PUSH_DBL, addressof(end)  || stack: a a addressof(end)
+IF_NOT_JMP                || stack: a
+POP                       || stack:
+b                         || stack: b
+end:                      || stack: either a or b depending on values
+
+a || b
+
+a                         || stack: a
+TOP                       || stack: a a
+LOGICAL_NOT               || stack: a !a
+PUSH_DBL, addressof(end)  || stack: a !a addressof(end)
+IF_NOT_JMP                || stack: a
+POP                       || stack: 
+b                         || stack: b
+end:                      || stack: either a or b depending on values
