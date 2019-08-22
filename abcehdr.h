@@ -2,6 +2,7 @@
 #define _ABCE_HDR_H_
 
 #include <string.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 
 static inline uint64_t abce_hdr_get64h(const void *buf)

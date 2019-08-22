@@ -5,7 +5,6 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <limits.h>
 #include "amyplanyyutils.h"
 #include "amyplanyy.tab.h"
