@@ -2195,15 +2195,18 @@ outpbset:
           }
           break;
         }
-        case ABCE_OPCODE_BOOLEANIFY:
+        case ABCE_OPCODE_TOP:
         {
-          int b;
-          GETBOOLEAN(&b, -1);
-          POP();
-          if (abce_push_boolean(abce, b) != 0)
+          struct abce_mb mb;
+          GETMB(&mb, -1);
+          if (abce_push_mb(abce, &mb) != 0)
           {
-            abce_maybeabort();
+            abce->err.code = ABCE_E_STACK_OVERFLOW;
+            abce->err.mb = mb; // transfer of ref
+            ret = -EOVERFLOW;
+            break;
           }
+          abce_mb_refdn(abce, &mb);
           break;
         }
         case ABCE_OPCODE_EQ:
