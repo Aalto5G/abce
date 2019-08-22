@@ -5,11 +5,37 @@ void *do_mmap_madvise(size_t bytes)
 {
   void *ptr;
   bytes = abce_topages(bytes);
+  // Ugh. I wish all systems had simple and compatible interface.
+#ifdef MAP_ANON
+  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+#else
+  #ifdef MAP_ANONYMOUS
+    #ifdef MAP_NORESERVE
   ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0);
+    #else
+  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    #endif
+  #else
+  {
+    int fd;
+    fd = open("/dev/zero", O_RDWR);
+    if (fd < 0)
+    {
+      abort();
+    }
+    ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, fd, 0);
+    close(fd);
+  }
+  #endif
+#endif
+#ifdef MADV_DONTNEED
+  #ifdef __linux__
   if (ptr && ptr != MAP_FAILED)
   {
-    madvise(ptr, bytes, MADV_DONTNEED);
+    madvise(ptr, bytes, MADV_DONTNEED); // Linux-ism
   }
+  #endif
+#endif
   if (ptr == MAP_FAILED)
   {
     return NULL;
