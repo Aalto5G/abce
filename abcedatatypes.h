@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <sys/mman.h>
 #include "abcerbtree.h"
 #include "abcemurmur.h"
 #include "abcecontainerof.h"
@@ -115,6 +114,8 @@ struct abce {
   struct abce_err err;
   void *(*alloc)(void *old, size_t oldsz, size_t newsz, void **pbaton);
   int (*trap)(void **pbaton, uint16_t ins, unsigned char *addcode, size_t addsz);
+  void *(*map)(void *ptr, size_t new_sz, size_t old_sz, void **pbaton);
+  void *map_baton;
   void *alloc_baton;
   void *trap_baton;
   void *userdata;

@@ -2,7 +2,6 @@
 #define _ABCE_H_
 
 #include "abcedatatypes.h"
-#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -977,26 +976,13 @@ static inline void abce_mb_dump(const struct abce_mb *mb)
   printf("\n");
 }
 
-static inline size_t abce_topages(size_t limit)
-{
-  long pagesz = sysconf(_SC_PAGE_SIZE);
-  size_t pages, actlimit;
-  if (pagesz <= 0)
-  {
-    abort();
-  }
-  pages = (limit + (pagesz-1)) / pagesz;
-  actlimit = pages * pagesz;
-  return actlimit;
-}
+struct abce_mb *abce_alloc_stack(struct abce *abce, size_t limit);
 
-struct abce_mb *abce_alloc_stack(size_t limit);
+void abce_free_stack(struct abce *abce, struct abce_mb *stackbase, size_t limit);
 
-void abce_free_stack(struct abce_mb *stackbase, size_t limit);
+unsigned char *abce_alloc_bcode(struct abce *abce, size_t limit);
 
-unsigned char *abce_alloc_bcode(size_t limit);
-
-void abce_free_bcode(unsigned char *bcodebase, size_t limit);
+void abce_free_bcode(struct abce *abce, unsigned char *bcodebase, size_t limit);
 
 void abce_init(struct abce *abce);
 

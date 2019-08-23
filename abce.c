@@ -1,7 +1,22 @@
 #include "abce.h"
 #include "abcetrees.h"
+#include <unistd.h>
+#include <sys/mman.h>
 
-void *do_mmap_madvise(size_t bytes)
+static inline size_t abce_topages(size_t limit)
+{
+  long pagesz = sysconf(_SC_PAGE_SIZE);
+  size_t pages, actlimit;
+  if (pagesz <= 0)
+  {
+    abort();
+  }
+  pages = (limit + (pagesz-1)) / pagesz;
+  actlimit = pages * pagesz;
+  return actlimit;
+}
+
+void *abce_do_mmap_madvise(size_t bytes)
 {
   void *ptr;
   bytes = abce_topages(bytes);
@@ -43,7 +58,13 @@ void *do_mmap_madvise(size_t bytes)
   return ptr;
 }
 
-void do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
+void abce_do_munmap(void *ptr, size_t bytes)
+{
+  bytes = abce_topages(bytes);
+  munmap(ptr, bytes);
+}
+
+void abce_do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
 {
   char *ptr2;
   int errno_save;
@@ -57,53 +78,108 @@ void do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
   // don't report errors
 }
 
-struct abce_mb *abce_alloc_stack(size_t limit)
+void *abce_std_map(void *ptr, size_t new_bytes, size_t old_bytes, void **pbaton)
 {
-  return do_mmap_madvise(abce_topages(limit * sizeof(struct abce_mb)));
-}
-
-void abce_free_stack(struct abce_mb *stackbase, size_t limit)
-{
-  if (munmap(stackbase, abce_topages(limit * sizeof(struct abce_mb))) != 0)
+  if (ptr != NULL && new_bytes == 0)
   {
-    abort();
+    abce_do_munmap(ptr, old_bytes);
+    return NULL;
   }
-}
-
-unsigned char *abce_alloc_bcode(size_t limit)
-{
-  return do_mmap_madvise(abce_topages(limit));
-}
-
-void abce_free_bcode(unsigned char *bcodebase, size_t limit)
-{
-  if (munmap(bcodebase, abce_topages(limit)) != 0)
+  if (ptr == NULL && old_bytes == 0)
   {
-    abort();
+    return abce_do_mmap_madvise(new_bytes);
   }
+  if (ptr != NULL && new_bytes == old_bytes)
+  {
+    return ptr; // pointless!
+  }
+  if (ptr != NULL && new_bytes < old_bytes)
+  {
+    abce_do_mmap_compact(ptr, new_bytes, old_bytes);
+    return ptr;
+  }
+  if (ptr != NULL && new_bytes > old_bytes)
+  {
+    void *ptr2 = abce_do_mmap_madvise(new_bytes);
+    memcpy(ptr2, ptr, old_bytes);
+    abce_do_munmap(ptr, old_bytes);
+    return ptr2;
+  }
+  abort();
+}
+
+struct abce_mb *abce_alloc_stack(struct abce *abce, size_t limit)
+{
+  return abce->map(NULL, limit * sizeof(struct abce_mb), 0, &abce->map_baton);
+}
+
+void abce_free_stack(struct abce *abce, struct abce_mb *stackbase, size_t limit)
+{
+  abce->map(stackbase, 0, limit * sizeof(struct abce_mb), &abce->map_baton);
+}
+
+struct abce_gcqe {
+  enum abce_type typ;
+  struct abce_mb_area *mba;
+};
+
+size_t *abce_alloc_refcs(struct abce *abce, size_t limit)
+{
+  return abce->map(NULL, limit * sizeof(size_t), 0, &abce->map_baton);
+}
+
+void abce_free_refcs(struct abce *abce, size_t *refcsbase, size_t limit)
+{
+  abce->map(refcsbase, 0, limit * sizeof(size_t), &abce->map_baton);
+}
+
+struct abce_gcqe *abce_alloc_gcqueue(struct abce *abce, size_t limit)
+{
+  return abce->map(NULL, limit * sizeof(struct abce_gcqe), 0, &abce->map_baton);
+}
+
+void abce_free_gcqueue(struct abce *abce, struct abce_gcqe *gcqueuebase, size_t limit)
+{
+  abce->map(gcqueuebase, 0, limit * sizeof(struct abce_gcqe), &abce->map_baton);
+}
+
+unsigned char *abce_alloc_bcode(struct abce *abce, size_t limit)
+{
+  return abce->map(NULL, limit, 0, &abce->map_baton);
+}
+
+void abce_free_bcode(struct abce *abce, unsigned char *bcodebase, size_t limit)
+{
+  abce->map(bcodebase, 0, limit, &abce->map_baton);
 }
 
 void abce_compact(struct abce *abce)
 {
-  do_mmap_compact(abce->stackbase,
-                  abce->sp * sizeof(struct abce_mb),
-                  abce->stacklimit * sizeof(struct abce_mb));
-  do_mmap_compact(abce->gcblockbase,
-                  abce->gcblocksz * sizeof(struct abce_mb),
-                  abce->gcblockcap * sizeof(struct abce_mb));
-  do_mmap_compact(abce->btbase,
-                  abce->btsz * sizeof(struct abce_mb),
-                  abce->btcap * sizeof(struct abce_mb));
-  do_mmap_compact(abce->bytecode,
-                  abce->bytecodesz,
-                  abce->bytecodecap);
-  do_mmap_compact(abce->cachebase,
-                  abce->cachesz * sizeof(struct abce_mb),
-                  abce->cachecap * sizeof(struct abce_mb));
+  abce->map(abce->stackbase,
+            abce->sp * sizeof(struct abce_mb),
+            abce->stacklimit * sizeof(struct abce_mb),
+            &abce->map_baton);
+  abce->map(abce->gcblockbase,
+            abce->gcblocksz * sizeof(struct abce_mb),
+            abce->gcblockcap * sizeof(struct abce_mb),
+            &abce->map_baton);
+  abce->map(abce->btbase,
+            abce->btsz * sizeof(struct abce_mb),
+            abce->btcap * sizeof(struct abce_mb),
+            &abce->map_baton);
+  abce->map(abce->bytecode,
+            abce->bytecodesz,
+            abce->bytecodecap,
+            &abce->map_baton);
+  abce->map(abce->cachebase,
+            abce->cachesz * sizeof(struct abce_mb),
+            abce->cachecap * sizeof(struct abce_mb),
+            &abce->map_baton);
 }
 
 void abce_init(struct abce *abce)
 {
+  // FIXME allow specifying custom conf
   memset(abce, 0, sizeof(*abce));
   abce->in_engine = 0;
   abce->do_check_heap_on_gc = 0; // Warning: setting this to 1 WILL crash!
@@ -111,32 +187,34 @@ void abce_init(struct abce *abce)
   abce->lastgcblocksz = 0;
   abce->trusted = 1;
   abce->alloc = abce_std_alloc;
+  abce->map = abce_std_map;
   abce->bytes_alloced = 0;
   abce->bytes_cap = SIZE_MAX;
   abce->trap = NULL;
   abce->alloc_baton = NULL;
+  abce->map_baton = NULL;
   abce->ins_budget_fn = NULL;
   abce->ins_budget_baton = NULL;
   abce->userdata = NULL;
   abce->stacklimit = 1024*1024;
-  abce->stackbase = abce_alloc_stack(abce->stacklimit);
+  abce->stackbase = abce_alloc_stack(abce, abce->stacklimit);
   abce->gcblockcap = 1024*1024;
   abce->gcblocksz = 0;
   abce->scratchstart = abce->gcblockcap;
-  abce->gcblockbase = abce_alloc_stack(abce->gcblockcap);
+  abce->gcblockbase = abce_alloc_stack(abce, abce->gcblockcap);
   abce->btcap = 1024*1024;
   abce->btsz = 0;
-  abce->btbase = abce_alloc_stack(abce->btcap);
+  abce->btbase = abce_alloc_stack(abce, abce->btcap);
   abce->sp = 0;
   abce->bp = 0;
   abce->ip = 0;
   abce->bytecodecap = 32*1024*1024;
-  abce->bytecode = abce_alloc_bcode(abce->bytecodecap);
+  abce->bytecode = abce_alloc_bcode(abce, abce->bytecodecap);
   abce->bytecodesz = 0;
   abce->oneblock.typ = ABCE_T_N;
 
   abce->cachecap = 1024*1024;
-  abce->cachebase = abce_alloc_stack(abce->cachecap);
+  abce->cachebase = abce_alloc_stack(abce, abce->cachecap);
   abce->cachesz = 0;
 
   abce->dynscope = abce_mb_create_scope_noparent(abce, ABCE_DEFAULT_SCOPE_SIZE);
@@ -155,11 +233,6 @@ void abce_free_gcblock_one(struct abce *abce, size_t locidx)
   abce->gcblockbase[locidx] = abce->gcblockbase[--abce->gcblocksz];
   abce->gcblockbase[locidx].u.area->locidx = locidx;
 }
-
-struct abce_gcqe {
-  enum abce_type typ;
-  struct abce_mb_area *mba;
-};
 
 void abce_enqueue_stackentry_mb(const struct abce_mb *mb,
                                 struct abce_gcqe *stackbase, size_t *stackidx, size_t stackcap);
@@ -294,32 +367,6 @@ void abce_mark_mb(struct abce *abce, const struct abce_mb *mb,
   }
 }
 
-size_t *abce_alloc_refcs(size_t limit)
-{
-  return do_mmap_madvise(abce_topages(limit * sizeof(size_t)));
-}
-
-void abce_free_refcs(size_t *stackbase, size_t limit)
-{
-  if (munmap(stackbase, abce_topages(limit * sizeof(size_t))) != 0)
-  {
-    abort();
-  }
-}
-
-struct abce_gcqe *abce_alloc_gcqueue(size_t limit)
-{
-  return do_mmap_madvise(abce_topages(limit * sizeof(struct abce_gcqe)));
-}
-
-void abce_free_gcqueue(struct abce_gcqe *stackbase, size_t limit)
-{
-  if (munmap(stackbase, abce_topages(limit * sizeof(struct abce_gcqe))) != 0)
-  {
-    abort();
-  }
-}
-
 void abce_check_heap_object(struct abce *abce, size_t *stackbase, struct abce_mb *mb)
 {
   if (!abce_is_dynamic_type(mb->typ))
@@ -408,7 +455,7 @@ void abce_check_heap(struct abce *abce)
   size_t i;
 
   stackcap = abce->gcblocksz + safety_margin;
-  stackbase = abce_alloc_refcs(stackcap);
+  stackbase = abce_alloc_refcs(abce, stackcap);
 
   if (abce->oneblock.typ != ABCE_T_N)
   {
@@ -458,7 +505,7 @@ void abce_check_heap(struct abce *abce)
     i++;
   }
 
-  abce_free_refcs(stackbase, stackcap);
+  abce_free_refcs(abce, stackbase, stackcap);
   stackbase = NULL;
   stackcap = 0;
 }
@@ -479,7 +526,7 @@ void abce_gc(struct abce *abce)
     abce_check_heap(abce);
   }
   stackcap = abce->gcblocksz + safety_margin;
-  stackbase = abce_alloc_gcqueue(stackcap);
+  stackbase = abce_alloc_gcqueue(abce, stackcap);
   if (abce->oneblock.typ != ABCE_T_N)
   {
     abce_mark_mb(abce, &abce->oneblock, stackbase, &stackidx, stackcap);
@@ -498,7 +545,7 @@ void abce_gc(struct abce *abce)
   {
     abce_mark_mb(abce, &abce->btbase[i], stackbase, &stackidx, stackcap);
   }
-  abce_free_gcqueue(stackbase, stackcap);
+  abce_free_gcqueue(abce, stackbase, stackcap);
   stackbase = NULL;
   stackcap = 0;
 
@@ -652,19 +699,19 @@ void abce_free(struct abce *abce)
   abce->in_engine = 1; // to make GC work
   abce_gc(abce);
 
-  abce_free_stack(abce->stackbase, abce->stacklimit);
+  abce_free_stack(abce, abce->stackbase, abce->stacklimit);
   abce->stackbase = NULL;
   abce->stacklimit = 0;
-  abce_free_bcode(abce->bytecode, abce->bytecodecap);
+  abce_free_bcode(abce, abce->bytecode, abce->bytecodecap);
   abce->bytecode = NULL;
   abce->bytecodecap = 0;
-  abce_free_stack(abce->cachebase, abce->cachecap);
+  abce_free_stack(abce, abce->cachebase, abce->cachecap);
   abce->cachebase = NULL;
   abce->cachecap = 0;
-  abce_free_stack(abce->btbase, abce->btcap);
+  abce_free_stack(abce, abce->btbase, abce->btcap);
   abce->btbase = NULL;
   abce->btcap = 0;
-  abce_free_stack(abce->gcblockbase, abce->gcblockcap);
+  abce_free_stack(abce, abce->gcblockbase, abce->gcblockcap);
   abce->gcblockbase = NULL;
   abce->gcblockcap = 0;
 }
