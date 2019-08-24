@@ -108,7 +108,7 @@ bytecode and then executed.
 
 What Amyplan successfully does is to have a grammar that can be embedded into
 other Yacc grammars. All reserved words begin with the sigil `@` and variables
-begin with the sigil `$`, so the requierments Amyplan places on the lexer are
+begin with the sigil `$`, so the requirements Amyplan places on the lexer are
 small.
 
 Amyplan is strongly typed, and indexing of different types of objects is
