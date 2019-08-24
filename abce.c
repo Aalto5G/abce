@@ -766,6 +766,29 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
   return mb;
 }
 
+struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz + 1, &abce->alloc_baton);
+  if (mba == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb.typ = ABCE_T_D;
+    abce->err.mb.u.d = sz;
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.str.size = sz;
+  memset(mba->u.str.buf, 0, sz);
+  mba->u.str.buf[sz] = '\0';
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_S;
+  mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
+  return mb;
+}
+
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
 {
   struct abce_mb_area *mba;

@@ -605,6 +605,8 @@ abce_mb_refuparea(struct abce *abce, struct abce_mb_area *mba,
 
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz);
 
+struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz);
+
 struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
                                      const char *str2, size_t sz2);
 
