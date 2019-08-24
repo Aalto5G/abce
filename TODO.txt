@@ -1,3 +1,5 @@
+Evaluate use of mmap in abce
+
 Add to Amyplan: shortcutting booleans
 
 Add to Amyplan: @elseif syntax
