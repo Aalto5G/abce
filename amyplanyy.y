@@ -201,6 +201,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     abce_mb_refdn(get_abce(amyplanyy), &oldscope);
     $<d>$ = oldscopeidx;
   }
+  free($3);
 }
   amyplanrules
   ENDSCOPE NEWLINE
@@ -987,7 +988,6 @@ varref:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
       amyplanyy_add_double(amyplanyy, idx);
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
-      free($1);
       $$ = ABCE_OPCODE_SCOPEVAR;
     }
     else
@@ -1003,10 +1003,10 @@ varref:
         printf("var %s not found\n", $1);
         YYABORT;
       }
-      free($1);
       $$ = ABCE_OPCODE_PUSH_STACK;
     }
   }
+  free($1);
 }
 | IO VARREF_LITERAL
 {
