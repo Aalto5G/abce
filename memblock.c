@@ -452,10 +452,13 @@ void abce_dump_str(const char *str, size_t sz)
   printf("\"");
 }
 
+#define DUMP_NEST_LIMIT 100
+
 void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
 {
   size_t i;
   int first = 1;
+  size_t cnt = 0;
   struct abce_dump_list ll3 = {
     .parent = ll,
   };
@@ -483,6 +486,24 @@ void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
         }
       }
       ll2 = ll2->parent;
+      cnt++;
+    }
+    if (cnt > DUMP_NEST_LIMIT)
+    {
+      switch (mb->typ)
+      {
+        case ABCE_T_SC:
+          printf("sc(%zu){...}", mb->u.area->u.sc.size);
+          return;
+        case ABCE_T_T:
+          printf("{...}");
+          return;
+        case ABCE_T_A:
+          printf("[...]");
+          return;
+        default:
+          break;
+      }
     }
   }
   switch (mb->typ)
