@@ -31,5 +31,3 @@ JSON_DECODE
 Syntax for setting dynamic scope
 
 Immediate evaluation
-
-abce_mb_dump for circular or deeply nested structures using a linked list

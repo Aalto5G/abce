@@ -928,7 +928,12 @@ static inline struct abce_mb abce_mb_create_scope_noparent(struct abce *abce, si
 
 void abce_mb_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum abce_type typ);
 
-void abce_mb_dump_impl(const struct abce_mb *mb);
+struct abce_dump_list {
+  struct abce_dump_list *parent;
+  struct abce_mb_area *area;
+};
+
+void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll);
 
 static inline void
 abce_mb_array_pop_back(struct abce *abce,
@@ -966,15 +971,14 @@ abce_mb_array_append(struct abce *abce,
   return 0;
 }
 
-void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first);
+void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first,
+                      struct abce_dump_list *ll);
 
 void abce_dump_str(const char *str, size_t sz);
 
-void abce_mb_dump_impl(const struct abce_mb *mb);
-
 static inline void abce_mb_dump(const struct abce_mb *mb)
 {
-  abce_mb_dump_impl(mb);
+  abce_mb_dump_impl(mb, NULL);
   printf("\n");
 }
 

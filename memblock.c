@@ -382,9 +382,8 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mbap, enum ab
   *mbap = NULL;
 }
 
-void abce_mb_dump_impl(const struct abce_mb *mb);
-
-void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first)
+void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first,
+                      struct abce_dump_list *ll)
 {
   struct abce_mb_rb_entry *e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
   if (n == NULL)
@@ -399,11 +398,11 @@ void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first)
   {
     printf(", ");
   }
-  abce_mb_treedump(n->left, first);
-  abce_mb_dump_impl(&e->key);
+  abce_mb_treedump(n->left, first, ll);
+  abce_mb_dump_impl(&e->key, ll);
   printf(": ");
-  abce_mb_dump_impl(&e->val);
-  abce_mb_treedump(n->right, first);
+  abce_mb_dump_impl(&e->val, ll);
+  abce_mb_treedump(n->right, first, ll);
 }
 
 void abce_dump_str(const char *str, size_t sz)
@@ -453,10 +452,39 @@ void abce_dump_str(const char *str, size_t sz)
   printf("\"");
 }
 
-void abce_mb_dump_impl(const struct abce_mb *mb)
+void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
 {
   size_t i;
   int first = 1;
+  struct abce_dump_list ll3 = {
+    .parent = ll,
+  };
+  if (abce_is_dynamic_type(mb->typ))
+  {
+    struct abce_dump_list *ll2 = ll;
+    ll3.area = mb->u.area;
+    while (ll2)
+    {
+      if (ll2->area == ll3.area)
+      {
+        switch (mb->typ)
+        {
+          case ABCE_T_SC:
+            printf("sc(%zu){...}", mb->u.area->u.sc.size);
+            return;
+          case ABCE_T_T:
+            printf("{...}");
+            return;
+          case ABCE_T_A:
+            printf("[...]");
+            return;
+          default:
+            abort();
+        }
+      }
+      ll2 = ll2->parent;
+    }
+  }
   switch (mb->typ)
   {
     case ABCE_T_PB:
@@ -491,7 +519,7 @@ void abce_mb_dump_impl(const struct abce_mb *mb)
         {
           printf(", ");
         }
-        abce_mb_dump_impl(&mb->u.area->u.ar.mbs[i]);
+        abce_mb_dump_impl(&mb->u.area->u.ar.mbs[i], &ll3);
       }
       printf("]");
       break;
@@ -499,13 +527,13 @@ void abce_mb_dump_impl(const struct abce_mb *mb)
       printf("sc(%zu){", mb->u.area->u.sc.size);
       for (i = 0; i < mb->u.area->u.sc.size; i++)
       {
-        abce_mb_treedump(mb->u.area->u.sc.heads[i].root, &first);
+        abce_mb_treedump(mb->u.area->u.sc.heads[i].root, &first, &ll3);
       }
       printf("}");
       break;
     case ABCE_T_T:
       printf("{");
-      abce_mb_treedump(mb->u.area->u.tree.tree.root, &first);
+      abce_mb_treedump(mb->u.area->u.tree.tree.root, &first, &ll3);
       printf("}");
       break;
     case ABCE_T_S:
