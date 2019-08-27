@@ -134,6 +134,290 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   return mb.u.area->u.str.locidx;
 }
 
+#ifdef WITH_LUA
+
+void mb_to_lua(lua_State *lua, const struct abce_mb *mb);
+
+void tree_to_lua(lua_State *lua, const struct abce_rb_tree_node *n)
+{
+  struct abce_mb_rb_entry *e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  if (n == NULL)
+  {
+    return;
+  }
+  tree_to_lua(lua, n->left);
+  mb_to_lua(lua, &e->key);
+  mb_to_lua(lua, &e->val);
+  lua_settable(lua, -3);
+  tree_to_lua(lua, n->right);
+}
+
+void mb_to_lua(lua_State *lua, const struct abce_mb *mb)
+{
+  size_t i;
+  switch (mb->typ)
+  {
+    case ABCE_T_B:
+      lua_pushboolean(lua, !!mb->u.d);
+      return;
+    case ABCE_T_D:
+      lua_pushnumber(lua, mb->u.d);
+      return;
+    case ABCE_T_S:
+      lua_pushlstring(lua, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      return;
+    case ABCE_T_A:
+      lua_newtable(lua);
+      for (i = 0; i < mb->u.area->u.ar.size; i++)
+      {
+        mb_to_lua(lua, &mb->u.area->u.ar.mbs[i]);
+        lua_rawseti(lua, -2, i+1); // this pops item from stack
+      }
+      return;
+    case ABCE_T_T:
+      lua_newtable(lua);
+      tree_to_lua(lua, mb->u.area->u.tree.tree.root);
+      return;
+    case ABCE_T_N:
+      lua_pushnil(lua);
+      return;
+    default:
+      abort();
+      return;
+  }
+}
+
+void mb_from_lua(lua_State *lua, struct abce *abce)
+{
+  size_t i, len;
+  int typ = lua_type(lua, -1);
+  const char *str;
+  struct abce_mb mb;
+  switch (typ)
+  {
+    case LUA_TBOOLEAN:
+      if (abce_push_boolean(abce, lua_toboolean(lua, -1)) != 0)
+      {
+        abort();
+      }
+      return;
+    case LUA_TNUMBER:
+      if (abce_push_double(abce, lua_tonumber(lua, -1)) != 0)
+      {
+        abort();
+      }
+      return;
+    case LUA_TSTRING:
+      str = lua_tolstring(lua, -1, &len);
+      mb = abce_mb_create_string(abce, str, len);
+      if (mb.typ == ABCE_T_N)
+      {
+        abort();
+      }
+      if (abce_push_mb(abce, &mb) != 0)
+      {
+        abort();
+      }
+      abce_mb_refdn(abce, &mb);
+      return;
+    case LUA_TTABLE:
+      len = lua_objlen(lua, -1);
+      if (len)
+      {
+        mb = abce_mb_create_array(abce);
+        if (mb.typ == ABCE_T_N)
+        {
+          abort();
+        }
+        if (abce_push_mb(abce, &mb) != 0)
+        {
+          abort();
+        }
+        for (i = 0; i < len; i++)
+        {
+          struct abce_mb mb2;
+          lua_pushnumber(lua, i + 1);
+          lua_gettable(lua, -1);
+          mb_from_lua(lua, abce);
+          if (abce_getmb(&mb2, abce, -1) != 0)
+          {
+            abort();
+          }
+          if (abce_mb_array_append(abce, &mb, &mb2) != 0)
+          {
+            abort();
+          }
+          abce_mb_refdn(abce, &mb2);
+          abce_pop(abce);
+          lua_pop(lua, 1);
+        }
+        abce_mb_refdn(abce, &mb);
+        return;
+      }
+      else
+      {
+        int empty = 1;
+        mb = abce_mb_create_tree(abce);
+        if (mb.typ == ABCE_T_N)
+        {
+          abort();
+        }
+        if (abce_push_mb(abce, &mb) != 0)
+        {
+          abort();
+        }
+        lua_pushnil(lua);
+        while (lua_next(lua, -2) != 0)
+        {
+          size_t l;
+          const char *s = lua_tolstring(lua, -2, &l); // FIXME does this mod?
+          struct abce_mb mbkey, mbval;
+          mbkey = abce_mb_create_string(abce, s, l);
+          empty = 0;
+          if (mbkey.typ == ABCE_T_N)
+          {
+            abort();
+          }
+          if (abce_push_mb(abce, &mbkey) != 0)
+          {
+            abort();
+          }
+          mb_from_lua(lua, abce);
+          if (abce_getmb(&mbval, abce, -1) != 0)
+          {
+            abort();
+          }
+          if (abce_tree_set_str(abce, &mb, &mbkey, &mbval) != 0)
+          {
+            abort();
+          }
+          abce_mb_refdn(abce, &mbkey);
+          abce_pop(abce);
+          abce_mb_refdn(abce, &mbval);
+          abce_pop(abce);
+          lua_pop(lua, 1);
+        }
+        lua_pop(lua, 1); // FIXME needed?
+        abce_mb_refdn(abce, &mb);
+        if (empty)
+        {
+          abce_pop(abce);
+          mb = abce_mb_create_array(abce);
+          if (mb.typ == ABCE_T_N)
+          {
+            abort();
+          }
+          if (abce_push_mb(abce, &mb) != 0)
+          {
+            abort();
+          }
+        }
+        return;
+      }
+      return;
+    case ABCE_T_A:
+      lua_newtable(lua);
+      for (i = 0; i < mb.u.area->u.ar.size; i++)
+      {
+        mb_to_lua(lua, &mb.u.area->u.ar.mbs[i]);
+        lua_rawseti(lua, -2, i+1); // this pops item from stack
+      }
+      return;
+    case ABCE_T_T:
+      lua_newtable(lua);
+      tree_to_lua(lua, mb.u.area->u.tree.tree.root);
+      return;
+    case ABCE_T_N:
+      lua_pushnil(lua);
+      return;
+    default:
+      abort();
+      return;
+  }
+}
+
+int lua_makelexcall(lua_State *lua)
+{
+  struct abce_mb scop = {.typ = ABCE_T_SC};
+  struct abce *abce;
+  const struct abce_mb *res;
+  unsigned char tmpbuf[64] = {0};
+  size_t tmpsiz;
+  if (lua_gettop(lua) == 0)
+  {
+    abort();
+  }
+  const char *str = luaL_checkstring(lua, 1);
+  int args = lua_gettop(lua) - 1;
+
+  lua_getglobal(lua, "__abcelua_abce");
+  abce = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  lua_getglobal(lua, "__abcelua_scope");
+  scop.u.area = lua_touserdata(lua, -1); // FIXME lua may mix pointers => crash!
+  lua_pop(lua, 1);
+
+  if (abce_push_double(abce, args) != 0)
+  {
+    abort();
+  }
+
+  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
+  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+
+  res = abce_sc_get_rec_str(&scop, str, 1);
+  if (res == NULL)
+  {
+    abort();
+  }
+  mb_to_lua(lua, res);
+  return 1;
+}
+
+int lua_getlexval(lua_State *lua)
+{
+  struct abce_mb scop = {.typ = ABCE_T_SC};
+  struct abce *abce;
+  const struct abce_mb *res;
+  if (lua_gettop(lua) == 0)
+  {
+    abort();
+  }
+  const char *str = luaL_checkstring(lua, 1);
+  int args = lua_gettop(lua) - 1;
+  if (args != 0)
+  {
+    abort();
+  }
+  lua_getglobal(lua, "__abcelua_abce");
+  abce = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  lua_getglobal(lua, "__abcelua_scope");
+  scop.u.area = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  res = abce_sc_get_rec_str(&scop, str, 1);
+  if (res == NULL)
+  {
+    abort();
+  }
+  mb_to_lua(lua, res);
+  return 1;
+}
+
+
+int luaopen_stir(lua_State *lua)
+{
+        static const luaL_Reg stir_lib[] = {
+                {"makelexcall", lua_makelexcall},
+                {"getlexval", lua_getlexval},
+                {NULL, NULL}};
+
+        luaL_newlib(lua, stir_lib);
+        return 1;
+}
+
+#endif
+
 struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
                                       const struct abce_mb *parent, int holey)
 {
@@ -152,6 +436,12 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
     return mb;
   }
   luaL_openlibs(lua);
+  lua_pushcfunction(lua, luaopen_stir);
+  lua_pushstring(lua, "Stir");
+  lua_call(lua, 1, 1);
+  lua_pushvalue(lua, -1);
+  lua_setglobal(lua, "Stir");
+  lua_pop(lua, 1);
 #endif
 
   capacity = abce_next_highest_power_of_2(capacity);
