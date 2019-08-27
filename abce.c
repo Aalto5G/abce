@@ -628,6 +628,9 @@ void abce_gc(struct abce *abce)
               abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
             }
           }
+#ifdef WITH_LUA
+          lua_close(mba->u.sc.lua);
+#endif
           abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
           break;
         default:

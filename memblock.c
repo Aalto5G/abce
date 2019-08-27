@@ -140,6 +140,19 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   struct abce_mb_area *mba;
   struct abce_mb mb = {};
   size_t i;
+#ifdef WITH_LUA
+  lua_State *lua;
+
+  lua = lua_open();
+  if (lua == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = 0;
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  luaL_openlibs(lua);
+#endif
 
   capacity = abce_next_highest_power_of_2(capacity);
 
@@ -187,6 +200,15 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   abce->cachebase[abce->cachesz++] = abce_mb_refup(abce, &mb);
 
   abce_setup_mb_for_gc(abce, mba, ABCE_T_SC);
+
+#ifdef WITH_LUA
+  mba->u.sc.lua = lua;
+  lua_pushlightuserdata(lua, mba);
+  lua_setglobal(lua, "__abcelua_scope");
+  lua_pushlightuserdata(lua, abce);
+  lua_setglobal(lua, "__abcelua_abce");
+#endif
+
   return mb;
 }
 
@@ -356,6 +378,9 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
               abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
             }
           }
+#ifdef WITH_LUA
+          lua_close(mba->u.sc.lua);
+#endif
           abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
         }
         break;

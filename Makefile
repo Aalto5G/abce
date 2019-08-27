@@ -62,12 +62,18 @@ wcparser:
 #LUALIB:=/usr/lib/x86_64-linux-gnu/liblua5.3.a
 LUAINC:=/usr/include/luajit-2.1
 LUALIB:=/usr/lib/x86_64-linux-gnu/libluajit-5.1.a
-LUALIB:=
 
 CC=clang
 CPP=clang++
-CFLAGS=-O3 -Wall -g #-I$(LUAINC)
-CPPFLAGS=-O3 -Wall -g #-I$(LUAINC)
+CFLAGS=-O3 -Wall -g
+CPPFLAGS=-O3 -Wall -g
+
+ifeq ($(WITH_LUA),yes)
+  CFLAGS += -I$(LUAINC) -DWITH_LUA
+  CPPFLAGS += -I$(LUAINC) -DWITH_LUA
+else
+  LUALIB :=
+endif
 
 gctest: gctest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl

@@ -11,6 +11,11 @@
 #include "abcelikely.h"
 #include "abceopcodes.h"
 #include "abce_err.h"
+#ifdef WITH_LUA
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+#endif
 
 #define ABCE_DEFAULT_SCOPE_SIZE 8192
 #define ABCE_DEFAULT_CACHE_SIZE 8192
@@ -33,6 +38,9 @@ struct abce_mb_tree {
 struct abce_mb_scope {
   int holey;
   void *userdata;
+#ifdef WITH_LUA
+  lua_State *lua;
+#endif
   struct abce_mb_area *parent;
   size_t size;
   size_t locidx;
