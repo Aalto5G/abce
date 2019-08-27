@@ -187,28 +187,34 @@ void mb_to_lua(lua_State *lua, const struct abce_mb *mb)
   }
 }
 
-void mb_from_lua(lua_State *lua, struct abce *abce)
+void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
 {
   size_t i, len;
-  int typ = lua_type(lua, -1);
+  int typ = lua_type(lua, idx);
   const char *str;
   struct abce_mb mb;
   switch (typ)
   {
+    case LUA_TNIL:
+      if (abce_push_nil(abce) != 0)
+      {
+        abort();
+      }
+      return;
     case LUA_TBOOLEAN:
-      if (abce_push_boolean(abce, lua_toboolean(lua, -1)) != 0)
+      if (abce_push_boolean(abce, lua_toboolean(lua, idx)) != 0)
       {
         abort();
       }
       return;
     case LUA_TNUMBER:
-      if (abce_push_double(abce, lua_tonumber(lua, -1)) != 0)
+      if (abce_push_double(abce, lua_tonumber(lua, idx)) != 0)
       {
         abort();
       }
       return;
     case LUA_TSTRING:
-      str = lua_tolstring(lua, -1, &len);
+      str = lua_tolstring(lua, idx, &len);
       mb = abce_mb_create_string(abce, str, len);
       if (mb.typ == ABCE_T_N)
       {
@@ -221,7 +227,7 @@ void mb_from_lua(lua_State *lua, struct abce *abce)
       abce_mb_refdn(abce, &mb);
       return;
     case LUA_TTABLE:
-      len = lua_objlen(lua, -1);
+      len = lua_objlen(lua, idx);
       if (len)
       {
         mb = abce_mb_create_array(abce);
@@ -237,8 +243,8 @@ void mb_from_lua(lua_State *lua, struct abce *abce)
         {
           struct abce_mb mb2;
           lua_pushnumber(lua, i + 1);
-          lua_gettable(lua, -1);
-          mb_from_lua(lua, abce);
+          lua_gettable(lua, idx);
+          mb_from_lua(lua, abce, -1);
           if (abce_getmb(&mb2, abce, -1) != 0)
           {
             abort();
@@ -267,10 +273,10 @@ void mb_from_lua(lua_State *lua, struct abce *abce)
           abort();
         }
         lua_pushnil(lua);
-        while (lua_next(lua, -2) != 0)
+        while (lua_next(lua, (idx>=0?idx:idx-1)) != 0)
         {
           size_t l;
-          const char *s = lua_tolstring(lua, -2, &l); // FIXME does this mod?
+          const char *s = lua_tolstring(lua, (idx>=0?idx:idx-1), &l); // FIXME does this mod?
           struct abce_mb mbkey, mbval;
           mbkey = abce_mb_create_string(abce, s, l);
           empty = 0;
@@ -282,7 +288,7 @@ void mb_from_lua(lua_State *lua, struct abce *abce)
           {
             abort();
           }
-          mb_from_lua(lua, abce);
+          mb_from_lua(lua, abce, -1);
           if (abce_getmb(&mbval, abce, -1) != 0)
           {
             abort();
@@ -315,21 +321,6 @@ void mb_from_lua(lua_State *lua, struct abce *abce)
         return;
       }
       return;
-    case ABCE_T_A:
-      lua_newtable(lua);
-      for (i = 0; i < mb.u.area->u.ar.size; i++)
-      {
-        mb_to_lua(lua, &mb.u.area->u.ar.mbs[i]);
-        lua_rawseti(lua, -2, i+1); // this pops item from stack
-      }
-      return;
-    case ABCE_T_T:
-      lua_newtable(lua);
-      tree_to_lua(lua, mb.u.area->u.tree.tree.root);
-      return;
-    case ABCE_T_N:
-      lua_pushnil(lua);
-      return;
     default:
       abort();
       return;
@@ -342,7 +333,8 @@ int lua_makelexcall(lua_State *lua)
   struct abce *abce;
   const struct abce_mb *res;
   unsigned char tmpbuf[64] = {0};
-  size_t tmpsiz;
+  size_t tmpsiz = 0;
+  size_t i;
   if (lua_gettop(lua) == 0)
   {
     abort();
@@ -357,6 +349,21 @@ int lua_makelexcall(lua_State *lua)
   scop.u.area = lua_touserdata(lua, -1); // FIXME lua may mix pointers => crash!
   lua_pop(lua, 1);
 
+  res = abce_sc_get_rec_str(&scop, str, 1);
+  if (res == NULL)
+  {
+    abort();
+  }
+  if (abce_push_mb(abce, res) != 0)
+  {
+    abort();
+  }
+
+  for (i = 1; i <= args; i++)
+  {
+    mb_from_lua(lua, abce, i + 1);
+  }
+
   if (abce_push_double(abce, args) != 0)
   {
     abort();
@@ -365,12 +372,19 @@ int lua_makelexcall(lua_State *lua)
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
-  res = abce_sc_get_rec_str(&scop, str, 1);
-  if (res == NULL)
+  if (abce_engine(abce, tmpbuf, tmpsiz) != 0)
   {
     abort();
   }
-  mb_to_lua(lua, res);
+
+  struct abce_mb mbres;
+
+  abce_getmb(&mbres, abce, -1);
+
+  mb_to_lua(lua, &mbres);
+
+  abce_pop(abce);
+
   return 1;
 }
 
