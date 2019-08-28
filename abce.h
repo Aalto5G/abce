@@ -9,6 +9,8 @@ extern "C" {
 
 void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton);
 
+void *abce_jm_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton);
+
 static inline int is_little_endian(void)
 {
   double d;
@@ -990,7 +992,12 @@ unsigned char *abce_alloc_bcode(struct abce *abce, size_t limit);
 
 void abce_free_bcode(struct abce *abce, unsigned char *bcodebase, size_t limit);
 
-void abce_init(struct abce *abce);
+void abce_init_opts(struct abce *abce, int map_shared);
+
+static inline void abce_init(struct abce *abce)
+{
+  abce_init_opts(abce, 0);
+}
 
 void abce_free_bt(struct abce *abce);
 

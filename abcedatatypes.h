@@ -117,6 +117,7 @@ struct abce_err {
 };
 
 struct abce {
+  int map_shared;
   int in_engine;
   int do_check_heap_on_gc;
   struct abce_err err;

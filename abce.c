@@ -16,19 +16,19 @@ static inline size_t abce_topages(size_t limit)
   return actlimit;
 }
 
-void *abce_do_mmap_madvise(size_t bytes)
+void *abce_do_mmap_madvise(size_t bytes, int shared)
 {
   void *ptr;
   bytes = abce_topages(bytes);
   // Ugh. I wish all systems had simple and compatible interface.
 #ifdef MAP_ANON
-  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, (shared?MAP_SHARED:MAP_PRIVATE)|MAP_ANON, -1, 0);
 #else
   #ifdef MAP_ANONYMOUS
     #ifdef MAP_NORESERVE
-  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0);
+  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, (shared?MAP_SHARED:MAP_PRIVATE)|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0);
     #else
-  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+  ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, (shared?MAP_SHARED:MAP_PRIVATE)|MAP_ANONYMOUS, -1, 0);
     #endif
   #else
   {
@@ -38,7 +38,7 @@ void *abce_do_mmap_madvise(size_t bytes)
     {
       abort();
     }
-    ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, fd, 0);
+    ptr = mmap(NULL, bytes, PROT_READ|PROT_WRITE, (shared?MAP_SHARED:MAP_PRIVATE)|MAP_ANONYMOUS|MAP_NORESERVE, fd, 0);
     close(fd);
   }
   #endif
@@ -80,6 +80,7 @@ void abce_do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
 
 void *abce_std_map(void *ptr, size_t new_bytes, size_t old_bytes, void **pbaton)
 {
+  struct abce *abce = ABCE_CONTAINER_OF(pbaton, struct abce, map_baton);
   if (ptr != NULL && new_bytes == 0)
   {
     abce_do_munmap(ptr, old_bytes);
@@ -87,7 +88,7 @@ void *abce_std_map(void *ptr, size_t new_bytes, size_t old_bytes, void **pbaton)
   }
   if (ptr == NULL && old_bytes == 0)
   {
-    return abce_do_mmap_madvise(new_bytes);
+    return abce_do_mmap_madvise(new_bytes, abce->map_shared);
   }
   if (ptr != NULL && new_bytes == old_bytes)
   {
@@ -100,7 +101,7 @@ void *abce_std_map(void *ptr, size_t new_bytes, size_t old_bytes, void **pbaton)
   }
   if (ptr != NULL && new_bytes > old_bytes)
   {
-    void *ptr2 = abce_do_mmap_madvise(new_bytes);
+    void *ptr2 = abce_do_mmap_madvise(new_bytes, abce->map_shared);
     memcpy(ptr2, ptr, old_bytes);
     abce_do_munmap(ptr, old_bytes);
     return ptr2;
@@ -177,7 +178,7 @@ void abce_compact(struct abce *abce)
             &abce->map_baton);
 }
 
-void abce_init(struct abce *abce)
+void abce_init_opts(struct abce *abce, int map_shared)
 {
   // FIXME allow specifying custom conf
   memset(abce, 0, sizeof(*abce));
@@ -186,7 +187,15 @@ void abce_init(struct abce *abce)
   abce->lastbytes_alloced = 0;
   abce->lastgcblocksz = 0;
   abce->trusted = 1;
-  abce->alloc = abce_std_alloc;
+  abce->map_shared = !!map_shared;
+  if (map_shared)
+  {
+    abce->alloc = abce_jm_alloc;
+  }
+  else
+  {
+    abce->alloc = abce_std_alloc;
+  }
   abce->map = abce_std_map;
   abce->bytes_alloced = 0;
   abce->bytes_cap = SIZE_MAX;

@@ -11,6 +11,113 @@
 #include "abceopcodes.h"
 #include "abce.h"
 #include "abcetrees.h"
+#include "abcejmalloc.h"
+
+void *abce_jm_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
+{
+  struct abce *abce = ABCE_CONTAINER_OF(pbaton, struct abce, alloc_baton);
+  void *result;
+  if (old == NULL)
+  {
+    if (newsz == 0)
+    {
+      newsz = 1;
+    }
+    if (oldsz != 0)
+    {
+      abort();
+    }
+    if (newsz > abce->bytes_cap)
+    {
+      return NULL;
+    }
+    if ((   (abce->gcblocksz*1.0 > abce->lastgcblocksz*2.0
+            && abce->gcblocksz - abce->lastgcblocksz > 16*100*1000)
+         || (abce->bytes_alloced*1.0 > abce->lastbytes_alloced*2.0
+            && abce->bytes_alloced - abce->lastbytes_alloced > 16*1000*1000)
+         || abce->gcblocksz >= abce->gcblockcap
+         || abce->bytes_alloced > (abce->bytes_cap - newsz))
+        && abce->in_engine)
+    {
+      //printf("B: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("B: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("B: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("B: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
+      abce_gc(abce);
+      abce->lastgcblocksz = abce->gcblocksz;
+      abce->lastbytes_alloced = abce->bytes_alloced;
+      //printf("A: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("A: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("A: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("A: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
+    }
+    if (abce->bytes_alloced > (abce->bytes_cap - newsz))
+    {
+      return NULL;
+    }
+    if (abce->gcblocksz >= abce->gcblockcap)
+    {
+      return NULL;
+    }
+    result = abce_jmalloc(newsz);
+    if (result)
+    {
+      abce->bytes_alloced += newsz;
+    }
+    return result;
+  }
+  else if (newsz == 0)
+  {
+    if (oldsz > abce->bytes_alloced)
+    {
+      abort();
+    }
+    abce_jmfree(old, oldsz);
+    abce->bytes_alloced -= oldsz;
+    return NULL;
+  }
+  else
+  {
+    if (oldsz > abce->bytes_alloced)
+    {
+      abort();
+    }
+    if (newsz > abce->bytes_cap)
+    {
+      return NULL;
+    }
+    if ((   (abce->gcblocksz*1.0 > abce->lastgcblocksz*2.0
+            && abce->gcblocksz - abce->lastgcblocksz > 16*100*1000)
+         || (abce->bytes_alloced*1.0 > abce->lastbytes_alloced*2.0
+            && abce->bytes_alloced - abce->lastbytes_alloced > 16*1000*1000)
+         || (abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz))
+        && abce->in_engine)
+    {
+      //printf("B: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("B: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("B: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("B: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
+      abce_gc(abce);
+      abce->lastgcblocksz = abce->gcblocksz;
+      abce->lastbytes_alloced = abce->bytes_alloced;
+      //printf("A: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("A: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("A: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("A: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
+    }
+    if ((abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz))
+    {
+      return NULL;
+    }
+    result = abce_jmrealloc(old, oldsz, newsz);
+    if (result)
+    {
+      abce->bytes_alloced -= oldsz;
+      abce->bytes_alloced += newsz;
+    }
+    return result;
+  }
+}
 
 void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
 {
