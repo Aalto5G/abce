@@ -1,0 +1,84 @@
+@toplevel
+@strict
+
+# You can modify these during compilation
+$(CC) ?= "clang"
+$(CFLAGS) ?= ["-O3", "-Wall", "-g"]
+$(WITH_LUA) ?= @false
+$(LUAINCS) ?= ["-I/usr/include/luajit-2.1"]
+$(LUALIBS) ?= ["/usr/lib/x86_64-linux-gnu/libluajit-5.1.a"]
+
+# You can modify these during development
+$(SRC_LIB) = ["amyplanyyutils.c", "memblock.c", "abcerbtree.c", \
+              "amyplanlocvarctx.c", "engine.c", "abcestring.c", "abcetrees.c", \
+              "abcescopes.c", "abce.c", "abceapi.c", "safemode.c"]
+$(SRC_PROG) = ["gctest.c", "reftest.c", "ret.c", "breaktest.c", "main.c", \
+               "locvartest.c", "treetest.c", "amyplantest.c", "fiboefftest.c", \
+               "fortest.c", "iftest.c", "dumptest.c", "fibonaccitest.c", \
+               "bttest.c"]
+$(LEX_LIB) = ["amyplanyy.l"]
+
+# Here starts the portions you probably don't want to modify
+$(YACC_LIB) = @sufsuball($(LEX_LIB), ".l", ".y")
+$(SRC) = [@$(SRC_LIB), @$(SRC_PROG)]
+$(LEXGEN_LIB) = @sufsuball($(LEX_LIB), ".l", ".lex.c")
+$(YACCGEN_LIB) = @sufsuball($(YACC_LIB), ".y", ".tab.c")
+$(GEN_LIB) = [@$(LEXGEN_LIB), @$(YACCGEN_LIB)]
+$(OBJ_LIB) = @sufsuball($(SRC_LIB), ".c", ".o")
+$(OBJ) = @sufsuball($(SRC), ".c", ".o")
+$(OBJGEN_LIB) = @sufsuball($(GEN_LIB), ".c", ".o")
+$(DEP) = @sufsuball($(SRC), ".c", ".d")
+$(DEPGEN_LIB) = @sufsuball($(GEN_LIB), ".c", ".d")
+$(PROG) = @sufsuball($(SRC_PROG), ".c", "")
+
+@if(!$(WITH_LUA))
+  $(LUAINCS) = []
+  $(LUALIBS) = []
+@endif
+@if($(WITH_LUA))
+  $(CFLAGS) = [@$(CFLAGS), @$(LUAINCS), "-DWITH_LUA"]
+@endif
+
+@phonyrule: 'all': $(PROG) 'libabce.a'
+
+@phonyrule: 'wc':
+@	["wc", "-l", @$(LEX_LIB), @$(YACC_LIB), @$(SRC), @@suffilterout(@suffilterout(@glob("*.h"),".lex.h"),".tab.h")]
+
+@patrule: $(PROG): '%': '%.o' 'libabce.a'
+@	[$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm', '-ldl']
+
+@patrule: $(OBJ): '%.o': '%.c' '%.d'
+@	[$(CC), @$(CFLAGS), "-c", "-o", $@, $<]
+
+@patrule: $(OBJGEN_LIB): '%.o': '%.c' '%.h' '%.d'
+@	[$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-c", "-o", $@, $<]
+
+@patrule: $(DEP): '%.d': '%.c'
+@	[$(CC), @$(CFLAGS), "-MM", "-o", $@, $<]
+
+@patrule: $(DEPGEN_LIB): '%.d': '%.c' '%.h'
+@	[$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-MM", "-o", $@, $<]
+
+'libabce.a': $(OBJ_LIB) $(OBJGEN_LIB)
+@	["unlink", $@]
+@	["ar", "rvs", $@, @@suffilter($^, ".o")]
+
+@function $ADD_LEXX_YACC_DEPS($lex)
+  @locvar $b = @sufsuball($lex, ".l", "")
+  @locvar $i = 0
+  @for($i = 0, $i < $b[], $i = $i+1)
+    @adddeps([@strappend($b[$i], ".lex.d"), @strappend($b[$i], ".lex.o"), \
+              @strappend($b[$i], ".tab.d"), @strappend($b[$i], ".tab.o")], \
+             [@strappend($b[$i], ".lex.h"), @strappend($b[$i], ".tab.h")], {})
+  @endfor
+@endfunction
+@call $ADD_LEXX_YACC_DEPS($(LEX_LIB))
+
+# FIXME test breaking long command line to many shorter lines
+@patrule: $(LEXGEN_LIB): '%.lex.c' '%.lex.h': '%.l'
+@	["flex", @strappend("--outfile=", $@), @strappend("--header-file=", @sufsubone($@, ".c", ".h")), $<]
+
+@patrule: $(YACCGEN_LIB): '%.tab.c' '%.tab.h': '%.y'
+@	["byacc", "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", @sufsubone($@, ".tab.c", ""), "-o", $@, $<]
+
+@cdepincludes @autophony @autotarget @ignore [@$(DEP), @$(DEPGEN_LIB)]
