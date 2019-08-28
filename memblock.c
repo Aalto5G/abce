@@ -719,6 +719,8 @@ void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first,
   {
     return;
   }
+
+  abce_mb_treedump(n->left, first, ll);
   if (*first)
   {
     *first = 0;
@@ -727,7 +729,7 @@ void abce_mb_treedump(const struct abce_rb_tree_node *n, int *first,
   {
     printf(", ");
   }
-  abce_mb_treedump(n->left, first, ll);
+
   abce_mb_dump_impl(&e->key, ll);
   printf(": ");
   abce_mb_dump_impl(&e->val, ll);
