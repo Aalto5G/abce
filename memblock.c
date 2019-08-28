@@ -276,9 +276,16 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
         while (lua_next(lua, (idx>=0?idx:(idx-1))) != 0)
         {
           size_t l;
-          const char *s = lua_tolstring(lua, -2, &l); // FIXME does this mod?
+          const char *s;
           struct abce_mb mbkey, mbval;
+
+          // Need to push it temporarily to stack top so that lua_tolstring
+          // doesn't modify it in-place.
+          lua_pushvalue(lua, -2);
+          s = lua_tolstring(lua, -1, &l);
           mbkey = abce_mb_create_string(abce, s, l);
+          lua_pop(lua, 1);
+
           empty = 0;
           if (mbkey.typ == ABCE_T_N)
           {
