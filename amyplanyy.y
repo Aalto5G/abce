@@ -240,17 +240,20 @@ expr NEWLINE
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
     amyplanyy_add_double(amyplanyy, amyplan_symbol_add(amyplanyy, $1, strlen($1)));
-    amyplanyy_add_fun_sym(amyplanyy, $1, $3, $<d>4);
 
-    if (!$2)
+    if ($2)
+    {
+      amyplanyy_add_fun_sym(amyplanyy, $1, $3, $<d>4);
+    }
+    else if (!$3 || abce_sc_get_rec_str_area(get_abce(amyplanyy)->dynscope.u.area, $1, 1) == NULL)
     {
       if (get_abce(amyplanyy)->sp != 0)
       {
         abort();
       }
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
-      abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
-        abce_sc_get_rec_str_fun(&get_abce(amyplanyy)->dynscope, $1, 1));
+      abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), $<d>4);
+        //abce_sc_get_rec_str_fun(&get_abce(amyplanyy)->dynscope, $1, 1));
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL_IF_FUN);
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
