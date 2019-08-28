@@ -30,17 +30,25 @@ void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     {
       return NULL;
     }
-    if ((   (abce->gcblocksz*1.0 > abce->lastgcblocksz*1.3
-            && abce->gcblocksz - abce->lastgcblocksz > 100*1000)
-         || (abce->bytes_alloced*1.0 > abce->lastbytes_alloced*1.3
-            && abce->bytes_alloced - abce->lastbytes_alloced > 1000*1000)
+    if ((   (abce->gcblocksz*1.0 > abce->lastgcblocksz*2.0
+            && abce->gcblocksz - abce->lastgcblocksz > 16*100*1000)
+         || (abce->bytes_alloced*1.0 > abce->lastbytes_alloced*2.0
+            && abce->bytes_alloced - abce->lastbytes_alloced > 16*1000*1000)
          || abce->gcblocksz >= abce->gcblockcap
          || abce->bytes_alloced > (abce->bytes_cap - newsz))
         && abce->in_engine)
     {
+      //printf("B: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("B: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("B: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("B: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
       abce_gc(abce);
       abce->lastgcblocksz = abce->gcblocksz;
       abce->lastbytes_alloced = abce->bytes_alloced;
+      //printf("A: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("A: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("A: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("A: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
     }
     if (abce->bytes_alloced > (abce->bytes_cap - newsz))
     {
@@ -77,14 +85,24 @@ void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     {
       return NULL;
     }
-    if ((   abce->gcblocksz*1.0 > abce->lastgcblocksz*1.3
-         || abce->bytes_alloced*1.0 > abce->lastbytes_alloced*1.3
+    if ((   (abce->gcblocksz*1.0 > abce->lastgcblocksz*2.0
+            && abce->gcblocksz - abce->lastgcblocksz > 16*100*1000)
+         || (abce->bytes_alloced*1.0 > abce->lastbytes_alloced*2.0
+            && abce->bytes_alloced - abce->lastbytes_alloced > 16*1000*1000)
          || (abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz))
         && abce->in_engine)
     {
+      //printf("B: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("B: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("B: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("B: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
       abce_gc(abce);
       abce->lastgcblocksz = abce->gcblocksz;
       abce->lastbytes_alloced = abce->bytes_alloced;
+      //printf("A: gcblocksz %zu\n", abce->gcblocksz);
+      //printf("A: lastgcblocksz %zu\n", abce->lastgcblocksz);
+      //printf("A: bytes_alloced %zu\n", abce->bytes_alloced);
+      //printf("A: lastbytes_alloced %zu\n", abce->lastbytes_alloced);
     }
     if ((abce->bytes_alloced - oldsz) > (abce->bytes_cap - newsz))
     {
