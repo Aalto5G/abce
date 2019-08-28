@@ -243,7 +243,7 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
         {
           struct abce_mb mb2;
           lua_pushnumber(lua, i + 1);
-          lua_gettable(lua, idx);
+          lua_gettable(lua, (idx>=0)?idx:(idx-1));
           mb_from_lua(lua, abce, -1);
           if (abce_getmb(&mb2, abce, -1) != 0)
           {
@@ -273,10 +273,10 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
           abort();
         }
         lua_pushnil(lua);
-        while (lua_next(lua, (idx>=0?idx:idx-1)) != 0)
+        while (lua_next(lua, (idx>=0?idx:(idx-1))) != 0)
         {
           size_t l;
-          const char *s = lua_tolstring(lua, (idx>=0?idx:idx-1), &l); // FIXME does this mod?
+          const char *s = lua_tolstring(lua, -2, &l); // FIXME does this mod?
           struct abce_mb mbkey, mbval;
           mbkey = abce_mb_create_string(abce, s, l);
           empty = 0;
