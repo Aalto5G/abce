@@ -208,7 +208,10 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
+    struct abce_mb creatscope;
+    creatscope = get_abce(amyplanyy)->dynscope;
     get_abce(amyplanyy)->dynscope = abce_mb_refup(get_abce(amyplanyy), &get_abce(amyplanyy)->cachebase[(size_t)$<d>5]);
+    abce_mb_refdn(get_abce(amyplanyy), &creatscope);
   }
 }
 | amyplanrules custom_rule
