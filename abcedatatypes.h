@@ -17,7 +17,7 @@
 #include <lualib.h>
 #endif
 
-#define ABCE_DEFAULT_SCOPE_SIZE 8192
+#define ABCE_DEFAULT_SCOPE_SIZE 128
 #define ABCE_DEFAULT_CACHE_SIZE 8192
 
 #ifdef __cplusplus
