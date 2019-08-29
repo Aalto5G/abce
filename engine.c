@@ -875,7 +875,18 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce->err.mb = abce_mb_refup(abce, mb);
           return -EINVAL;
         }
-        if (abce_str_buf_add(abce, &buf, mbar.u.area->u.str.buf, mbar.u.area->u.str.size)
+        if (i != 0)
+        {
+          if (abce_str_buf_add(abce, &buf, mbjoiner.u.area->u.str.buf, mbjoiner.u.area->u.str.size)
+              != 0)
+          {
+            abce_str_buf_free(abce, &buf);
+            abce_mb_refdn(abce, &mbar);
+            abce_mb_refdn(abce, &mbjoiner);
+            return -ENOMEM;
+          }
+        }
+        if (abce_str_buf_add(abce, &buf, mbar.u.area->u.ar.mbs[i].u.area->u.str.buf, mbar.u.area->u.ar.mbs[i].u.area->u.str.size)
             != 0)
         {
           abce_str_buf_free(abce, &buf);
