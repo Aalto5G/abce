@@ -553,14 +553,14 @@ int lua_getlexval(lua_State *lua)
 }
 
 
-int luaopen_stir(lua_State *lua)
+int luaopen_abce(lua_State *lua)
 {
-        static const luaL_Reg stir_lib[] = {
+        static const luaL_Reg abce_lib[] = {
                 {"makelexcall", lua_makelexcall},
                 {"getlexval", lua_getlexval},
                 {NULL, NULL}};
 
-        luaL_newlib(lua, stir_lib);
+        luaL_newlib(lua, abce_lib);
         return 1;
 }
 
@@ -584,11 +584,11 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
     return mb;
   }
   luaL_openlibs(lua);
-  lua_pushcfunction(lua, luaopen_stir);
-  lua_pushstring(lua, "Stir");
+  lua_pushcfunction(lua, luaopen_abce);
+  lua_pushstring(lua, "Abce");
   lua_call(lua, 1, 1);
   lua_pushvalue(lua, -1);
-  lua_setglobal(lua, "Stir");
+  lua_setglobal(lua, "Abce");
   lua_pop(lua, 1);
 #endif
 
