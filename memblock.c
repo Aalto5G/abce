@@ -476,6 +476,7 @@ int lua_makelexcall(lua_State *lua)
   {
     abort();
   }
+  const char *btsym = "(Abce.makelexcall)";
   const char *str = luaL_checkstring(lua, 1);
   int args = lua_gettop(lua) - 1;
 
@@ -508,6 +509,9 @@ int lua_makelexcall(lua_State *lua)
 
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUN_TRAILER);
+  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), abce_cache_add_str(abce, btsym, strlen(btsym)));
+
 
   tmpip = abce->ip;
   tmpsp = abce->sp;
