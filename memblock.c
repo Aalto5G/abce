@@ -352,7 +352,11 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
       abce_mb_refdn(abce, &mb);
       return;
     case LUA_TTABLE:
+#if LUA_VERSION_NUM >= 502
+      len = lua_rawlen(lua, idx);
+#else
       len = lua_objlen(lua, idx);
+#endif
       if (len)
       {
         mb = abce_mb_create_array(abce);
@@ -583,7 +587,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
 #ifdef WITH_LUA
   lua_State *lua;
 
-  lua = lua_open();
+  lua = luaL_newstate();
   if (lua == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
