@@ -463,6 +463,80 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
   }
 }
 
+int lua_makedyncall(lua_State *lua)
+{
+  struct abce *abce;
+  const struct abce_mb *res;
+  unsigned char tmpbuf[64] = {0};
+  size_t tmpsiz = 0;
+  size_t i;
+  int64_t tmpip, tmpsp;
+  if (lua_gettop(lua) == 0)
+  {
+    return luaL_error(lua, "Abce.makedyncall requires an argument");
+  }
+  const char *btsym = "(Abce.makedyncall)";
+  const char *str = luaL_checkstring(lua, 1);
+  int args = lua_gettop(lua) - 1;
+
+  lua_getglobal(lua, "__abcelua_abce");
+  abce = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+
+  res = abce_sc_get_rec_str(&abce->dynscope, str, 1);
+  if (res == NULL)
+  {
+    return luaL_error(lua, "Abce.makedyncall didn't find function %s", str);
+  }
+  if (abce_push_mb(abce, res) != 0)
+  {
+    return luaL_error(lua, "Abce.makedyncall out of stack space");
+  }
+
+  for (i = 1; i <= args; i++)
+  {
+    mb_from_lua(lua, abce, i + 1);
+  }
+
+  if (abce_push_double(abce, args) != 0)
+  {
+    return luaL_error(lua, "Abce.makedyncall out of stack space");
+  }
+
+  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL);
+  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
+  abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUN_TRAILER);
+  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), abce_cache_add_str(abce, btsym, strlen(btsym)));
+
+
+  tmpip = abce->ip;
+  tmpsp = abce->sp;
+
+  if (abce_engine(abce, tmpbuf, tmpsiz) != 0)
+  {
+    abce->ip = tmpip;
+    while (abce->sp > tmpsp)
+    {
+      abce_pop(abce);
+    }
+    return luaL_error(lua, "Abce.makelexcall encountered abce error");
+  }
+
+  abce->ip = tmpip;
+
+  struct abce_mb mbres;
+
+  abce_getmb(&mbres, abce, -1);
+
+  mb_to_lua(lua, &mbres);
+
+  abce_mb_refdn(abce, &mbres);
+
+  abce_pop(abce);
+
+  return 1;
+}
+
 int lua_makelexcall(lua_State *lua)
 {
   struct abce_mb scop = {.typ = ABCE_T_SC};
@@ -541,6 +615,32 @@ int lua_makelexcall(lua_State *lua)
   return 1;
 }
 
+int lua_getdynval(lua_State *lua)
+{
+  struct abce *abce;
+  const struct abce_mb *res;
+  if (lua_gettop(lua) == 0)
+  {
+    return luaL_error(lua, "Abce.getdynval requires an argument");
+  }
+  const char *str = luaL_checkstring(lua, 1);
+  int args = lua_gettop(lua) - 1;
+  if (args != 0)
+  {
+    return luaL_error(lua, "Abce.getdynval doesn't require multiple arguments");
+  }
+  lua_getglobal(lua, "__abcelua_abce");
+  abce = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  res = abce_sc_get_rec_str(&abce->dynscope, str, 1);
+  if (res == NULL)
+  {
+    return luaL_error(lua, "Abce.getdynval didn't find value %s", str);
+  }
+  mb_to_lua(lua, res);
+  return 1;
+}
+
 int lua_getlexval(lua_State *lua)
 {
   struct abce_mb scop = {.typ = ABCE_T_SC};
@@ -577,7 +677,10 @@ int luaopen_abce(lua_State *lua)
         static const luaL_Reg abce_lib[] = {
                 {"makelexcall", lua_makelexcall},
                 {"getlexval", lua_getlexval},
-                {NULL, NULL}};
+                {"makedyncall", lua_makedyncall},
+                {"getdynval", lua_getdynval},
+                {NULL, NULL}
+        };
 
         luaL_newlib(lua, abce_lib);
         return 1;
