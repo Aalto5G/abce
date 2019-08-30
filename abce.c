@@ -1112,3 +1112,80 @@ void abce_maybe_mv_obj_to_scratch_tail(struct abce *abce, const struct abce_mb *
       abort();
   }
 }
+
+const char *abce_err_to_str(enum abce_errcode code)
+{
+  switch (code)
+  {
+  case ABCE_E_NONE: return "No error";
+  case ABCE_E_EXIT: return "Exited";
+  case ABCE_E_NOTSUP_INSTRUCTION: return "Instruction not supported";
+  case ABCE_E_RUN_INTO_FUNC: return "Run into function";
+  case ABCE_E_INDEX_OOB: return "Index out of bounds";
+  case ABCE_E_INDEX_NOT_INT: return "Index not an integer";
+  case ABCE_E_NO_MEM: return "Not enough memory";
+  case ABCE_E_INVALID_CH: return "Invalid character";
+  case ABCE_E_INVALID_STREAMIDX: return "Invalid stream index";
+  case ABCE_E_IO_ERROR: return "I/O error";
+  case ABCE_E_ERROR_EXIT: return "Error exit";
+  case ABCE_E_REPCNT_NOT_UINT: return "Repeat count not unsigned integer";
+  case ABCE_E_NOT_A_NUMBER_STRING: return "String is not numeric";
+  case ABCE_E_EXPECT_ARRAY_OR_TREE: return "Expected array or tree";
+  case ABCE_E_UNKNOWN_INSTRUCTION: return "Unknown instruction";
+  case ABCE_E_ILLEGAL_INSTRUCTION: return "Illegal instruction";
+  case ABCE_E_BYTECODE_FAULT: return "Bytecode fault";
+  case ABCE_E_EXPECT_FUN_HEADER: return "Expected function header";
+  case ABCE_E_INVALID_ARG_CNT: return "Invalid argument count";
+  case ABCE_E_STACK_UNDERFLOW: return "Stack underflow";
+  case ABCE_E_STACK_OVERFLOW: return "Stack overflow";
+  case ABCE_E_ARRAY_UNDERFLOW: return "Array underflow";
+  case ABCE_E_PB_NEW_LEN_NOT_UINT:
+    return "Protocol buffer new length not unsigned integer";
+  case ABCE_E_PB_VAL_OOB: return "Protocol buffer value out of bounds";
+  case ABCE_E_PB_OFF_NOT_UINT:
+    return "Protocol buffer offset not unsigned integer";
+  case ABCE_E_PB_OPSZ_INVALID: return "Protocol buffer operation size invalid";
+  case ABCE_E_PB_GET_OOB: return "Protocol buffer get out of bounds";
+  case ABCE_E_PB_SET_OOB: return "Protocol buffer set out of bounds";
+  case ABCE_E_RET_LOCVARCNT_NOT_UINT:
+    return "Return instruction local variable count not unsigned integer";
+  case ABCE_E_STACK_IDX_NOT_UINT: return "Stack index not unsigned integer";
+  case ABCE_E_STACK_IDX_OOB: return "Stack index out of bounds";
+  case ABCE_E_RET_ARGCNT_NOT_UINT:
+    return "Return argument count not unsigned integer";
+  case ABCE_E_CACHE_IDX_NOT_INT: return "Cache index not unsigned integer";
+  case ABCE_E_CACHE_IDX_OOB: return "Cache index out of bounds";
+  case ABCE_E_SCOPEVAR_NOT_FOUND: return "Scope variable not found";
+  case ABCE_E_SCOPEVAR_NAME_NOT_STR: return "Scope variable name not string";
+  case ABCE_E_TREE_ENTRY_NOT_FOUND: return "Tree entry not found";
+  case ABCE_E_TREE_KEY_NOT_STR: return "Tree key not string";
+  case ABCE_E_EXPECT_RG: return "Expected recursion guard";
+  case ABCE_E_EXPECT_DBL: return "Expected double-precision number";
+  case ABCE_E_EXPECT_BOOL: return "Expected boolean";
+  case ABCE_E_EXPECT_FUNC: return "Expected function address";
+  case ABCE_E_EXPECT_BP: return "Expected base pointer value";
+  case ABCE_E_EXPECT_IP: return "Expected insruction pointer value";
+  case ABCE_E_EXPECT_NIL: return "Expected nil";
+  case ABCE_E_EXPECT_TREE: return "Expected tree";
+  case ABCE_E_EXPECT_IOS: return "Expected I/O-stream";
+  case ABCE_E_EXPECT_ARRAY: return "Expected array";
+  case ABCE_E_EXPECT_STR: return "Expected string";
+  case ABCE_E_EXPECT_PB: return "Expected protocol buffer";
+  case ABCE_E_EXPECT_SCOPE: return "Expected scope";
+  case ABCE_E_FUNADDR_NOT_INT: return "Function address not integer";
+  case ABCE_E_REG_NOT_INT: return "Register value not integer";
+  case ABCE_E_CALL_ARGCNT_NOT_UINT:
+    return "Call argument count not unsigned integer";
+  case ABCE_E_INTCONVERT_SZ_NOT_UINT:
+    return "Integer conversion size not unsigned integer";
+  case ABCE_E_INTCONVERT_SZ_NOTSUP:
+    return "Integer conversion size not supported";
+  case ABCE_E_TIME_BUDGET_EXCEEDED: return "Time budget exceeded";
+  case ABCE_E_INS_NOT_PERMITTED: return "Instruction not permitted";
+  case ABCE_E_LUA_ERR: return "Lua interface error";
+  case ABCE_E_TREE_ITER_NOT_STR_OR_NUL:
+    return "Tree iterator not string or nil";
+  case ABCE_E_LAST: abort();
+  default: return "Unknown error";
+  }
+}

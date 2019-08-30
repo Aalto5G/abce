@@ -1223,6 +1223,8 @@ void abce_gc(struct abce *abce);
 
 void abce_compact(struct abce *abce);
 
+const char *abce_err_to_str(enum abce_errcode code);
+
 #ifdef __cplusplus
 };
 #endif

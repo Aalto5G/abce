@@ -267,7 +267,7 @@ expr NEWLINE
       {
         size_t i;
         printf("Error executing bytecode for var %s\n", $1);
-        printf("error %d\n", get_abce(amyplanyy)->err.code);
+        printf("error %s\n", abce_err_to_str(get_abce(amyplanyy)->err.code));
         printf("Backtrace:\n");
         for (i = 0; i < get_abce(amyplanyy)->btsz; i++)
         {
@@ -349,7 +349,7 @@ expr NEWLINE
       {
         size_t i;
         printf("Error executing bytecode for var %s\n", $1);
-        printf("error %d\n", get_abce(amyplanyy)->err.code);
+        printf("error %s\n", abce_err_to_str(get_abce(amyplanyy)->err.code));
         printf("Backtrace:\n");
         for (i = 0; i < get_abce(amyplanyy)->btsz; i++)
         {
