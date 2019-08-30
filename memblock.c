@@ -435,7 +435,7 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
           abce_pop(abce);
           lua_pop(lua, 1);
         }
-        lua_pop(lua, 1); // FIXME needed?
+        //lua_pop(lua, 1); // FIXME needed? NO!!!! THIS IS BAD!!!!!
         abce_mb_refdn(abce, &mb);
         if (empty)
         {
