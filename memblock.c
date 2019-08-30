@@ -474,6 +474,7 @@ int lua_makelexcall(lua_State *lua)
   int64_t tmpip, tmpsp;
   if (lua_gettop(lua) == 0)
   {
+    lua_error(lua);
     abort();
   }
   const char *btsym = "(Abce.makelexcall)";
@@ -490,10 +491,12 @@ int lua_makelexcall(lua_State *lua)
   res = abce_sc_get_rec_str(&scop, str, 1);
   if (res == NULL)
   {
+    lua_error(lua);
     abort();
   }
   if (abce_push_mb(abce, res) != 0)
   {
+    lua_error(lua);
     abort();
   }
 
@@ -504,6 +507,7 @@ int lua_makelexcall(lua_State *lua)
 
   if (abce_push_double(abce, args) != 0)
   {
+    lua_error(lua);
     abort();
   }
 
@@ -549,12 +553,14 @@ int lua_getlexval(lua_State *lua)
   const struct abce_mb *res;
   if (lua_gettop(lua) == 0)
   {
+    lua_error(lua);
     abort();
   }
   const char *str = luaL_checkstring(lua, 1);
   int args = lua_gettop(lua) - 1;
   if (args != 0)
   {
+    lua_error(lua);
     abort();
   }
   lua_getglobal(lua, "__abcelua_abce");
@@ -566,6 +572,7 @@ int lua_getlexval(lua_State *lua)
   res = abce_sc_get_rec_str(&scop, str, 1);
   if (res == NULL)
   {
+    lua_error(lua);
     abort();
   }
   mb_to_lua(lua, res);
