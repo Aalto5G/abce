@@ -476,6 +476,20 @@ static inline int abce_push_ip(struct abce *abce)
   abce->sp++;
   return 0;
 }
+static inline int abce_push_rg(struct abce *abce)
+{
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_RG;
+    abce->err.mb.u.d = 0;
+    return -EOVERFLOW;
+  }
+  abce->stackbase[abce->sp].typ = ABCE_T_RG;
+  abce->stackbase[abce->sp].u.d = 0;
+  abce->sp++;
+  return 0;
+}
 static inline int abce_push_bp(struct abce *abce)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))

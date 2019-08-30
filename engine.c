@@ -116,13 +116,21 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       POP(); // funname
       abce_mb_refdn(abce, &funname);
+      abce_push_rg(abce); // to capture backtrace in stages
+      abce->err.code = ABCE_E_NONE;
+      abce->err.mb.typ = ABCE_T_N;
       if (lua_pcall(abce->dynscope.u.area->u.sc.lua, argcnt, 1, 0) != 0)
       {
-        abce->err.code = ABCE_E_LUA_ERR;
-        abce->err.mb.typ = ABCE_T_N;
+        abce_pop(abce);
+        if (abce->err.code == ABCE_E_NONE)
+        {
+          abce->err.code = ABCE_E_LUA_ERR;
+          abce->err.mb.typ = ABCE_T_N;
+        } // otherwise it's error from nested call
         ret = -EINVAL;
         break;
       }
+      abce_pop(abce);
       mb_from_lua(abce->dynscope.u.area->u.sc.lua, abce, -1);
       return 0;
     }
@@ -1438,6 +1446,10 @@ static int abce_bt_gather(struct abce *abce, unsigned char *addcode, size_t adds
       abce->btbase[abce->btsz++] =
         abce_fun_stringify(abce, abce->stackbase[i-1].u.d, addcode, addsz);
     }
+    if (abce->stackbase[i-1].typ == ABCE_T_RG)
+    {
+      return 0;
+    }
   }
   return 0;
 }
@@ -1449,6 +1461,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
   int ret = -EAGAIN;
   double argcnt;
   int64_t new_ip;
+  int was_in_engine;
+  was_in_engine = abce->in_engine;
   abce->in_engine = 1;
   if (addcode != NULL)
   {
@@ -2958,7 +2972,8 @@ outpbset:
         }
         case ABCE_OPCODE_FUN_HEADER:
           abce->err.code = ABCE_E_RUN_INTO_FUNC;
-          return -EACCES;
+          ret = -EACCES;
+          break;
         default:
         {
           //printf("Invalid instruction %d\n", (int)ins);
@@ -3024,8 +3039,8 @@ outpbset:
   }
   if (ret != 0)
   {
-    abce_bt_gather(abce, addcode, addsz);
+    abce_bt_gather(abce, addcode, addsz); // RFE re-entrancy
   }
-  abce->in_engine = 0;
+  abce->in_engine = was_in_engine;
   return ret;
 }

@@ -87,12 +87,12 @@ enum abce_type {
   ABCE_T_PB = 49, // packet buffer
   ABCE_T_SC = 50,
 
+  ABCE_T_RG = 38, // rec guard
   ABCE_T_D = 39,
   ABCE_T_B = 40,
   ABCE_T_F = 41,
   ABCE_T_BP = 42,
   ABCE_T_IP = 43,
-  //ABCE_T_LP,
   ABCE_T_N = 44,
 };
 struct abce_mb {

@@ -40,7 +40,7 @@ enum abce_errcode {
   ABCE_E_SCOPEVAR_NAME_NOT_STR = 35, // value: mb
   ABCE_E_TREE_ENTRY_NOT_FOUND = 36, // value: mb
   ABCE_E_TREE_KEY_NOT_STR = 37, // value: mb
-  ABCE_E_TREE_ITER_NOT_STR_OR_NUL = 38, // value: mb
+  ABCE_E_EXPECT_RG = 38, // value: mb, value2: idx
   ABCE_E_EXPECT_DBL = 39, // value: mb, value2: idx
   ABCE_E_EXPECT_BOOL = 40, // value: mb, value2: idx
   ABCE_E_EXPECT_FUNC = 41, // value: mb, value2: idx
@@ -61,6 +61,7 @@ enum abce_errcode {
   ABCE_E_TIME_BUDGET_EXCEEDED = 56,
   ABCE_E_INS_NOT_PERMITTED = 57, // value: ins
   ABCE_E_LUA_ERR = 58, // value: nil
+  ABCE_E_TREE_ITER_NOT_STR_OR_NUL = 59, // value: mb
   ABCE_E_LAST = 0x7FFFFFFF, // unused
 };
 

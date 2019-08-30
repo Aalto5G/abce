@@ -471,8 +471,7 @@ int lua_makelexcall(lua_State *lua)
   unsigned char tmpbuf[64] = {0};
   size_t tmpsiz = 0;
   size_t i;
-  int tmpin_engine;
-  int64_t tmpip;
+  int64_t tmpip, tmpsp;
   if (lua_gettop(lua) == 0)
   {
     abort();
@@ -511,15 +510,20 @@ int lua_makelexcall(lua_State *lua)
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
   tmpip = abce->ip;
-  tmpin_engine = abce->in_engine;
+  tmpsp = abce->sp;
 
   if (abce_engine(abce, tmpbuf, tmpsiz) != 0)
   {
+    abce->ip = tmpip;
+    while (abce->sp > tmpsp)
+    {
+      abce_pop(abce);
+    }
+    lua_error(lua);
     abort();
   }
 
   abce->ip = tmpip;
-  abce->in_engine = tmpin_engine;
 
   struct abce_mb mbres;
 
@@ -987,6 +991,9 @@ void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
   {
     case ABCE_T_PB:
       printf("pb");
+      break;
+    case ABCE_T_RG:
+      printf("rg");
       break;
     case ABCE_T_N:
       printf("null");
