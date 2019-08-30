@@ -57,6 +57,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 %token <s> PERCENTLUA_LITERAL
 %token OPEN_BRACKET CLOSE_BRACKET OPEN_BRACE CLOSE_BRACE OPEN_PAREN CLOSE_PAREN
+%token LUACALL
 
 %token AT ATTAB NEWLINE TOSTRING TONUMBER
 
@@ -1557,6 +1558,15 @@ expr0_without_string:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     amyplanyy_add_double(amyplanyy, $4);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL);
+  }
+}
+| LUACALL OPEN_PAREN expr COMMA maybe_arglist CLOSE_PAREN
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, $5);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LUACALL);
   }
 }
 | lvalue MAYBE_CALL

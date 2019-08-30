@@ -85,6 +85,48 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
   int ret = 0;
   switch (ins)
   {
+#ifdef WITH_LUA
+    case ABCE_OPCODE_LUACALL:
+    {
+      size_t i;
+      double argcnt;
+      struct abce_mb mb = {};
+      struct abce_mb funname = {};
+      GETDBL(&argcnt, -1);
+      if (abce_unlikely((double)(size_t)argcnt != argcnt))
+      {
+        abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = argcnt;
+        ret = -EINVAL;
+        break;
+      }
+      GETMBSTR(&funname, -2-(int)(size_t)argcnt);
+      POP(); // argcnt
+      lua_getglobal(abce->dynscope.u.area->u.sc.lua, funname.u.area->u.str.buf);
+      for (i = 0; i < argcnt; i++)
+      {
+        GETMB(&mb, -1-(int)i);
+        mb_to_lua(abce->dynscope.u.area->u.sc.lua, &mb);
+        abce_mb_refdn(abce, &mb);
+      }
+      for (i = 0; i < argcnt; i++)
+      {
+        POP(); // args
+      }
+      POP(); // funname
+      abce_mb_refdn(abce, &funname);
+      if (lua_pcall(abce->dynscope.u.area->u.sc.lua, argcnt, 1, 0) != 0)
+      {
+        abce->err.code = ABCE_E_LUA_ERR;
+        abce->err.mb.typ = ABCE_T_N;
+        ret = -EINVAL;
+        break;
+      }
+      mb_from_lua(abce->dynscope.u.area->u.sc.lua, abce, -1);
+      return 0;
+    }
+#endif
     case ABCE_OPCODE_SCOPEVAR_NONRECURSIVE:
     {
       struct abce_mb mbsc, mbit;

@@ -134,6 +134,7 @@ enum abce_opcode {
   ABCE_OPCODE_SCOPE_PARENT = 186,
   ABCE_OPCODE_SCOPEVAR_NONRECURSIVE = 187,
   ABCE_OPCODE_SCOPE_HAS_NONRECURSIVE = 188,
+  ABCE_OPCODE_LUACALL = 189,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 
