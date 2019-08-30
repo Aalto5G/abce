@@ -280,6 +280,7 @@ expr NEWLINE
             printf("(-)\n");
           }
         }
+        amyplanyyerror(scanner, amyplanyy, "error in assignment");
         YYABORT;
       }
       if (get_abce(amyplanyy)->sp != 1)
@@ -361,6 +362,7 @@ expr NEWLINE
             printf("(-)\n");
           }
         }
+        amyplanyyerror(scanner, amyplanyy, "error in += assignment");
         YYABORT;
       }
       if (get_abce(amyplanyy)->sp != 1)
