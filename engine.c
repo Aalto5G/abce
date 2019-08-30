@@ -1526,7 +1526,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
             ret = -EINVAL;
             break;
           }
-          GETFUNADDR(&new_ip, -2-(size_t)argcnt);
+          GETFUNADDR(&new_ip, -2-(int)(size_t)argcnt);
           POP(); // argcnt
 calltrailer:
           // FIXME off by one?
