@@ -104,9 +104,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETMBSTR(&funname, -2-(int)(size_t)argcnt);
       POP(); // argcnt
       lua_getglobal(abce->dynscope.u.area->u.sc.lua, funname.u.area->u.str.buf);
-      for (i = 0; i < argcnt; i++)
+      for (i = argcnt; i > 0; i--)
       {
-        GETMB(&mb, -1-(int)i);
+        GETMB(&mb, -(int)i);
         mb_to_lua(abce->dynscope.u.area->u.sc.lua, &mb);
         abce_mb_refdn(abce, &mb);
       }
