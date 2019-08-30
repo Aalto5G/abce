@@ -280,6 +280,8 @@ expr NEWLINE
             printf("(-)\n");
           }
         }
+        printf("Additional information:\n");
+        abce_mb_dump(&get_abce(amyplanyy)->err.mb);
         amyplanyyerror(scanner, amyplanyy, "error in assignment");
         YYABORT;
       }
@@ -362,6 +364,8 @@ expr NEWLINE
             printf("(-)\n");
           }
         }
+        printf("Additional information:\n");
+        abce_mb_dump(&get_abce(amyplanyy)->err.mb);
         amyplanyyerror(scanner, amyplanyy, "error in += assignment");
         YYABORT;
       }

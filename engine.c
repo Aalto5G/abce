@@ -124,8 +124,12 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_pop(abce);
         if (abce->err.code == ABCE_E_NONE)
         {
+          struct abce_mb mberrstr = {};
+          mb_from_lua(abce->dynscope.u.area->u.sc.lua, abce, -1);
+          GETMB(&mberrstr, -1);
           abce->err.code = ABCE_E_LUA_ERR;
-          abce->err.mb.typ = ABCE_T_N;
+          abce->err.mb = mberrstr;
+          abce_pop(abce);
         } // otherwise it's error from nested call
         ret = -EINVAL;
         break;
