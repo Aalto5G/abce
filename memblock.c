@@ -515,6 +515,8 @@ int lua_makelexcall(lua_State *lua)
 
   mb_to_lua(lua, &mbres);
 
+  abce_mb_refdn(abce, &mbres);
+
   abce_pop(abce);
 
   return 1;
