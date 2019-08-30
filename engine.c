@@ -1553,7 +1553,7 @@ calltrailer:
             break;
           }
           abce->ip = new_ip;
-          abce->bp = abce->sp - 2 - (uint64_t)argcnt;
+          abce->bp = abce->sp - 2 - (int)(uint64_t)argcnt;
 #if 1
           rettmp = abce_fetch_b(&inshi, abce, addcode, addsz);
           if (abce_unlikely(rettmp != 0))
