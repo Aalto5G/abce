@@ -1394,7 +1394,6 @@ static struct abce_mb abce_fun_stringify(struct abce *abce, int64_t ip, unsigned
     {
       case ABCE_OPCODE_PUSH_DBL:
         abce->ip += 8;
-        abce->err = err;
         break;
       case ABCE_OPCODE_FUN_TRAILER:
         //printf("Trailer\n");
@@ -1413,6 +1412,7 @@ static struct abce_mb abce_fun_stringify(struct abce *abce, int64_t ip, unsigned
           return nil;
         }
         abce->ip = ip_tmp;
+        abce->err = err;
         //printf("Stringifying fun\n");
         return abce_mb_refup(abce, &abce->cachebase[dblsz]);
       case ABCE_OPCODE_FUN_HEADER:
