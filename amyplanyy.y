@@ -75,7 +75,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
 %token D L I DO LO IO DP LP IP DPO LPO IPO LOC
 %token APPEND APPEND_LIST
-%token RETURN PRINT
+%token RETURN PRINT PERIOD
 
 %token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP
 %token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
@@ -1271,6 +1271,13 @@ expr3:
   if (amyplanyy_do_emit(amyplanyy))
   {
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SUB);
+  }
+}
+| expr3 PERIOD expr2
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRAPPEND);
   }
 }
 ;

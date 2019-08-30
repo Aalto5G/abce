@@ -159,18 +159,19 @@ struct amyplan_csnippet luaSnippet = {
 \>= return GE;
 \<= return LE;
 \<\> return MAYBE_CALL;
+[.] return PERIOD;
 
 
-[$][A-Za-z0-9_.]+ {
+[$][A-Za-z0-9_]+ {
   yylval->s = strdup(yytext+1);
   return VARREF_LITERAL;
 }
-[$][(][A-Za-z0-9_.]+[)] {
+[$][(][A-Za-z0-9_]+[)] {
   yylval->s = strdup(yytext+2);
   yylval->s[strlen(yylval->s)-1] = '\0';
   return VARREF_LITERAL;
 }
-[$][{][A-Za-z0-9_.]+[}] {
+[$][{][A-Za-z0-9_]+[}] {
   yylval->s = strdup(yytext+2);
   yylval->s[strlen(yylval->s)-1] = '\0';
   return VARREF_LITERAL;

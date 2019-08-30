@@ -67,17 +67,18 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @function $ADD_LEXX_YACC_DEPS($lex)
   @locvar $b = @sufsuball($lex, ".l", "")
   @locvar $i = 0
+  @locvar $c = @nil
   @for($i = 0, $i < $b[], $i = $i+1)
-    @adddeps([@strappend($b[$i], ".lex.d"), @strappend($b[$i], ".lex.o"), \
-              @strappend($b[$i], ".tab.d"), @strappend($b[$i], ".tab.o")], \
-             [@strappend($b[$i], ".lex.h"), @strappend($b[$i], ".tab.h")], {})
+    $c = $b[$i]
+    @adddeps([$c.".lex.d", $c.".lex.o", $c.".tab.d", $c.".tab.o"], \
+             [$c.".lex.h", $c.".tab.h"], {})
   @endfor
 @endfunction
 @call $ADD_LEXX_YACC_DEPS($(LEX_LIB))
 
 # FIXME test breaking long command line to many shorter lines
 @patrule: $(LEXGEN_LIB): '%.lex.c' '%.lex.h': '%.l'
-@	["flex", @strappend("--outfile=", $@), @strappend("--header-file=", @sufsubone($@, ".c", ".h")), $<]
+@	["flex", "--outfile=".$@, "--header-file=".@sufsubone($@,".c",".h"), $<]
 
 @patrule: $(YACCGEN_LIB): '%.tab.c' '%.tab.h': '%.y'
 @	["byacc", "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", @sufsubone($@, ".tab.c", ""), "-o", $@, $<]
