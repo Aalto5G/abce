@@ -127,7 +127,8 @@ struct amyplan_csnippet luaSnippet = {
 @strlower return STR_LOWER;
 @strfromchr return STR_FROMCHR;
 @appendlist   return APPEND_LIST;
-@luacall  return LUACALL;
+@dynluacall  return DYNLUACALL;
+@lexluacall  return LEXLUACALL;
 [+]=      return PLUSEQUALS;
 [?]=      return QMEQUALS;
 :         return COLON;

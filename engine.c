@@ -91,6 +91,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       size_t i;
       double argcnt;
       struct abce_mb mb = {};
+      struct abce_mb mbsc = {};
       struct abce_mb funname = {};
       GETDBL(&argcnt, -1);
       if (abce_unlikely((double)(size_t)argcnt != argcnt))
@@ -101,13 +102,16 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         ret = -EINVAL;
         break;
       }
+      VERIFYMB(-2-(int)(size_t)argcnt, ABCE_T_S);
+      VERIFYMB(-3-(int)(size_t)argcnt, ABCE_T_SC);
       GETMBSTR(&funname, -2-(int)(size_t)argcnt);
+      GETMBSC(&mbsc, -3-(int)(size_t)argcnt);
       POP(); // argcnt
-      lua_getglobal(abce->dynscope.u.area->u.sc.lua, funname.u.area->u.str.buf);
+      lua_getglobal(mbsc.u.area->u.sc.lua, funname.u.area->u.str.buf);
       for (i = argcnt; i > 0; i--)
       {
         GETMB(&mb, -(int)i);
-        mb_to_lua(abce->dynscope.u.area->u.sc.lua, &mb);
+        mb_to_lua(mbsc.u.area->u.sc.lua, &mb);
         abce_mb_refdn(abce, &mb);
       }
       for (i = 0; i < argcnt; i++)
@@ -119,23 +123,35 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_push_rg(abce); // to capture backtrace in stages
       abce->err.code = ABCE_E_NONE;
       abce->err.mb.typ = ABCE_T_N;
-      if (lua_pcall(abce->dynscope.u.area->u.sc.lua, argcnt, 1, 0) != 0)
+      if (lua_pcall(mbsc.u.area->u.sc.lua, argcnt, 1, 0) != 0)
       {
-        abce_pop(abce);
+        abce_pop(abce); // rg
         if (abce->err.code == ABCE_E_NONE)
         {
           struct abce_mb mberrstr = {};
-          mb_from_lua(abce->dynscope.u.area->u.sc.lua, abce, -1);
+          mb_from_lua(mbsc.u.area->u.sc.lua, abce, -1);
           GETMB(&mberrstr, -1);
           abce->err.code = ABCE_E_LUA_ERR;
           abce->err.mb = mberrstr;
           abce_pop(abce);
         } // otherwise it's error from nested call
+        abce_pop(abce); // mbsc
+        abce_mb_refdn(abce, &mbsc);
         ret = -EINVAL;
         break;
       }
-      abce_pop(abce);
-      mb_from_lua(abce->dynscope.u.area->u.sc.lua, abce, -1);
+      // Ok, here it gets a bit tricky. We can't pop or refdn mbsc so that the
+      // GC sees it. But we have to convert result to Lua. So we need to remove
+      // an item that is not topmost item on the stack. We pop twice and push
+      // the intermediate value.
+      abce_pop(abce); // rg
+      mb_from_lua(mbsc.u.area->u.sc.lua, abce, -1);
+      GETMB(&mb, -1); // retval
+      abce_pop(abce); // retval
+      abce_pop(abce); // mbsc
+      abce_push_mb(abce, &mb); // retval
+      abce_mb_refdn(abce, &mbsc);
+      abce_mb_refdn(abce, &mb);
       return 0;
     }
 #endif
