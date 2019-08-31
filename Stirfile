@@ -61,7 +61,7 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @	[$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-MM", "-o", $@, $<]
 
 'libabce.a': $(OBJ_LIB) $(OBJGEN_LIB)
-@	["unlink", $@]
+@	["rm", "-f", $@]
 @	["ar", "rvs", $@, @@suffilter($^, ".o")]
 
 @function $ADD_LEXX_YACC_DEPS($lex)
