@@ -178,9 +178,9 @@ static inline int abce_str_buf_add(struct abce *abce,
                                    struct abce_str_buf *buf,
                                    const char *str, size_t len)
 {
-  if (buf->sz + len >= buf->capacity)
+  if (buf->sz + len + 1 >= buf->capacity)
   {
-    if (abce_str_buf_grow(abce, buf, len) != 0)
+    if (abce_str_buf_grow(abce, buf, len + 1) != 0)
     {
       return -ENOMEM;
     }
