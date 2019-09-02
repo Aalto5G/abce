@@ -13,7 +13,7 @@
 struct jmalloc_block {
   union {
     char block[0];
-    struct abce_linked_list_node llnode;
+    struct jmalloc_block *next;
   } u;
 };
 
@@ -21,16 +21,7 @@ size_t arenaremain;
 char *arena;
 
 // 16, 32, 64, 128, 256, 512, 1024, 2048
-struct abce_linked_list_head blocks[8] = {
-  {.node = {.prev = &blocks[0].node, .next = &blocks[0].node}},
-  {.node = {.prev = &blocks[1].node, .next = &blocks[1].node}},
-  {.node = {.prev = &blocks[2].node, .next = &blocks[2].node}},
-  {.node = {.prev = &blocks[3].node, .next = &blocks[3].node}},
-  {.node = {.prev = &blocks[4].node, .next = &blocks[4].node}},
-  {.node = {.prev = &blocks[5].node, .next = &blocks[5].node}},
-  {.node = {.prev = &blocks[6].node, .next = &blocks[6].node}},
-  {.node = {.prev = &blocks[7].node, .next = &blocks[7].node}},
-};
+struct jmalloc_block *blocks[8];
 
 const uint8_t lookup[129] = {
 0,0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
@@ -63,7 +54,7 @@ void *abce_jmrealloc(void *oldptr, size_t oldsz, size_t newsz)
 
 void *abce_jmalloc(size_t sz)
 {
-  struct abce_linked_list_head *ls = NULL;
+  struct jmalloc_block **ls = NULL;
   struct jmalloc_block *blk;
   uint8_t lookupval;
   void *ret;
@@ -111,7 +102,7 @@ void *abce_jmalloc(size_t sz)
   }
   ls = &blocks[lookupval];
   sz = 1<<(4+lookupval);
-  if (abce_linked_list_is_empty(ls))
+  if (!*ls)
   {
     if (arenaremain < sz)
     {
@@ -131,14 +122,14 @@ void *abce_jmalloc(size_t sz)
     arena += sz;
     return ret;
   }
-  blk = CONTAINER_OF(ls->node.next, struct jmalloc_block, u.llnode);
-  abce_linked_list_delete(&blk->u.llnode);
+  blk = *ls;
+  *ls = blk->u.next;
   return blk;
 }
 
 void abce_jmfree(void *ptr, size_t sz)
 {
-  struct abce_linked_list_head *ls = NULL;
+  struct jmalloc_block **ls = NULL;
   struct jmalloc_block *blk = ptr;
   uint8_t lookupval;
   if (sz > 2048)
@@ -180,6 +171,6 @@ void abce_jmfree(void *ptr, size_t sz)
     abort();
   }
   ls = &blocks[lookupval];
-  sz = 1<<(4+lookupval);
-  abce_linked_list_add_head(&blk->u.llnode, ls);
+  blk->u.next = *ls;
+  *ls = blk;
 }
