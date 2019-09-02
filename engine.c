@@ -107,6 +107,15 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETMBSTR(&funname, -2-(int)(size_t)argcnt);
       GETMBSC(&mbsc, -3-(int)(size_t)argcnt);
       POP(); // argcnt
+
+      if (abce_ensure_lua(mbsc.u.area, abce) != 0)
+      {
+        ret = -ENOMEM;
+        abce_mb_refdn(abce, &mbsc);
+        abce_mb_refdn(abce, &funname);
+        break;
+      }
+
       lua_getglobal(mbsc.u.area->u.sc.lua, funname.u.area->u.str.buf);
       for (i = argcnt; i > 0; i--)
       {

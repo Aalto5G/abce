@@ -688,22 +688,16 @@ int luaopen_abce(lua_State *lua)
 
 #endif
 
-struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
-                                      const struct abce_mb *parent, int holey)
-{
-  struct abce_mb_area *mba;
-  struct abce_mb mb = {};
-  size_t i;
 #ifdef WITH_LUA
+lua_State *lua_create_abce(struct abce_mb_area *mba, struct abce *abce)
+{
   lua_State *lua;
-
   lua = luaL_newstate();
   if (lua == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
     abce->err.val2 = 0;
-    mb.typ = ABCE_T_N;
-    return mb;
+    return NULL;
   }
   luaL_openlibs(lua);
   lua_pushcfunction(lua, luaopen_abce);
@@ -712,7 +706,34 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   lua_pushvalue(lua, -1);
   lua_setglobal(lua, "Abce");
   lua_pop(lua, 1);
+  lua_pushlightuserdata(lua, mba);
+  lua_setglobal(lua, "__abcelua_scope");
+  lua_pushlightuserdata(lua, abce);
+  lua_setglobal(lua, "__abcelua_abce");
+  return lua;
+}
+
+int abce_ensure_lua(struct abce_mb_area *mba, struct abce *abce)
+{
+  if (mba->u.sc.lua)
+  {
+    return 0;
+  }
+  mba->u.sc.lua = lua_create_abce(mba, abce);
+  if (mba->u.sc.lua == NULL)
+  {
+    return -ENOMEM;
+  }
+  return 0;
+}
 #endif
+
+struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
+                                      const struct abce_mb *parent, int holey)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  size_t i;
 
   capacity = abce_next_highest_power_of_2(capacity);
 
@@ -762,11 +783,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   abce_setup_mb_for_gc(abce, mba, ABCE_T_SC);
 
 #ifdef WITH_LUA
-  mba->u.sc.lua = lua;
-  lua_pushlightuserdata(lua, mba);
-  lua_setglobal(lua, "__abcelua_scope");
-  lua_pushlightuserdata(lua, abce);
-  lua_setglobal(lua, "__abcelua_abce");
+  mba->u.sc.lua = NULL;
 #endif
 
   return mb;
@@ -939,7 +956,11 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
             }
           }
 #ifdef WITH_LUA
-          lua_close(mba->u.sc.lua);
+          if (mba->u.sc.lua)
+          {
+            lua_close(mba->u.sc.lua);
+            mba->u.sc.lua = NULL;
+          }
 #endif
           abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
         }

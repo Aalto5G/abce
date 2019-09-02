@@ -1225,6 +1225,10 @@ void abce_compact(struct abce *abce);
 
 const char *abce_err_to_str(enum abce_errcode code);
 
+#ifdef WITH_LUA
+int abce_ensure_lua(struct abce_mb_area *mba, struct abce *abce);
+#endif
+
 #ifdef __cplusplus
 };
 #endif
