@@ -1187,5 +1187,5 @@ const char *abce_err_to_str(enum abce_errcode code)
     return "Tree iterator not string or nil";
   case ABCE_E_LAST: abort();
   default: return "Unknown error";
-  }
+  }
 }
