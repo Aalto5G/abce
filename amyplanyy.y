@@ -1418,22 +1418,47 @@ expr9:
 
 expr10:
   expr9
-| expr10 LOGICAL_AND expr9
+| expr10 LOGICAL_AND
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LOGICAL_AND);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TOP);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    $<d>$ = get_abce(amyplanyy)->bytecodesz;
+    amyplanyy_add_double(amyplanyy, 0);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+  }
+}
+  expr9
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_set_double(amyplanyy, $<d>3, get_abce(amyplanyy)->bytecodesz);
   }
 }
 ;
 
 expr11:
   expr10
-| expr11 LOGICAL_OR expr10
+| expr11 LOGICAL_OR
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LOGICAL_OR);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TOP);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LOGICAL_NOT);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    $<d>$ = get_abce(amyplanyy)->bytecodesz;
+    amyplanyy_add_double(amyplanyy, 0);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+  }
+}
+  expr10
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_set_double(amyplanyy, $<d>3, get_abce(amyplanyy)->bytecodesz);
   }
 }
 ;
