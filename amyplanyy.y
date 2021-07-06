@@ -167,18 +167,28 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   {
     size_t oldscopeidx = get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx;
     struct abce_mb oldscope;
-    struct abce_mb key;
+    struct abce_mb *key;
     void *ud = abce_scope_get_userdata(&get_abce(amyplanyy)->dynscope);
 
     if ($3)
     {
-      key = abce_mb_create_string(get_abce(amyplanyy), $3, strlen($3));
+      key = abce_mb_cpush_create_string(get_abce(amyplanyy), $3, strlen($3));
+      if (key == NULL)
+      {
+        fprintf(stderr, "out of memory\n");
+        YYABORT;
+      }
     }
     else
     {
-      key.typ = ABCE_T_N;
+      if (abce_cpush_nil(get_abce(amyplanyy)) != 0)
+      {
+        fprintf(stderr, "out of memory\n");
+        YYABORT;
+      }
+      key = &get_abce(amyplanyy)->cstackbase[get_abce(amyplanyy)->csp-1];
     }
-    abce_push_mb(get_abce(amyplanyy), &key); // for GC to see it
+    //abce_push_c(get_abce(amyplanyy)); // FIXME required? only for GC?
 
     oldscope = get_abce(amyplanyy)->dynscope;
     oldscopeidx = oldscope.u.area->u.sc.locidx;
@@ -191,14 +201,11 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     }
     if ($3)
     {
-      abce_sc_replace_val_mb(get_abce(amyplanyy), &oldscope, &key, &get_abce(amyplanyy)->dynscope);
+      abce_sc_replace_val_mb(get_abce(amyplanyy), &oldscope, key, &get_abce(amyplanyy)->dynscope);
     }
     abce_scope_set_userdata(&get_abce(amyplanyy)->dynscope, ud);
-    abce_pop(get_abce(amyplanyy));
-    if ($3)
-    {
-      abce_mb_refdn(get_abce(amyplanyy), &key);
-    }
+    //abce_pop(get_abce(amyplanyy)); // FIXME required? only for GC?
+    abce_cpop(get_abce(amyplanyy));
     abce_mb_refdn(get_abce(amyplanyy), &oldscope);
     $<d>$ = oldscopeidx;
   }
@@ -289,9 +296,9 @@ expr NEWLINE
       {
         abort();
       }
-      struct abce_mb key = abce_mb_create_string(get_abce(amyplanyy), $1, strlen($1));
-      abce_sc_replace_val_mb(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope, &key, &get_abce(amyplanyy)->stackbase[0]);
-      abce_mb_refdn(get_abce(amyplanyy), &key);
+      struct abce_mb *key = abce_mb_cpush_create_string(get_abce(amyplanyy), $1, strlen($1));
+      abce_sc_replace_val_mb(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope, key, &get_abce(amyplanyy)->stackbase[0]);
+      abce_cpop(get_abce(amyplanyy));
       abce_pop(get_abce(amyplanyy));
     }
   }
@@ -373,9 +380,9 @@ expr NEWLINE
       {
         abort();
       }
-      struct abce_mb key = abce_mb_create_string(get_abce(amyplanyy), $1, strlen($1));
-      abce_sc_replace_val_mb(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope, &key, &get_abce(amyplanyy)->stackbase[0]);
-      abce_mb_refdn(get_abce(amyplanyy), &key);
+      struct abce_mb *key = abce_mb_cpush_create_string(get_abce(amyplanyy), $1, strlen($1));
+      abce_sc_replace_val_mb(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope, key, &get_abce(amyplanyy)->stackbase[0]);
+      abce_cpop(get_abce(amyplanyy));
       abce_pop(get_abce(amyplanyy));
     }
   }

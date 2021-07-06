@@ -31,27 +31,25 @@ int main(int argc, char **argv)
 
   for (i = 0; i < 10*1000*1000; i++)
   {
-    struct abce_mb mb1, mb2;
-    mb1 = abce_mb_create_array(&amyplanyy.abce);
-    if (mb1.typ == ABCE_T_N)
+    struct abce_mb *mb1, *mb2;
+    mb1 = abce_mb_cpush_create_array(&amyplanyy.abce);
+    if (mb1 == NULL)
     {
       abort();
     }
-    if (abce_push_mb(&amyplanyy.abce, &mb1) != 0)
+    if (abce_push_mb(&amyplanyy.abce, mb1) != 0)
     {
       abort();
     }
-    abce_mb_refdn(&amyplanyy.abce, &mb1);
-    mb2 = abce_mb_create_array(&amyplanyy.abce);
-    if (mb2.typ == ABCE_T_N)
+    mb2 = abce_mb_cpush_create_array(&amyplanyy.abce);
+    if (mb2 == NULL)
     {
       abort();
     }
-    if (abce_push_mb(&amyplanyy.abce, &mb2) != 0)
+    if (abce_push_mb(&amyplanyy.abce, mb2) != 0)
     {
       abort();
     }
-    abce_mb_refdn(&amyplanyy.abce, &mb2);
     if (abce_mb_array_append(&amyplanyy.abce,
                              &amyplanyy.abce.stackbase[0],
                              &amyplanyy.abce.stackbase[1]) != 0)
@@ -69,6 +67,14 @@ int main(int argc, char **argv)
       abort();
     }
     if (abce_pop(&amyplanyy.abce) != 0)
+    {
+      abort();
+    }
+    if (abce_cpop(&amyplanyy.abce) != 0)
+    {
+      abort();
+    }
+    if (abce_cpop(&amyplanyy.abce) != 0)
     {
       abort();
     }

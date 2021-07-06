@@ -14,11 +14,10 @@ int abce_strgsub(struct abce *abce,
                  const char *sub, size_t subsz);
 
 static inline
-int abce_strgsub_mb(struct abce *abce,
-                    struct abce_mb *res,
-                    const struct abce_mb *haystack,
-                    const struct abce_mb *needle,
-                    const struct abce_mb *sub)
+int abce_cpush_strgsub_mb(struct abce *abce,
+                          const struct abce_mb *haystack,
+                          const struct abce_mb *needle,
+                          const struct abce_mb *sub)
 {
   char *resstr;
   size_t ressz;
@@ -36,13 +35,11 @@ int abce_strgsub_mb(struct abce *abce,
   {
     return retval;
   }
-  *res = abce_mb_create_string(abce, resstr, ressz);
-  // After this point, we can no longer allocate memory because GC can crash...
-  if (res->typ == ABCE_T_N)
+  if (abce_mb_cpush_create_string(abce, resstr, ressz) == NULL)
   {
     return -ENOMEM;
   }
-  abce->alloc(resstr, rescap, 0, &abce->alloc_baton); // ..except this is free()
+  abce->alloc(resstr, rescap, 0, &abce->alloc_baton);
   return 0;
 }
 

@@ -207,65 +207,65 @@ char *abceapi_getpbstr(struct abce *abce, int stackidx, size_t *len)
 
 int abceapi_pushnewarray(struct abce *abce)
 {
-  struct abce_mb mb;
+  struct abce_mb *mb;
   struct abce_err err_old = abce->err;
   int ret;
-  mb = abce_mb_create_array(abce);
-  if (mb.typ == ABCE_T_N)
+  mb = abce_mb_cpush_create_array(abce);
+  if (mb == NULL)
   {
     abce->err = err_old;
     return 0;
   }
-  ret = abce_push_mb(abce, &mb) == 0;
-  abce_mb_refdn_typ(abce, &mb, ABCE_T_A);
+  ret = abce_push_c(abce) == 0;
+  abce_cpop(abce);
   abce->err = err_old;
   return ret;
 }
 int abceapi_pushnewtree(struct abce *abce)
 {
-  struct abce_mb mb;
+  struct abce_mb *mb;
   struct abce_err err_old = abce->err;
   int ret;
-  mb = abce_mb_create_tree(abce);
-  if (mb.typ == ABCE_T_N)
+  mb = abce_mb_cpush_create_tree(abce);
+  if (mb == NULL)
   {
     abce->err = err_old;
     return 0;
   }
-  ret = abce_push_mb(abce, &mb) == 0;
-  abce_mb_refdn_typ(abce, &mb, ABCE_T_A);
+  ret = abce_push_c(abce) == 0;
+  abce_cpop(abce);
   abce->err = err_old;
   return ret;
 }
 int abceapi_pushnewpb(struct abce *abce, const char *str, size_t len)
 {
-  struct abce_mb mb;
+  struct abce_mb *mb;
   struct abce_err err_old = abce->err;
   int ret;
-  mb = abce_mb_create_pb_from_buf(abce, str, len);
-  if (mb.typ == ABCE_T_N)
+  mb = abce_mb_cpush_create_pb_from_buf(abce, str, len);
+  if (mb == NULL)
   {
     abce->err = err_old;
     return 0;
   }
-  ret = abce_push_mb(abce, &mb) == 0;
-  abce_mb_refdn_typ(abce, &mb, ABCE_T_PB);
+  ret = abce_push_c(abce) == 0;
+  abce_cpop(abce);
   abce->err = err_old;
   return ret;
 }
 int abceapi_pushnewstr(struct abce *abce, const char *str, size_t len)
 {
-  struct abce_mb mb;
+  struct abce_mb *mb;
   struct abce_err err_old = abce->err;
   int ret;
-  mb = abce_mb_create_string(abce, str, len);
-  if (mb.typ == ABCE_T_N)
+  mb = abce_mb_cpush_create_string(abce, str, len);
+  if (mb == NULL)
   {
     abce->err = err_old;
     return 0;
   }
-  ret = abce_push_mb(abce, &mb) == 0;
-  abce_mb_refdn_typ(abce, &mb, ABCE_T_A);
+  ret = abce_push_c(abce) == 0;
+  abce_cpop(abce);
   abce->err = err_old;
   return ret;
 }

@@ -28,8 +28,8 @@ int main(int argc, char **argv)
 
   for (i = 0; i < 10*1000*1000; i++)
   {
-    struct abce_mb mb = abce_mb_create_tree(&amyplanyy.abce);
-    abce_mb_refdn(&amyplanyy.abce, &mb);
+    abce_mb_cpush_create_tree(&amyplanyy.abce);
+    abce_cpop(&amyplanyy.abce);
   }
 
   amyplanyy_free(&amyplanyy);

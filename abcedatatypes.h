@@ -142,6 +142,9 @@ struct abce {
   size_t bp;
   int64_t ip;
   struct abce_mb oneblock;
+  struct abce_mb *cstackbase;
+  size_t cstacklimit;
+  size_t csp;
   // Byte code
   unsigned char *bytecode;
   size_t bytecodesz;

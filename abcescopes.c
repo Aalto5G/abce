@@ -80,6 +80,7 @@ int abce_sc_put_val_str(
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval)
 {
   struct abce_mb_area *mba = mb->u.area;
+  struct abce_mb *mbtmp;
   uint32_t hashval;
   struct abce_mb_rb_entry *e;
   size_t hashloc;
@@ -97,13 +98,14 @@ int abce_sc_put_val_str(
     abce->err.val2 = sizeof(*e);
     return -ENOMEM;
   }
-  e->key = abce_mb_create_string(abce, str, strlen(str));
-  if (e->key.typ == ABCE_T_N)
+  mbtmp = abce_mb_cpush_create_string(abce, str, strlen(str));
+  if (mbtmp == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
     abce->err.val2 = strlen(str);
     return -ENOMEM;
   }
+  e->key = abce_mb_refup(abce, mbtmp);
   e->val = abce_mb_refup(abce, pval);
   ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
                                       abce_str_cmp_sym, NULL, &e->n);
@@ -113,6 +115,7 @@ int abce_sc_put_val_str(
   }
   abce_mb_refdn(abce, &e->key);
   abce_mb_refdn(abce, &e->val);
+  abce_cpop(abce);
   abce->alloc(e, sizeof(*e), 0, &abce->alloc_baton);
   return ret;
 }
@@ -125,7 +128,7 @@ int abce_sc_put_val_str_maybe_old(
   struct abce_mb_area *mba = mb->u.area;
   uint32_t hashval;
   struct abce_mb_rb_entry *e;
-  struct abce_mb key;
+  struct abce_mb *mbkey;
   size_t hashloc;
   int ret;
   struct abce_rb_tree_node *n;
@@ -137,8 +140,8 @@ int abce_sc_put_val_str_maybe_old(
   hashval = abce_str_hash(str);
   hashloc = hashval & (mba->u.sc.size - 1);
 
-  key = abce_mb_create_string(abce, str, strlen(str));
-  if (key.typ == ABCE_T_N)
+  mbkey = abce_mb_cpush_create_string(abce, str, strlen(str));
+  if (mbkey == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
     abce->err.val2 = strlen(str);
@@ -149,11 +152,10 @@ int abce_sc_put_val_str_maybe_old(
     return -ENOMEM;
   }
 
-  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, &key);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, mbkey);
   if (n != NULL)
   {
     struct abce_mb_rb_entry *e;
-    abce_mb_refdn(abce, &key);
     e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
     if (mbold)
     {
@@ -166,10 +168,12 @@ int abce_sc_put_val_str_maybe_old(
     if (!maybe)
     {
       e->val = abce_mb_refup(abce, pval);
+      abce_cpop(abce);
       return 0;
     }
     else
     {
+      abce_cpop(abce);
       return -EEXIST;
     }
   }
@@ -183,9 +187,10 @@ int abce_sc_put_val_str_maybe_old(
     {
       mbold->typ = ABCE_T_N;
     }
+    abce_cpop(abce);
     return -ENOMEM;
   }
-  e->key = key;
+  e->key = abce_mb_refup(abce, mbkey);
   e->val = abce_mb_refup(abce, pval);
   ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
                                       abce_str_cmp_sym, NULL, &e->n);
@@ -195,6 +200,7 @@ int abce_sc_put_val_str_maybe_old(
     {
       mbold->typ = ABCE_T_N;
     }
+    abce_cpop(abce);
     return 0;
   }
   abce_mb_refdn(abce, &e->key);
@@ -204,5 +210,6 @@ int abce_sc_put_val_str_maybe_old(
   {
     mbold->typ = ABCE_T_N;
   }
+  abce_cpop(abce);
   return ret;
 }

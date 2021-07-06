@@ -183,6 +183,18 @@ static inline int64_t abce_cache_add(struct abce *abce, const struct abce_mb *mb
 }
 
 
+static inline int abce_cpop(struct abce *abce)
+{
+  struct abce_mb *mb;
+  if (abce->csp == 0)
+  {
+    abce->err.code = ABCE_E_STACK_UNDERFLOW;
+    return -EOVERFLOW;
+  }
+  mb = &abce->cstackbase[--abce->csp];
+  abce_mb_refdn(abce, mb);
+  return 0;
+}
 static inline int abce_pop(struct abce *abce)
 {
   struct abce_mb *mb;
@@ -421,6 +433,30 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
   return 0;
 }
 
+static inline int abce_cpush_nil(struct abce *abce)
+{
+  if (abce_unlikely(abce->csp >= abce->cstacklimit))
+  {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_N;
+    return -EOVERFLOW;
+  }
+  abce->cstackbase[abce->csp].typ = ABCE_T_N;
+  abce->csp++;
+  return 0;
+}
+static inline int abce_cpush_mb(struct abce *abce, const struct abce_mb *mb)
+{
+  if (abce_unlikely(abce->csp >= abce->cstacklimit))
+  {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    return -EOVERFLOW;
+  }
+  abce->cstackbase[abce->csp] = abce_mb_refup(abce, mb);
+  abce->csp++;
+  return 0;
+}
 static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))
@@ -430,6 +466,24 @@ static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp] = abce_mb_refup(abce, mb);
+  abce->sp++;
+  return 0;
+}
+static inline int abce_push_c(struct abce *abce)
+{
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_N;
+    return -EOVERFLOW;
+  }
+  if (abce_unlikely(abce->csp == 0))
+  {
+    abce->err.code = ABCE_E_STACK_UNDERFLOW;
+    abce->err.mb.typ = ABCE_T_N;
+    return -EOVERFLOW; // FIXME UNDERFLOW
+  }
+  abce->stackbase[abce->sp] = abce_mb_refup(abce, &abce->cstackbase[abce->csp-1]);
   abce->sp++;
   return 0;
 }
@@ -624,20 +678,20 @@ abce_mb_refuparea(struct abce *abce, struct abce_mb_area *mba,
   return mb;
 }
 
-struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz);
+struct abce_mb *abce_mb_cpush_create_string(struct abce *abce, const char *str, size_t sz);
 
-struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz);
+struct abce_mb *abce_mb_cpush_create_string_to_be_filled(struct abce *abce, size_t sz);
 
-struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,
+struct abce_mb *abce_mb_cpush_concat_string(struct abce *abce, const char *str1, size_t sz1,
                                      const char *str2, size_t sz2);
 
-struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str1, size_t sz1,
+struct abce_mb *abce_mb_cpush_rep_string(struct abce *abce, const char *str1, size_t sz1,
                                   size_t cnt);
 
-static inline struct abce_mb
-abce_mb_create_string_nul(struct abce *abce, const char *str)
+static inline struct abce_mb *
+abce_mb_cpush_create_string_nul(struct abce *abce, const char *str)
 {
-  return abce_mb_create_string(abce, str, strlen(str));
+  return abce_mb_cpush_create_string(abce, str, strlen(str));
 }
 
 static inline uint32_t abce_str_hash(const char *str)
@@ -939,9 +993,26 @@ static inline size_t abce_next_highest_power_of_2(size_t x)
   return x;
 }
 
+// Only for internal use!
 struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
-                                      const struct abce_mb *parent, int holey);
+                                     const struct abce_mb *parent, int holey);
 
+// RFE move to C file?
+static inline struct abce_mb *abce_mb_cpush_create_scope(struct abce *abce, size_t capacity,
+                                           const struct abce_mb *parent, int holey)
+{
+  struct abce_mb mb = abce_mb_create_scope(abce, capacity, parent, holey);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
+}
+
+// Only for internal use!
 static inline struct abce_mb abce_mb_create_scope_noparent(struct abce *abce, size_t capacity)
 {
   return abce_mb_create_scope(abce, capacity, NULL, 0);
@@ -1109,13 +1180,13 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
   return abce_fetch_i_tail(ophi, ins, abce, addcode, addsz);
 }
 
-struct abce_mb abce_mb_create_tree(struct abce *abce);
+struct abce_mb *abce_mb_cpush_create_tree(struct abce *abce);
 
-struct abce_mb abce_mb_create_pb(struct abce *abce);
+struct abce_mb *abce_mb_cpush_create_pb(struct abce *abce);
 
-struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz);
+struct abce_mb *abce_mb_cpush_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz);
 
-struct abce_mb abce_mb_create_array(struct abce *abce);
+struct abce_mb *abce_mb_cpush_create_array(struct abce *abce);
 
 int
 abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz);

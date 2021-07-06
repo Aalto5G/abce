@@ -229,9 +229,10 @@ void abce_mb_do_arearefdn(struct abce *abce, struct abce_mb_area **mba, enum abc
 
 int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
 {
-  struct abce_mb mb;
+  struct abce_mb *mb;
   uint32_t hashval, hashloc;
   struct abce_const_str_len key = {.str = str, .len = len};
+  int64_t ret;
   struct abce_rb_tree_node *n;
 
   hashval = abce_str_len_hash(&key);
@@ -245,18 +246,20 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   {
     return -EOVERFLOW;
   }
-  mb = abce_mb_create_string(abce, str, len);
-  if (mb.typ == ABCE_T_N)
+  mb = abce_mb_cpush_create_string(abce, str, len);
+  if (mb == NULL)
   {
     return -ENOMEM;
   }
-  mb.u.area->u.str.locidx = abce->cachesz;
-  abce->cachebase[abce->cachesz++] = mb;
-  if (abce_rb_tree_nocmp_insert_nonexist(&abce->strcache[hashloc], abce_str_cache_cmp_sym, NULL, &mb.u.area->u.str.node) != 0)
+  mb->u.area->u.str.locidx = abce->cachesz;
+  abce->cachebase[abce->cachesz++] = abce_mb_refup(abce, mb);
+  if (abce_rb_tree_nocmp_insert_nonexist(&abce->strcache[hashloc], abce_str_cache_cmp_sym, NULL, &mb->u.area->u.str.node) != 0)
   {
     abort();
   }
-  return mb.u.area->u.str.locidx;
+  ret = mb->u.area->u.str.locidx;
+  abce_cpop(abce);
+  return ret;
 }
 
 #ifdef WITH_LUA

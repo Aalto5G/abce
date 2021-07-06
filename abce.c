@@ -160,6 +160,10 @@ void abce_compact(struct abce *abce)
             abce->sp * sizeof(struct abce_mb),
             abce->stacklimit * sizeof(struct abce_mb),
             &abce->map_baton);
+  abce->map(abce->cstackbase,
+            abce->csp * sizeof(struct abce_mb),
+            abce->cstacklimit * sizeof(struct abce_mb),
+            &abce->map_baton);
   abce->map(abce->gcblockbase,
             abce->gcblocksz * sizeof(struct abce_mb),
             abce->gcblockcap * sizeof(struct abce_mb),
@@ -207,6 +211,8 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->userdata = NULL;
   abce->stacklimit = 1024*1024;
   abce->stackbase = abce_alloc_stack(abce, abce->stacklimit);
+  abce->cstacklimit = 8*1024;
+  abce->cstackbase = abce_alloc_stack(abce, abce->cstacklimit);
   abce->gcblockcap = 1024*1024;
   abce->gcblocksz = 0;
   abce->scratchstart = abce->gcblockcap;
@@ -215,6 +221,7 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->btsz = 0;
   abce->btbase = abce_alloc_stack(abce, abce->btcap);
   abce->sp = 0;
+  abce->csp = 0;
   abce->bp = 0;
   abce->ip = 0;
   abce->bytecodecap = 32*1024*1024;
@@ -476,6 +483,10 @@ void abce_check_heap(struct abce *abce)
   {
     abce_check_heap_object(abce, stackbase, &abce->stackbase[i]);
   }
+  for (i = 0; i < abce->csp; i++)
+  {
+    abce_check_heap_object(abce, stackbase, &abce->cstackbase[i]);
+  }
   for (i = 0; i < abce->cachesz; i++)
   {
     abce_check_heap_object(abce, stackbase, &abce->cachebase[i]);
@@ -545,6 +556,10 @@ void abce_gc(struct abce *abce)
   for (i = 0; i < abce->sp; i++)
   {
     abce_mark_mb(abce, &abce->stackbase[i], stackbase, &stackidx, stackcap);
+  }
+  for (i = 0; i < abce->csp; i++)
+  {
+    abce_mark_mb(abce, &abce->cstackbase[i], stackbase, &stackidx, stackcap);
   }
   for (i = 0; i < abce->cachesz; i++)
   {
@@ -708,7 +723,12 @@ void abce_free(struct abce *abce)
   {
     abce_mb_refdn(abce, &abce->stackbase[i]);
   }
+  for (i = 0; i < abce->csp; i++)
+  {
+    abce_mb_refdn(abce, &abce->cstackbase[i]);
+  }
   abce->sp = 0;
+  abce->csp = 0;
 
   abce_err_free(abce, &abce->err);
 
@@ -718,6 +738,9 @@ void abce_free(struct abce *abce)
   abce_free_stack(abce, abce->stackbase, abce->stacklimit);
   abce->stackbase = NULL;
   abce->stacklimit = 0;
+  abce_free_stack(abce, abce->cstackbase, abce->cstacklimit);
+  abce->cstackbase = NULL;
+  abce->cstacklimit = 0;
   abce_free_bcode(abce, abce->bytecode, abce->bytecodecap);
   abce->bytecode = NULL;
   abce->bytecodecap = 0;
@@ -755,6 +778,18 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
   abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
 }
+struct abce_mb *abce_mb_cpush_concat_string(struct abce *abce, const char *str1, size_t sz1, const char *str2, size_t sz2)
+{
+  struct abce_mb mb = abce_mb_concat_string(abce, str1, sz1, str2, sz2);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
+}
 
 struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz, size_t rep)
 {
@@ -781,6 +816,18 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
   abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
 }
+struct abce_mb *abce_mb_cpush_rep_string(struct abce *abce, const char *str, size_t sz, size_t rep)
+{
+  struct abce_mb mb = abce_mb_rep_string(abce, str, sz, rep);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
+}
 
 struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz)
 {
@@ -804,6 +851,18 @@ struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz)
   abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
 }
+struct abce_mb *abce_mb_cpush_create_string_to_be_filled(struct abce *abce, size_t sz)
+{
+  struct abce_mb mb = abce_mb_create_string_to_be_filled(abce, sz);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
+}
 
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
 {
@@ -826,6 +885,18 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
   mb.u.area = mba;
   abce_setup_mb_for_gc(abce, mba, ABCE_T_S);
   return mb;
+}
+struct abce_mb *abce_mb_cpush_create_string(struct abce *abce, const char *str, size_t sz)
+{
+  struct abce_mb mb = abce_mb_create_string(abce, str, sz);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
 }
 
 struct abce_mb abce_mb_create_pb(struct abce *abce)
@@ -853,6 +924,18 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
   mb.u.area = mba;
   abce_setup_mb_for_gc(abce, mba, ABCE_T_PB);
   return mb;
+}
+struct abce_mb *abce_mb_cpush_create_pb(struct abce *abce)
+{
+  struct abce_mb mb = abce_mb_create_pb(abce);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
 }
 
 struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz)
@@ -886,6 +969,18 @@ struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, si
   abce_setup_mb_for_gc(abce, mba, ABCE_T_PB);
   return mb;
 }
+struct abce_mb *abce_mb_cpush_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz)
+{
+  struct abce_mb mb = abce_mb_create_pb_from_buf(abce, buf, sz);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
+}
 
 struct abce_mb abce_mb_create_tree(struct abce *abce)
 {
@@ -906,6 +1001,18 @@ struct abce_mb abce_mb_create_tree(struct abce *abce)
   mb.u.area = mba;
   abce_setup_mb_for_gc(abce, mba, ABCE_T_T);
   return mb;
+}
+struct abce_mb *abce_mb_cpush_create_tree(struct abce *abce)
+{
+  struct abce_mb mb = abce_mb_create_tree(abce);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
 }
 
 struct abce_mb abce_mb_create_array(struct abce *abce)
@@ -933,6 +1040,18 @@ struct abce_mb abce_mb_create_array(struct abce *abce)
   mb.u.area = mba;
   abce_setup_mb_for_gc(abce, mba, ABCE_T_A);
   return mb;
+}
+struct abce_mb *abce_mb_cpush_create_array(struct abce *abce)
+{
+  struct abce_mb mb = abce_mb_create_array(abce);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  abce_cpush_mb(abce, &mb);
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
 }
 
 int abce_mb_array_append_grow(struct abce *abce, struct abce_mb *mb)
