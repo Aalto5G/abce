@@ -111,6 +111,7 @@ int abce_sc_put_val_str(
                                       abce_str_cmp_sym, NULL, &e->n);
   if (ret == 0)
   {
+    abce_cpop(abce);
     return 0;
   }
   abce_mb_refdn(abce, &e->key);
