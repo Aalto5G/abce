@@ -163,21 +163,20 @@ const char *abceapi_getstr(struct abce *abce, int stackidx, size_t *len)
   int res;
   const char *resbuf;
   struct abce_err err_old = abce->err;
-  struct abce_mb mb;
-  res = abce_getmb(&mb, abce, stackidx) == 0;
+  struct abce_mb *mb;
+  res = abce_getmbptr(&mb, abce, stackidx) == 0;
   if (!res)
   {
     abce->err = err_old;
     return NULL;
   }
-  if (mb.typ != ABCE_T_S)
+  if (mb->typ != ABCE_T_S)
   {
     abce->err = err_old;
     return NULL;
   }
-  *len = mb.u.area->u.str.size;
-  resbuf = mb.u.area->u.str.buf;
-  abce_mb_refdn(abce, &mb);
+  *len = mb->u.area->u.str.size;
+  resbuf = mb->u.area->u.str.buf;
   abce->err = err_old;
   return resbuf;
 }
@@ -186,21 +185,20 @@ char *abceapi_getpbstr(struct abce *abce, int stackidx, size_t *len)
   int res;
   char *resbuf;
   struct abce_err err_old = abce->err;
-  struct abce_mb mb;
-  res = abce_getmb(&mb, abce, stackidx) == 0;
+  struct abce_mb *mb;
+  res = abce_getmbptr(&mb, abce, stackidx) == 0;
   if (!res)
   {
     abce->err = err_old;
     return NULL;
   }
-  if (mb.typ != ABCE_T_PB)
+  if (mb->typ != ABCE_T_PB)
   {
     abce->err = err_old;
     return NULL;
   }
-  *len = mb.u.area->u.pb.size;
-  resbuf = mb.u.area->u.pb.buf;
-  abce_mb_refdn(abce, &mb);
+  *len = mb->u.area->u.pb.size;
+  resbuf = mb->u.area->u.pb.buf;
   abce->err = err_old;
   return resbuf;
 }
@@ -297,15 +295,14 @@ int abceapi_pushstack(struct abce *abce, int stackidx)
 {
   int res;
   struct abce_err err_old = abce->err;
-  struct abce_mb mb;
-  res = abce_getmb(&mb, abce, stackidx) == 0;
+  struct abce_mb *mb;
+  res = abce_getmbptr(&mb, abce, stackidx) == 0;
   if (!res)
   {
     abce->err = err_old;
     return res;
   }
-  res = abce_push_mb(abce, &mb);
-  abce_mb_refdn(abce, &mb);
+  res = abce_push_mb(abce, mb);
   abce->err = err_old;
   return res;
 }
@@ -355,20 +352,19 @@ size_t abceapi_getarraylen(struct abce *abce, int stackidx)
   int res;
   size_t ressz;
   struct abce_err err_old = abce->err;
-  struct abce_mb mb;
-  res = abce_getmb(&mb, abce, stackidx) == 0;
+  struct abce_mb *mb;
+  res = abce_getmbptr(&mb, abce, stackidx) == 0;
   if (!res)
   {
     abce->err = err_old;
     return (size_t)-1;
   }
-  if (mb.typ != ABCE_T_A)
+  if (mb->typ != ABCE_T_A)
   {
     abce->err = err_old;
     return (size_t)-1;
   }
-  ressz = mb.u.area->u.ar.size;
-  abce_mb_refdn(abce, &mb);
+  ressz = mb->u.area->u.ar.size;
   abce->err = err_old;
   return ressz;
 }
@@ -377,20 +373,19 @@ size_t abceapi_gettreesize(struct abce *abce, int stackidx)
   int res;
   size_t ressz;
   struct abce_err err_old = abce->err;
-  struct abce_mb mb;
-  res = abce_getmb(&mb, abce, stackidx) == 0;
+  struct abce_mb *mb;
+  res = abce_getmbptr(&mb, abce, stackidx) == 0;
   if (!res)
   {
     abce->err = err_old;
     return (size_t)-1;
   }
-  if (mb.typ != ABCE_T_T)
+  if (mb->typ != ABCE_T_T)
   {
     abce->err = err_old;
     return (size_t)-1;
   }
-  ressz = mb.u.area->u.tree.sz;
-  abce_mb_refdn(abce, &mb);
+  ressz = mb->u.area->u.tree.sz;
   abce->err = err_old;
   return ressz;
 }

@@ -320,7 +320,8 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
   size_t i, len;
   int typ = lua_type(lua, idx);
   const char *str;
-  struct abce_mb mb;
+  //struct abce_mb mb;
+  struct abce_mb *mbptr;
   switch (typ)
   {
     case LUA_TNIL:
@@ -343,16 +344,16 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
       return;
     case LUA_TSTRING:
       str = lua_tolstring(lua, idx, &len);
-      mb = abce_mb_create_string(abce, str, len);
-      if (mb.typ == ABCE_T_N)
+      mbptr = abce_mb_cpush_create_string(abce, str, len);
+      if (mbptr->typ == ABCE_T_N)
       {
         abort();
       }
-      if (abce_push_mb(abce, &mb) != 0)
+      if (abce_push_mb(abce, mbptr) != 0)
       {
         abort();
       }
-      abce_mb_refdn(abce, &mb);
+      abce_mb_cpop(abce);
       return;
     case LUA_TTABLE:
 #if LUA_VERSION_NUM >= 502
@@ -362,45 +363,44 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
 #endif
       if (len)
       {
-        mb = abce_mb_create_array(abce);
-        if (mb.typ == ABCE_T_N)
+        mbptr = abce_mb_cpush_create_array(abce);
+        if (mbptr->typ == ABCE_T_N)
         {
           abort();
         }
-        if (abce_push_mb(abce, &mb) != 0)
+        if (abce_push_mb(abce, mbptr) != 0)
         {
           abort();
         }
         for (i = 0; i < len; i++)
         {
-          struct abce_mb mb2;
+          struct abce_mb *mb2ptr;
           lua_pushnumber(lua, i + 1);
           lua_gettable(lua, (idx>=0)?idx:(idx-1));
           mb_from_lua(lua, abce, -1);
-          if (abce_getmb(&mb2, abce, -1) != 0)
+          if (abce_getmbptr(&mb2ptr, abce, -1) != 0)
           {
             abort();
           }
-          if (abce_mb_array_append(abce, &mb, &mb2) != 0)
+          if (abce_mb_array_append(abce, &mb, mb2ptr) != 0)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mb2);
           abce_pop(abce);
           lua_pop(lua, 1);
         }
-        abce_mb_refdn(abce, &mb);
+	abce_cpop(abce);
         return;
       }
       else
       {
         int empty = 1;
-        mb = abce_mb_create_tree(abce);
-        if (mb.typ == ABCE_T_N)
+        mbptr = abce_mb_cpush_create_tree(abce);
+        if (mbptr->typ == ABCE_T_N)
         {
           abort();
         }
-        if (abce_push_mb(abce, &mb) != 0)
+        if (abce_push_mb(abce, mbptr) != 0)
         {
           abort();
         }
@@ -409,41 +409,40 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
         {
           size_t l;
           const char *s;
-          struct abce_mb mbkey, mbval;
+          struct abce_mb *mbkeyptr, *mbvalptr;
 
           // Need to push it temporarily to stack top so that lua_tolstring
           // doesn't modify it in-place.
           lua_pushvalue(lua, -2);
           s = lua_tolstring(lua, -1, &l);
-          mbkey = abce_mb_create_string(abce, s, l);
+          mbkeyptr = abce_mb_cpush_create_string(abce, s, l);
           lua_pop(lua, 1);
 
           empty = 0;
-          if (mbkey.typ == ABCE_T_N)
+          if (mbkeyptr->typ == ABCE_T_N)
           {
             abort();
           }
-          if (abce_push_mb(abce, &mbkey) != 0)
+          if (abce_push_mb(abce, mbkeyptr) != 0)
           {
             abort();
           }
           mb_from_lua(lua, abce, -1);
-          if (abce_getmb(&mbval, abce, -1) != 0)
+          if (abce_getmbptr(&mbvalptr, abce, -1) != 0)
           {
             abort();
           }
-          if (abce_tree_set_str(abce, &mb, &mbkey, &mbval) != 0)
+          if (abce_tree_set_str(abce, mbptr, mbkeyptr, mbvalptr) != 0)
           {
             abort();
           }
-          abce_mb_refdn(abce, &mbkey);
+	  abce_cpop(abce);
           abce_pop(abce);
-          abce_mb_refdn(abce, &mbval);
           abce_pop(abce);
           lua_pop(lua, 1);
         }
         //lua_pop(lua, 1); // FIXME needed? NO!!!! THIS IS BAD!!!!!
-        abce_mb_refdn(abce, &mb);
+        abce_cpop(abce);
         if (empty)
         {
           abce_pop(abce);
@@ -527,13 +526,11 @@ int lua_makedyncall(lua_State *lua)
 
   abce->ip = tmpip;
 
-  struct abce_mb mbres;
+  struct abce_mb *mbresptr;
 
-  abce_getmb(&mbres, abce, -1);
+  abce_getmbptr(&mbresptr, abce, -1);
 
-  mb_to_lua(lua, &mbres);
-
-  abce_mb_refdn(abce, &mbres);
+  mb_to_lua(lua, mbresptr);
 
   abce_pop(abce);
 
@@ -605,13 +602,11 @@ int lua_makelexcall(lua_State *lua)
 
   abce->ip = tmpip;
 
-  struct abce_mb mbres;
+  struct abce_mb *mbresptr;
 
-  abce_getmb(&mbres, abce, -1);
+  abce_getmbptr(&mbresptr, abce, -1);
 
-  mb_to_lua(lua, &mbres);
-
-  abce_mb_refdn(abce, &mbres);
+  mb_to_lua(lua, mbresptr);
 
   abce_pop(abce);
 

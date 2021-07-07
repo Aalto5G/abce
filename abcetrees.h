@@ -74,6 +74,7 @@ abce_tree_set_str(struct abce *abce,
   if (e == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
+    abce_mb_refdn(abce, &abce->err.mb);
     abce->err.mb = abce_mb_refup(abce, mbkey);
     abce->err.val2 = sizeof(*e);
     return -ENOMEM;

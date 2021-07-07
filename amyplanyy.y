@@ -191,6 +191,8 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     //abce_push_c(get_abce(amyplanyy)); // FIXME required? only for GC?
 
     oldscope = get_abce(amyplanyy)->dynscope;
+    abce_cpush_mb(get_abce(amyplanyy), &oldscope);
+    abce_mb_refdn(get_abce(amyplanyy), &oldscope);
     oldscopeidx = oldscope.u.area->u.sc.locidx;
     get_abce(amyplanyy)->dynscope = abce_mb_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);
 
@@ -206,7 +208,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     abce_scope_set_userdata(&get_abce(amyplanyy)->dynscope, ud);
     //abce_pop(get_abce(amyplanyy)); // FIXME required? only for GC?
     abce_cpop(get_abce(amyplanyy));
-    abce_mb_refdn(get_abce(amyplanyy), &oldscope);
+    abce_cpop(get_abce(amyplanyy));
     $<d>$ = oldscopeidx;
   }
   free($3);

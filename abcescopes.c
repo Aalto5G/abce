@@ -121,6 +121,9 @@ int abce_sc_put_val_str(
   return ret;
 }
 
+// FIXME mbold dangerous due to fragility
+// Caller must immediately make mbold visible to abce before allocating
+// any abce memory.
 int abce_sc_put_val_str_maybe_old(
   struct abce *abce,
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval,
