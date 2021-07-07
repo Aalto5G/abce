@@ -61,10 +61,15 @@ static inline void abce_maybeabort()
 #define GETBP(idx) GETORVERIFY1(abce_getbp, idx)
 #define GETIP(idx) GETORVERIFY1(abce_getip, idx)
 #define GETMB(mb, idx) GETGENERIC(abce_getmb, mb, idx)
+#define GETMBPTR(mb, idx) GETGENERIC(abce_getmbptr, mb, idx)
 #define GETMBSC(mb, idx) GETGENERIC(abce_getmbsc, mb, idx)
+#define GETMBSCPTR(mb, idx) GETGENERIC(abce_getmbscptr, mb, idx)
 #define GETMBAR(mb, idx) GETGENERIC(abce_getmbar, mb, idx)
+#define GETMBARPTR(mb, idx) GETGENERIC(abce_getmbarptr, mb, idx)
 #define GETMBPB(mb, idx) GETGENERIC(abce_getmbpb, mb, idx)
+#define GETMBPBPTR(mb, idx) GETGENERIC(abce_getmbpbptr, mb, idx)
 #define GETMBSTR(mb, idx) GETGENERIC(abce_getmbstr, mb, idx)
+#define GETMBSTRPTR(mb, idx) GETGENERIC(abce_getmbstrptr, mb, idx)
 
 #if POPABORTS
 #define POP() \

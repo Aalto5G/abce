@@ -387,6 +387,26 @@ static inline int abce_getmb(struct abce_mb *mb, struct abce *abce, int64_t idx)
   *mb = abce_mb_refup(abce, mbptr);
   return 0;
 }
+static inline int abce_getmbtypedptr(struct abce_mb **mb, struct abce *abce, int64_t idx, enum abce_type typ)
+{
+  struct abce_mb *mbptr;
+  size_t addr;
+  if (abce_calc_addr(&addr, abce, idx) != 0)
+  {
+    return -EOVERFLOW;
+  }
+  mbptr = &abce->stackbase[addr];
+  if (abce_unlikely(mbptr->typ != typ))
+  {
+    abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
+    abce_mb_refdn_noinline(abce, &abce->err.mb);
+    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
+    abce->err.val2 = idx;
+    return -EINVAL;
+  }
+  *mb = mbptr;
+  return 0;
+}
 // FIXME dangerous, fragile
 static inline int abce_getmbtyped(struct abce_mb *mb, struct abce *abce, int64_t idx, enum abce_type typ)
 {
@@ -413,20 +433,36 @@ static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t id
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_SC);
 }
+static inline int abce_getmbscptr(struct abce_mb **mb, struct abce *abce, int64_t idx)
+{
+  return abce_getmbtypedptr(mb, abce, idx, ABCE_T_SC);
+}
 // FIXME dangerous, fragile
 static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_A);
+}
+static inline int abce_getmbarptr(struct abce_mb **mb, struct abce *abce, int64_t idx)
+{
+  return abce_getmbtypedptr(mb, abce, idx, ABCE_T_A);
 }
 // FIXME dangerous, fragile
 static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_PB);
 }
+static inline int abce_getmbpbptr(struct abce_mb **mb, struct abce *abce, int64_t idx)
+{
+  return abce_getmbtypedptr(mb, abce, idx, ABCE_T_PB);
+}
 // FIXME dangerous, fragile
 static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_S);
+}
+static inline int abce_getmbstrptr(struct abce_mb **mb, struct abce *abce, int64_t idx)
+{
+  return abce_getmbtypedptr(mb, abce, idx, ABCE_T_S);
 }
 static inline int abce_verifyaddr(struct abce *abce, int64_t idx)
 {
