@@ -408,18 +408,22 @@ static inline int abce_getmbtyped(struct abce_mb *mb, struct abce *abce, int64_t
   *mb = abce_mb_refup(abce, mbptr);
   return 0;
 }
+// FIXME dangerous, fragile
 static inline int abce_getmbsc(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_SC);
 }
+// FIXME dangerous, fragile
 static inline int abce_getmbar(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_A);
 }
+// FIXME dangerous, fragile
 static inline int abce_getmbpb(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_PB);
 }
+// FIXME dangerous, fragile
 static inline int abce_getmbstr(struct abce_mb *mb, struct abce *abce, int64_t idx)
 {
   return abce_getmbtyped(mb, abce, idx, ABCE_T_S);
