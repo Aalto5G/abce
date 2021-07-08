@@ -621,7 +621,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -EINVAL;
       }
       GETMBSTR(&mbbase, -1);
-      if ((uint64_t)loc < 0 || (uint64_t)loc >= mbbase.u.area->u.str.size)
+      if ((int64_t)loc < 0 || (uint64_t)loc >= mbbase.u.area->u.str.size)
       {
         abce->err.code = ABCE_E_INDEX_OOB;
         abce->err.mb.typ = ABCE_T_D;
@@ -2086,7 +2086,7 @@ outpbset:
           size_t addrm1;
           GETDBL(&loc, -1);
           POP();
-          if (loc != (double)(uint64_t)loc)
+          if (loc != (double)(int64_t)loc)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -2115,7 +2115,7 @@ outpbset:
           double loc;
           GETDBL(&loc, -1);
           POP();
-          if (loc != (double)(uint64_t)loc)
+          if (loc != (double)(int64_t)loc)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -2137,7 +2137,7 @@ outpbset:
           double loc;
           size_t addr;
           GETDBL(&loc, -2);
-          if (loc != (double)(uint64_t)loc)
+          if (loc != (double)(int64_t)loc)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
