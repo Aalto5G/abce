@@ -110,6 +110,7 @@ struct amyplan_csnippet luaSnippet = {
 @continue return CONTINUE;
 @return  return RETURN;
 @append   return APPEND;
+@dictnext return DICTNEXT;
 @strstr return STRSTR;
 @strrep return STRREP;
 @strlistjoin return STRLISTJOIN;

@@ -78,6 +78,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token APPEND APPEND_LIST
 %token RETURN PRINT PERIOD
 
+%token DICTNEXT
 %token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP
 %token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
 %token STRWORD STRWORDCNT STRWORDLIST
@@ -1534,6 +1535,25 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTR); }
 | STRREP OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRREP); }
+| DICTNEXT OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -1);
+    // Stack: dict | key | (-1)
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTNEXT_SAFE);
+    // Stack: dict | nextkey | nextval
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+    // Stack: dict | nextkey
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -2);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXCHANGE_TOP);
+    // Stack: nextkey | dict
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+    // Stack: nextkey
+  }
+}
 | STRLISTJOIN OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLISTJOIN); }
 | STRAPPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN
