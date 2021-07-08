@@ -1,7 +1,7 @@
 .SUFFIXES:
 
 SRC_LIB := amyplanyyutils.c memblock.c abcerbtree.c amyplanlocvarctx.c engine.c abcestring.c abcetrees.c abcescopes.c abce.c abceapi.c safemode.c abcejmalloc.c
-SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c ret.c breaktest.c gctest.c reftest.c fortest.c iftest.c dumptest.c shortcut.c
+SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c ret.c breaktest.c gctest.c reftest.c fortest.c iftest.c dumptest.c shortcut.c dictnext.c
 
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
@@ -47,7 +47,7 @@ DEPGEN := $(patsubst %.c,%.d,$(GEN))
 
 .PHONY: all wc wclib wcparser
 
-all: amyplantest main locvartest treetest fiboefftest fibonaccitest bttest ret breaktest gctest reftest fortest iftest dumptest shortcut
+all: amyplantest main locvartest treetest fiboefftest fibonaccitest bttest ret breaktest gctest reftest fortest iftest dumptest shortcut dictnext
 
 wc:
 	wc -l $(LEX) $(YACC) $(SRC_CPP) $(SRC) $(filter-out %.lex.h %.tab.h,$(wildcard *.h))
@@ -112,6 +112,9 @@ dumptest: dumptest.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 shortcut: shortcut.o libabce.a Makefile $(LUALIB)
+	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
+
+dictnext: dictnext.o libabce.a Makefile $(LUALIB)
 	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm -ldl
 
 fibonaccitest: fibonaccitest.o libabce.a Makefile $(LUALIB)

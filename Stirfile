@@ -16,7 +16,7 @@ $(SRC_LIB) = ["amyplanyyutils.c", "memblock.c", "abcerbtree.c", \
 $(SRC_PROG) = ["gctest.c", "reftest.c", "ret.c", "breaktest.c", "main.c", \
                "locvartest.c", "treetest.c", "amyplantest.c", "fiboefftest.c", \
                "fortest.c", "iftest.c", "dumptest.c", "fibonaccitest.c", \
-               "bttest.c", "shortcut.c"]
+               "bttest.c", "shortcut.c", "dictnext.c"]
 $(LEX_LIB) = ["amyplanyy.l"]
 
 # Here starts the portions you probably don't want to modify
