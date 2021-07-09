@@ -70,7 +70,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token FUNCTION ENDFUNCTION LOCVAR
 
 %token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
-%token FOR ENDFOR
+%token FORDICT FOR ENDFOR
 
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
@@ -593,6 +593,95 @@ statement:
   maybe_elseifs
   maybe_else
   ENDIF
+| FORDICT VARREF_LITERAL COMMA VARREF_LITERAL OPEN_PAREN expr CLOSE_PAREN NEWLINE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    struct amyplan_locvarctx *ctx;
+    size_t locvarkey;
+    size_t locvarval;
+    locvarkey = amyplan_locvarctx_search_rec(amyplanyy->ctx, $2);
+    if (locvarkey < 0)
+    {
+      printf("var %s not found\n", $2);
+      YYABORT;
+    }
+    locvarval = amyplan_locvarctx_search_rec(amyplanyy->ctx, $4);
+    if (locvarval < 0)
+    {
+      printf("var %s not found\n", $4);
+      YYABORT;
+    }
+
+    //amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    //amyplanyy_add_double(amyplanyy, -50); // to be overwritten
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NIL); // key
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NIL); // val
+
+    size_t addressof_iter = get_abce(amyplanyy)->bytecodesz;
+  //iter:
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP); // pop val
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -1);
+
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTNEXT_SAFE);
+
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -2);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TYPE);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, ABCE_T_N);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_NE);
+    size_t addressof_break = get_abce(amyplanyy)->bytecodesz;
+  //midpoint:
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    size_t tomodify = get_abce(amyplanyy)->bytecodesz;
+    amyplanyy_add_double(amyplanyy, -50); // to be overwritten
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_IF_NOT_JMP);
+
+    // set key and val to the named variables
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, locvarval);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -2);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SET_STACK);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, locvarkey);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -3);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SET_STACK);
+
+    ctx =
+      amyplan_locvarctx_alloc(amyplanyy->ctx, 0, addressof_break, addressof_iter);
+    ctx->sz = 3;
+    if (ctx == NULL)
+    {
+      printf("Out of memory\n");
+      YYABORT;
+    }
+    amyplanyy->ctx = ctx;
+    $<d>$ = tomodify;
+  }
+}
+  bodylinescont
+  ENDFOR
+{
+  struct amyplan_locvarctx *ctx = amyplanyy->ctx->parent;
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+  amyplanyy_add_double(amyplanyy, amyplanyy->ctx->jmpaddr_continue);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JMP);
+//iterend:
+  amyplanyy_set_double(amyplanyy, $<d>9, get_abce(amyplanyy)->bytecodesz);
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP); // pop val
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP); // pop key
+  amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP); // pop dict ref
+
+  free(amyplanyy->ctx);
+  amyplanyy->ctx = ctx;
+}
 | FOR OPEN_PAREN statement COMMA
 {
   if (amyplanyy_do_emit(amyplanyy))

@@ -4,10 +4,19 @@
 char *str =
   "@function $test()\n"
   "  @locvar $dict = {\"a\": 1, \"c\": 3, \"b\": 2}\n"
+  "  @locvar $k = @nil\n"
+  "  @locvar $v = @nil\n"
   "  @dump(@dictnext($dict, @nil))\n"
   "  @dump(@dictnext($dict, \"a\"))\n"
   "  @dump(@dictnext($dict, \"b\"))\n"
   "  @dump(@dictnext($dict, \"c\"))\n"
+  "  @dump(\"Iter begin\")\n"
+  "  @fordict $k, $v ($dict)\n"
+  "    @dump(\"Pair:\")\n"
+  "    @dump($k)\n"
+  "    @dump($v)\n"
+  "  @endfor\n"
+  "  @dump(\"Iter end\")\n"
   "@endfunction\n";
 
 int main(int argc, char **argv)

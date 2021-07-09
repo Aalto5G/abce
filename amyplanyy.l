@@ -67,6 +67,7 @@ struct amyplan_csnippet luaSnippet = {
 @beginholeyscope return BEGINHOLEYSCOPE;
 @endscope return ENDSCOPE;
 @for      return FOR;
+@fordict  return FORDICT;
 @endfor   return ENDFOR;
 
 @         return AT;
