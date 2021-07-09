@@ -146,7 +146,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           mb_from_lua(mbsc.u.area->u.sc.lua, abce, -1);
           GETMB(&mberrstr, -1);
           abce->err.code = ABCE_E_LUA_ERR;
-          abce->err.mb = mberrstr;
+          abce_mb_errreplace_noinline(abce, mberrstr);
+	  abce_mb_refdn(abce, mberrstr);
           abce_pop(abce);
         } // otherwise it's error from nested call
         abce_pop(abce); // mbsc
@@ -178,7 +179,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (abce_unlikely(mbit.typ != ABCE_T_S))
       {
         abce->err.code = ABCE_E_EXPECT_STR;
-        abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+        abce_mb_errreplace_noinline(abce, &mbit);
         abce->err.val2 = -2;
         abce_mb_refdn(abce, &mbit);
         abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -190,7 +191,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (abce_unlikely(ptr == NULL))
       {
         abce->err.code = ABCE_E_SCOPEVAR_NOT_FOUND;
-        abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+        abce_mb_errreplace_noinline(abce, &mbit);
         abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
         abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
         return -ENOENT;
@@ -212,7 +213,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (abce_unlikely(mbit.typ != ABCE_T_S))
       {
         abce->err.code = ABCE_E_EXPECT_STR;
-        abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+        abce_mb_errreplace_noinline(abce, &mbit);
         abce->err.val2 = -2;
         abce_mb_refdn(abce, &mbit);
         abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -947,7 +948,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce_mb_refdn(abce, &mbar);
           abce_mb_refdn(abce, &mbjoiner);
           abce->err.code = ABCE_E_EXPECT_STR;
-          abce->err.mb = abce_mb_refup(abce, mb);
+          abce_mb_errreplace_noinline(abce, mb);
           return -EINVAL;
         }
         if (i != 0)
@@ -1015,7 +1016,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           || str.u.area->u.str.size != strlen(str.u.area->u.str.buf))
       {
         abce->err.code = ABCE_E_NOT_A_NUMBER_STRING;
-        abce->err.mb = abce_mb_refup(abce, &str);
+        abce_mb_errreplace_noinline(abce, &str);
         abce_mb_refdn(abce, &str);
         return -EINVAL;
       }
@@ -1023,7 +1024,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (*endptr != '\0')
       {
         abce->err.code = ABCE_E_NOT_A_NUMBER_STRING;
-        abce->err.mb = abce_mb_refup(abce, &str);
+        abce_mb_errreplace_noinline(abce, &str);
         abce_mb_refdn(abce, &str);
         return -EINVAL;
       }
@@ -1190,7 +1191,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (abce_unlikely(mbold.typ != ABCE_T_A && mbold.typ != ABCE_T_T)) // FIXME T_PB
       {
         abce->err.code = ABCE_E_EXPECT_ARRAY_OR_TREE; // FIXME split
-        abce->err.mb = abce_mb_refup_noinline(abce, &mbold);
+        abce_mb_errreplace_noinline(abce, &mbold);
         abce_mb_refdn(abce, &mbold);
         return -EINVAL;
       }
@@ -1322,7 +1323,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (abce_unlikely(mboldkey.typ != ABCE_T_N && mboldkey.typ != ABCE_T_S))
       {
         abce->err.code = ABCE_E_TREE_ITER_NOT_STR_OR_NUL;
-        abce->err.mb = abce_mb_refup_noinline(abce, &mboldkey);
+        abce_mb_errreplace_noinline(abce, &mboldkey);
         abce_mb_refdn(abce, &mboldkey);
         ret = -EINVAL;
         break;
@@ -2295,7 +2296,8 @@ outpbset:
           if (abce_push_mb(abce, &mb) != 0)
           {
             abce->err.code = ABCE_E_STACK_OVERFLOW;
-            abce->err.mb = mb; // transfer of ref
+            abce_mb_errreplace_noinline(abce, &mb);
+	    abce_mb_refdn(abce, &mb);
             ret = -EOVERFLOW;
             break;
           }
@@ -2726,7 +2728,7 @@ outpbset:
           if (abce_unlikely(mbit.typ != ABCE_T_S))
           {
             abce->err.code = ABCE_E_EXPECT_STR;
-            abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+            abce_mb_errreplace_noinline(abce, &mbit);
             abce->err.val2 = -2;
             abce_mb_refdn(abce, &mbit);
             abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
@@ -2739,7 +2741,7 @@ outpbset:
           if (abce_unlikely(ptr == NULL))
           {
             abce->err.code = ABCE_E_SCOPEVAR_NOT_FOUND;
-            abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+            abce_mb_errreplace_noinline(abce, &mbit);
             abce_mb_refdn_typ(abce, &mbit, ABCE_T_S);
             abce_mb_refdn_typ(abce, &mbsc, ABCE_T_SC);
             ret = -ENOENT;
@@ -2762,7 +2764,7 @@ outpbset:
           if (abce_unlikely(mbit.typ != ABCE_T_S))
           {
             abce->err.code = ABCE_E_EXPECT_STR;
-            abce->err.mb = abce_mb_refup_noinline(abce, &mbit);
+            abce_mb_errreplace_noinline(abce, &mbit);
             abce->err.val2 = -2;
             ret = -EINVAL;
             abce_mb_refdn(abce, &mbit);
@@ -2785,7 +2787,7 @@ outpbset:
           if (abce_unlikely(abce_push_mb(abce, &abce->dynscope) != 0))
           {
             abce->err.code = ABCE_E_STACK_OVERFLOW;
-            abce->err.mb = abce_mb_refup_noinline(abce, &abce->dynscope);
+            abce_mb_errreplace_noinline(abce, &abce->dynscope);
             ret = -EOVERFLOW;
             break;
           }
@@ -2986,7 +2988,7 @@ outpbset:
           if (abce_unlikely(abce_tree_del_str(abce, &mbt, &mbstr) != 0))
           {
             abce->err.code = ABCE_E_TREE_ENTRY_NOT_FOUND;
-            abce->err.mb = abce_mb_refup_noinline(abce, &mbstr);
+            abce_mb_errreplace_noinline(abce, &mbstr);
             ret = -ENOENT;
             // No break: we want to call all refdn statements
           }

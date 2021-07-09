@@ -1119,6 +1119,18 @@ abce_mb_refdn_noinline(struct abce *abce, struct abce_mb *mb)
   abce_mb_refdn(abce, mb);
 }
 
+void
+abce_mb_refreplace_noinline(struct abce *abce, struct abce_mb *mbold, const struct abce_mb *mbnew)
+{
+  abce_mb_refdn(abce, mbold);
+  *mbold = abce_mb_refup(abce, mbnew);
+}
+void
+abce_mb_errreplace_noinline(struct abce *abce, const struct abce_mb *mbnew)
+{
+  abce_mb_refreplace(abce, &abce->err.mb, mbnew);
+}
+
 int
 abce_fetch_i_tail(uint8_t ophi, uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t addsz)
 {

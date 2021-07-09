@@ -170,6 +170,19 @@ abce_mb_refup(struct abce *abce, const struct abce_mb *mb)
   return *mb;
 }
 
+static inline void
+abce_mb_refreplace(struct abce *abce, struct abce_mb *mbold, const struct abce_mb *mbnew)
+{
+  abce_mb_refdn(abce, mbold);
+  *mbold = abce_mb_refup(abce, mbnew);
+}
+
+void
+abce_mb_refreplace_noinline(struct abce *abce, struct abce_mb *mbold, const struct abce_mb *mbnew);
+
+void
+abce_mb_errreplace_noinline(struct abce *abce, const struct abce_mb *mbnew);
+
 static inline int64_t abce_cache_add(struct abce *abce, const struct abce_mb *mb)
 {
   int64_t res;
@@ -249,8 +262,7 @@ static inline int abce_getboolean(int *b, struct abce *abce, int64_t idx)
   if (abce_unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
   {
     abce->err.code = ABCE_E_EXPECT_BOOL;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -270,8 +282,7 @@ static inline int abce_verifymb(struct abce *abce, int64_t idx, enum abce_type t
   if (abce_unlikely(mb->typ != typ))
   {
     abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -290,8 +301,7 @@ static inline int abce_getfunaddr(int64_t *paddr, struct abce *abce, int64_t idx
   if (abce_unlikely(mb->typ != ABCE_T_F))
   {
     abce->err.code = ABCE_E_EXPECT_FUNC;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -312,8 +322,7 @@ static inline int abce_getbp(struct abce *abce, int64_t idx)
   if (abce_unlikely(mb->typ != ABCE_T_BP))
   {
     abce->err.code = ABCE_E_EXPECT_BP;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -321,8 +330,7 @@ static inline int abce_getbp(struct abce *abce, int64_t idx)
   if (abce_unlikely(trial != mb->u.d))
   {
     abce->err.code = ABCE_E_REG_NOT_INT;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -344,8 +352,7 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
   {
     //printf("invalid typ: %d\n", mb->typ);
     abce->err.code = ABCE_E_EXPECT_IP;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -353,8 +360,7 @@ static inline int abce_getip(struct abce *abce, int64_t idx)
   if (abce_unlikely(trial != mb->u.d))
   {
     abce->err.code = ABCE_E_REG_NOT_INT;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -399,8 +405,7 @@ static inline int abce_getmbtypedptr(struct abce_mb **mb, struct abce *abce, int
   if (abce_unlikely(mbptr->typ != typ))
   {
     abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
+    abce_mb_errreplace_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -420,8 +425,7 @@ static inline int abce_getmbtyped(struct abce_mb *mb, struct abce *abce, int64_t
   if (abce_unlikely(mbptr->typ != typ))
   {
     abce->err.code = (enum abce_errcode)typ; // Same numbers valid for both
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mbptr);
+    abce_mb_errreplace_noinline(abce, mbptr);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -487,8 +491,7 @@ static inline int abce_getdbl(double *d, struct abce *abce, int64_t idx)
   if (abce_unlikely(mb->typ != ABCE_T_D && mb->typ != ABCE_T_B))
   {
     abce->err.code = ABCE_E_EXPECT_DBL;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = idx;
     return -EINVAL;
   }
@@ -513,8 +516,7 @@ static inline int abce_cpush_mb(struct abce *abce, const struct abce_mb *mb)
   if (abce_unlikely(abce->csp >= abce->cstacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     return -EOVERFLOW;
   }
   abce->cstackbase[abce->csp] = abce_mb_refup(abce, mb);
@@ -526,8 +528,7 @@ static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
-    abce_mb_refdn_noinline(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup_noinline(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     return -EOVERFLOW;
   }
   abce->stackbase[abce->sp] = abce_mb_refup(abce, mb);
