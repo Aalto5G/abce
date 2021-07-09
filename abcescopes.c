@@ -70,8 +70,7 @@ int abce_sc_replace_val_mb(
     return 0;
   }
   e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
-  abce_mb_refdn(abce, &e->val);
-  e->val = abce_mb_refup(abce, pval);
+  abce_mb_refreplace(abce, &e->val, pval);
   return 0;
 }
 

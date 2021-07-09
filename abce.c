@@ -1121,8 +1121,7 @@ abce_mb_refdn_noinline(struct abce *abce, struct abce_mb *mb)
 void
 abce_mb_refreplace_noinline(struct abce *abce, struct abce_mb *mbold, const struct abce_mb *mbnew)
 {
-  abce_mb_refdn(abce, mbold);
-  *mbold = abce_mb_refup(abce, mbnew);
+  abce_mb_refreplace(abce, mbold, mbnew);
 }
 void
 abce_mb_errreplace_noinline(struct abce *abce, const struct abce_mb *mbnew)

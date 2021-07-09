@@ -66,8 +66,7 @@ abce_tree_set_str(struct abce *abce,
   }
   if (abce_tree_get_str(abce, &mbres, mbt, mbkey) == 0)
   {
-    abce_mb_refdn(abce, mbres);
-    *mbres = abce_mb_refup(abce, mbval);
+    abce_mb_refreplace(abce, mbres, mbval);
     return 0;
   }
   e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);

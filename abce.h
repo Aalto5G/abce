@@ -173,8 +173,23 @@ abce_mb_refup(struct abce *abce, const struct abce_mb *mb)
 static inline void
 abce_mb_refreplace(struct abce *abce, struct abce_mb *mbold, const struct abce_mb *mbnew)
 {
+  struct abce_mb mbtmp = abce_mb_refup(abce, mbnew);
+  /*
+   * Here we have to be careful. The only reason the pointer mbnew might
+   * be valid could be that something in mbold holds the only tracked
+   * reference to it. Thus, if we first refdn mbold and then refup mbnew,
+   * it could be mbnew has already become invalid. Now that we have
+   * up-referenced mbnew, after we down-reference mbold, it could be the
+   * only valid reference to mbnew is in mbtmp. This is not tracked by
+   * abce, so we can't allocate any memory after the refdn operation has
+   * been done, or else the garbage collector could run and become confused
+   * by an object nothing refers to but still has a positive reference
+   * count. Fortunately, we don't need to do any memory allocation after
+   * refdn, we can directly assign mbtmp to mbold, eliminating the dangerous
+   * situation.
+   */
   abce_mb_refdn(abce, mbold);
-  *mbold = abce_mb_refup(abce, mbnew);
+  *mbold = mbtmp;
 }
 
 void
@@ -221,6 +236,35 @@ static inline int abce_pop(struct abce *abce)
   return 0;
 }
 
+static inline int abce_calc_caddr(size_t *paddr, struct abce *abce, int64_t idx)
+{
+  int64_t addr;
+  if (idx < 0)
+  {
+    addr = abce->csp + idx;
+    if (abce_unlikely(addr >= abce->csp || addr < 0))
+    {
+      abce->err.code = ABCE_E_STACK_IDX_OOB;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = idx;
+      return -EOVERFLOW;
+    }
+  }
+  else
+  {
+    addr = idx;
+    if (abce_unlikely(addr >= abce->csp || addr < 0))
+    {
+      abce->err.code = ABCE_E_STACK_IDX_OOB;
+      abce->err.mb.typ = ABCE_T_D;
+      abce->err.mb.u.d = idx;
+      return -EOVERFLOW;
+    }
+  }
+  *paddr = addr;
+  return 0;
+}
+
 static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
 {
   size_t addr;
@@ -247,6 +291,34 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
     }
   }
   *paddr = addr;
+  return 0;
+}
+
+static inline int
+abce_mb_stackreplace(struct abce *abce, int64_t idx, const struct abce_mb *mbnew)
+{
+  size_t addr;
+  int ret;
+  ret = abce_calc_addr(&addr, abce, idx);
+  if (ret != 0)
+  {
+    return ret;
+  }
+  abce_mb_refreplace(abce, &abce->stackbase[addr], mbnew);
+  return 0;
+}
+
+static inline int
+abce_mb_cstackreplace(struct abce *abce, int64_t idx, const struct abce_mb *mbnew)
+{
+  size_t addr;
+  int ret;
+  ret = abce_calc_caddr(&addr, abce, idx);
+  if (ret != 0)
+  {
+    return ret;
+  }
+  abce_mb_refreplace(abce, &abce->cstackbase[addr], mbnew);
   return 0;
 }
 
