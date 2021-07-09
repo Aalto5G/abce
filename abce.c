@@ -1065,8 +1065,7 @@ int abce_mb_array_append_grow(struct abce *abce, struct abce_mb *mb)
   if (mbs2 == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
-    abce_mb_refdn(abce, &abce->err.mb);
-    abce->err.mb = abce_mb_refup(abce, mb);
+    abce_mb_errreplace_noinline(abce, mb);
     abce->err.val2 = new_cap*sizeof(*mb->u.area->u.ar.mbs);
     return -ENOMEM;
   }
