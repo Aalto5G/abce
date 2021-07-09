@@ -70,7 +70,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token FUNCTION ENDFUNCTION LOCVAR
 
 %token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
-%token FORDICT FOR ENDFOR
+%token FORDICT FORDICTPREV FOR ENDFOR
 
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
@@ -78,7 +78,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token APPEND APPEND_LIST
 %token RETURN PRINT PERIOD
 
-%token DICTNEXT
+%token DICTNEXT DICTPREV
 %token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP
 %token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
 %token STRWORD STRWORDCNT STRWORDLIST
@@ -99,6 +99,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 %type<d> value
 %type<d> lvalue
+%type<d> fordict
 %type<d> arglist
 %type<d> valuelistentry
 %type<d> maybe_arglist
@@ -593,7 +594,7 @@ statement:
   maybe_elseifs
   maybe_else
   ENDIF
-| FORDICT VARREF_LITERAL COMMA VARREF_LITERAL OPEN_PAREN expr CLOSE_PAREN NEWLINE
+| fordict VARREF_LITERAL COMMA VARREF_LITERAL OPEN_PAREN expr CLOSE_PAREN NEWLINE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -621,8 +622,14 @@ statement:
     size_t addressof_iter = get_abce(amyplanyy)->bytecodesz;
   //iter:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP); // pop val
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-    amyplanyy_add_double(amyplanyy, -1);
+    if ($1 != 0)
+    {
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_TRUE);
+    }
+    else
+    {
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE);
+    }
 
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTNEXT_SAFE);
 
@@ -965,6 +972,17 @@ varref_tail:
 | OPEN_BRACE AT CLOSE_BRACE
 {
   $$ = ABCE_OPCODE_PBLEN; // This is very special: CAN assign to length query
+}
+;
+
+fordict:
+  FORDICT
+{
+  $$ = 0;
+}
+| FORDICTPREV
+{
+  $$ = 1;
 }
 ;
 
@@ -1624,13 +1642,30 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTR); }
 | STRREP OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRREP); }
+| DICTPREV OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_TRUE);
+    // Stack: dict | key | bool
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTNEXT_SAFE);
+    // Stack: dict | nextkey | nextval
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+    // Stack: dict | nextkey
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -2);
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_EXCHANGE_TOP);
+    // Stack: nextkey | dict
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+    // Stack: nextkey
+  }
+}
 | DICTNEXT OPEN_PAREN expr COMMA expr CLOSE_PAREN
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-    amyplanyy_add_double(amyplanyy, -1);
-    // Stack: dict | key | (-1)
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE);
+    // Stack: dict | key | bool
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTNEXT_SAFE);
     // Stack: dict | nextkey | nextval
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);

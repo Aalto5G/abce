@@ -1313,10 +1313,11 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       struct abce_mb mboldkey, mbt;
       const struct abce_mb *mbreskey, *mbresval;
-      double dictidx;
+      int64_t dictidx = -1;
       int rettmp;
-      VERIFYMB(-1, ABCE_T_D);
-      GETDBL(&dictidx, -1);
+      int prev = 0;
+      VERIFYMB(-1, ABCE_T_B);
+      GETBOOLEAN(&prev, -1);
       GETMB(&mboldkey, -2);
       if (abce_unlikely(mboldkey.typ != ABCE_T_N && mboldkey.typ != ABCE_T_S))
       {
@@ -1328,18 +1329,27 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       POP();
       POP();
-      rettmp = abce_verifymb(abce, (int64_t)dictidx, ABCE_T_T);
+      rettmp = abce_verifymb(abce, dictidx, ABCE_T_T);
       if (rettmp != 0)
       {
         abce_mb_refdn(abce, &mboldkey);
         ret = rettmp;
         break;
       }
-      if (abce_getmb(&mbt, abce, (int64_t)dictidx) != 0)
+      if (abce_getmb(&mbt, abce, dictidx) != 0)
       {
         abce_maybeabort();
       }
-      if (abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey) != 0)
+      int itres = 0;
+      if (prev)
+      {
+        itres = abce_tree_get_prev(abce, &mbreskey, &mbresval, &mbt, &mboldkey);
+      }
+      else
+      {
+        itres = abce_tree_get_next(abce, &mbreskey, &mbresval, &mbt, &mboldkey);
+      }
+      if (itres != 0)
       {
         if (abce_push_nil(abce) != 0)
         {

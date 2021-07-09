@@ -91,6 +91,90 @@ abce_tree_set_str(struct abce *abce,
 
 // FIXME verify if algorithm correct
 static inline int
+abce_rbtree_get_prev(const struct abce_mb **mbreskey,
+                     const struct abce_mb **mbresval,
+                     const struct abce_rb_tree_nocmp *head,
+                     const struct abce_mb *mbkey)
+{
+  struct abce_rb_tree_node *node;
+  struct abce_mb_rb_entry *mbe;
+  if (mbkey->typ != ABCE_T_S && mbkey->typ != ABCE_T_N)
+  {
+    abort();
+  }
+  node = head->root;
+  if (mbkey->typ == ABCE_T_N)
+  {
+    while (node != NULL)
+    {
+      if (node->right == NULL)
+      {
+        break;
+      }
+      node = node->right;
+    }
+    goto out;
+  }
+  while (node != NULL)
+  {
+    int res = abce_str_cmp_halfsym(mbkey, node, NULL);
+    if (res < 0)
+    {
+      if (node->left == NULL)
+      {
+        goto out;
+        //break;
+      }
+      node = node->left;
+    }
+    else if (res > 0)
+    {
+      if (node->right == NULL)
+      {
+        break;
+      }
+      node = node->right;
+    }
+    else if (res == 0)
+    {
+      break;
+    }
+  }
+  if (node->left != NULL)
+  {
+    node = node->left;
+    for (;;)
+    {
+      if (node->right == NULL)
+      {
+        break;
+      }
+      node = node->right;
+    }
+  }
+  else
+  {
+    while (node->parent && node->parent->left == node)
+    {
+      node = node->parent;
+    }
+    node = node->parent;
+  }
+out:
+  if (node == NULL)
+  {
+    *mbreskey = NULL;
+    *mbresval = NULL;
+    return -ENOENT;
+  }
+  mbe = ABCE_CONTAINER_OF(node, struct abce_mb_rb_entry, n);
+  *mbreskey = &mbe->key;
+  *mbresval = &mbe->val;
+  return 0;
+}
+
+// FIXME verify if algorithm correct
+static inline int
 abce_rbtree_get_next(const struct abce_mb **mbreskey,
                      const struct abce_mb **mbresval,
                      const struct abce_rb_tree_nocmp *head,
@@ -171,6 +255,20 @@ out:
   *mbreskey = &mbe->key;
   *mbresval = &mbe->val;
   return 0;
+}
+
+static inline int
+abce_tree_get_prev(struct abce *abce,
+                   const struct abce_mb **mbreskey,
+                   const struct abce_mb **mbresval,
+                   const struct abce_mb *mbt,
+                   const struct abce_mb *mbkey)
+{
+  if (mbt->typ != ABCE_T_T)
+  {
+    abort();
+  }
+  return abce_rbtree_get_prev(mbreskey, mbresval, &mbt->u.area->u.tree.tree, mbkey);
 }
 
 static inline int

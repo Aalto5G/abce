@@ -68,6 +68,7 @@ struct amyplan_csnippet luaSnippet = {
 @endscope return ENDSCOPE;
 @for      return FOR;
 @fordict  return FORDICT;
+@fordictprev  return FORDICTPREV;
 @endfor   return ENDFOR;
 
 @         return AT;
@@ -112,6 +113,7 @@ struct amyplan_csnippet luaSnippet = {
 @return  return RETURN;
 @append   return APPEND;
 @dictnext return DICTNEXT;
+@dictprev return DICTPREV;
 @strstr return STRSTR;
 @strrep return STRREP;
 @strlistjoin return STRLISTJOIN;
