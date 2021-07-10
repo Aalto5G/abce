@@ -1417,6 +1417,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
   int ret = -EAGAIN;
   double argcnt;
   int64_t new_ip;
+  uint16_t ins = 0;
   int was_in_engine;
   size_t oldcsp;
   was_in_engine = abce->in_engine;
@@ -1434,7 +1435,6 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
          ((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
          (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard)))
   {
-    uint16_t ins;
     oldcsp = abce->csp;
     if (abce_fetch_i(&ins, abce, addcode, addsz) != 0)
     {
@@ -2880,15 +2880,27 @@ outpbset:
     }
     if (abce->csp < oldcsp)
     {
-      fprintf(stderr, "Warning: C stack shrunk in engine\n");
+      fprintf(stderr, "Warning: C stack shrunk in engine, ins=%u, ret=%d\n", (unsigned)ins, ret);
     }
     else if (abce->csp > oldcsp)
     {
-      fprintf(stderr, "Warning: C stack grew in engine, popping stuff\n");
+      fprintf(stderr, "Warning: C stack grew in engine, popping stuff, ins=%u, ret=%d\n", (unsigned)ins, ret);
       while (abce->csp > oldcsp)
       {
         abce_cpop(abce);
       }
+    }
+  }
+  if (abce->csp < oldcsp)
+  {
+    fprintf(stderr, "Warning: C stack shrunk in engine, ins=%u, ret=%d\n", (unsigned)ins, ret);
+  }
+  else if (abce->csp > oldcsp)
+  {
+    fprintf(stderr, "Warning: C stack grew in engine, popping stuff, ins=%u, ret=%d\n", (unsigned)ins, ret);
+    while (abce->csp > oldcsp)
+    {
+      abce_cpop(abce);
     }
   }
   if (ret == -EAGAIN)
@@ -2898,18 +2910,6 @@ outpbset:
   if (ret == -EINTR)
   {
     ret = 0;
-  }
-  if (abce->csp < oldcsp)
-  {
-    fprintf(stderr, "Warning: C stack shrunk in engine\n");
-  }
-  else if (abce->csp > oldcsp)
-  {
-    fprintf(stderr, "Warning: C stack grew in engine, popping stuff\n");
-    while (abce->csp > oldcsp)
-    {
-      abce_cpop(abce);
-    }
   }
   if (ret != 0)
   {
