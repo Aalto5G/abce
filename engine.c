@@ -1254,7 +1254,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       struct abce_mb *mboldkey, *mbt;
       const struct abce_mb *mbreskey, *mbresval;
-      int64_t dictidx = -1;
+      int64_t dictidx = -3;
       int rettmp;
       int prev = 0;
       VERIFYMB(-1, ABCE_T_B);
@@ -1288,14 +1288,11 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       if (itres != 0)
       {
-        if (abce_push_nil(abce) != 0)
-        {
-          abce_maybeabort();
-        }
-        if (abce_push_nil(abce) != 0)
-        {
-          abce_maybeabort();
-        }
+        struct abce_mb nil;
+        nil.typ = ABCE_T_N;
+        nil.u.d = 0;
+        abce_mb_stackreplace(abce, -2, &nil);
+        abce_mb_stackreplace(abce, -1, &nil);
         break;
       }
       abce_mb_stackreplace(abce, -2, mbreskey);
