@@ -452,19 +452,6 @@ static inline int abce_getmbptr(struct abce_mb **mb, struct abce *abce, int64_t 
   *mb = mbptr;
   return 0;
 }
-// FIXME dangerous, fragile
-static inline int abce_getmb(struct abce_mb *mb, struct abce *abce, int64_t idx)
-{
-  const struct abce_mb *mbptr;
-  size_t addr;
-  if (abce_calc_addr(&addr, abce, idx) != 0)
-  {
-    return -EOVERFLOW;
-  }
-  mbptr = &abce->stackbase[addr];
-  *mb = abce_mb_refup(abce, mbptr);
-  return 0;
-}
 static inline int abce_getmbtypedptr(struct abce_mb **mb, struct abce *abce, int64_t idx, enum abce_type typ)
 {
   struct abce_mb *mbptr;

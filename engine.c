@@ -60,7 +60,6 @@ static inline void abce_maybeabort()
 #define GETDBL(dbl, idx) GETGENERIC(abce_getdbl, dbl, idx)
 #define GETBP(idx) GETORVERIFY1(abce_getbp, idx)
 #define GETIP(idx) GETORVERIFY1(abce_getip, idx)
-#define GETMB(mb, idx) GETGENERIC(abce_getmb, mb, idx)
 #define GETMBPTR(mb, idx) GETGENERIC(abce_getmbptr, mb, idx)
 #define GETMBSCPTR(mb, idx) GETGENERIC(abce_getmbscptr, mb, idx)
 #define GETMBARPTR(mb, idx) GETGENERIC(abce_getmbarptr, mb, idx)
@@ -2080,9 +2079,9 @@ outpbset:
           break;
         }
         /* stacktop - cntloc - cntargs - retval - locvar - ip - bp - args */
-        case ABCE_OPCODE_RETEX2: // FIXME make nonfragile
+        case ABCE_OPCODE_RETEX2:
         {
-          struct abce_mb mb;
+          struct abce_mb *mb;
           double cntloc, cntargs;
           size_t i;
           GETDBL(&cntloc, -1);
@@ -2104,7 +2103,13 @@ outpbset:
             break;
           }
           VERIFYADDR(-5 - cntloc - cntargs);
-          GETMB(&mb, -3);
+          GETMBPTR(&mb, -3);
+          GETBP(-5-(int64_t)cntloc); // So that stackreplace works
+          //printf("BP1 %zu\n", abce->bp);
+          if (abce_mb_stackreplace(abce, -6-(int64_t)cntloc-(int64_t)cntargs, mb) != 0)
+          {
+            abort();
+          }
           POP(); // cntloc
           POP(); // cntargs
           POP(); // retval
@@ -2114,18 +2119,14 @@ outpbset:
           }
           GETIP(-1);
           GETBP(-2);
+          //printf("BP2 %zu\n", abce->bp);
           POP(); // ip
           POP(); // bp
           for (i = 0; i < cntargs; i++)
           {
             POP();
           }
-          POP(); // funcall address
-          if (abce_unlikely(abce_push_mb(abce, &mb) != 0))
-          {
-            abce_maybeabort();
-          }
-          abce_mb_refdn(abce, &mb);
+          //POP(); // funcall address, replaced by stackreplace
           break;
         }
         case ABCE_OPCODE_JMP:
