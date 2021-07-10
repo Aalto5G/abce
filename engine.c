@@ -2004,12 +2004,11 @@ outpbset:
           abce->stackbase[addrm1] = mbtmp;
           break;
         }
-        case ABCE_OPCODE_PUSH_STACK: // FIXME make non-fragile
+        case ABCE_OPCODE_PUSH_STACK:
         {
-          struct abce_mb mb;
           double loc;
+          size_t addr;
           GETDBL(&loc, -1);
-          POP();
           if (loc != (double)(int64_t)loc)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
@@ -2018,12 +2017,16 @@ outpbset:
             ret = -EINVAL;
             break;
           }
-          GETMB(&mb, loc);
-          if (abce_push_mb(abce, &mb) != 0)
+          if (loc < 0)
           {
-            abce_maybeabort();
+            loc -= 1; // FIXME overflow?
           }
-          abce_mb_refdn(abce, &mb);
+          if (abce_calc_addr(&addr, abce, loc) != 0)
+          {
+            ret = -EOVERFLOW;
+            break;
+          }
+          abce_mb_stackreplace(abce, -1, &abce->stackbase[addr]);
           break;
         }
         case ABCE_OPCODE_SET_STACK:
