@@ -194,7 +194,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
 
     oldscope = get_abce(amyplanyy)->dynscope;
     abce_cpush_mb(get_abce(amyplanyy), &oldscope);
-    abce_mb_refdn(get_abce(amyplanyy), &oldscope);
+    abce_mb_refdn(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope);
     oldscopeidx = oldscope.u.area->u.sc.locidx;
     get_abce(amyplanyy)->dynscope = abce_mb_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);
 
