@@ -169,6 +169,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
   {
     size_t oldscopeidx = get_abce(amyplanyy)->dynscope.u.area->u.sc.locidx;
     struct abce_mb oldscope;
+    struct abce_mb *newscope;
     struct abce_mb *key;
     void *ud = abce_scope_get_userdata(&get_abce(amyplanyy)->dynscope);
 
@@ -196,13 +197,15 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     abce_cpush_mb(get_abce(amyplanyy), &oldscope);
     abce_mb_refdn(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope);
     oldscopeidx = oldscope.u.area->u.sc.locidx;
-    get_abce(amyplanyy)->dynscope = abce_mb_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);
-
-    if (get_abce(amyplanyy)->dynscope.typ == ABCE_T_N)
+    newscope = abce_mb_cpush_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);
+    if (newscope == NULL)
     {
       fprintf(stderr, "out of memory\n");
       YYABORT;
     }
+    get_abce(amyplanyy)->dynscope = abce_mb_refup(get_abce(amyplanyy), newscope);
+    abce_cpop(get_abce(amyplanyy));
+
     if ($3)
     {
       abce_sc_replace_val_mb(get_abce(amyplanyy), &oldscope, key, &get_abce(amyplanyy)->dynscope);
