@@ -96,6 +96,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token DUMMY_TOK1
 %token DUMMY_TOK2
 %token DUMMY_TOK3
+%token DUMMY_TOK4
 
 %type<d> value
 %type<d> lvalue
@@ -239,7 +240,8 @@ maybeqmequals: EQUALS {$$ = 0;} | QMEQUALS {$$ = 1;} ;
 maybe_maybe_call: {$$ = 0;} | MAYBE_CALL {$$ = 1;};
 
 assignrule:
-  VARREF_LITERAL maybe_maybe_call maybeqmequals
+  custom_assign
+| VARREF_LITERAL maybe_maybe_call maybeqmequals
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
@@ -2026,3 +2028,4 @@ valuelistentry:
 custom_stmt: DUMMY_TOK1;
 custom_expr0: DUMMY_TOK2;
 custom_rule: DUMMY_TOK3;
+custom_assign: DUMMY_TOK4;
