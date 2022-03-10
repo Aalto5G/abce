@@ -84,7 +84,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token STRWORD STRWORDCNT STRWORDLIST
 
 %token STDOUT STDERR ERROR DUMP EXIT
-%token ABS ACOS ASIN ATAN CEIL COS SIN TAN EXP LOG SQRT
+%token ABS ACOS ASIN ATAN CEIL FLOOR TRUNC ROUND COS SIN TAN EXP LOG SQRT
 %token DUP_NONRECURSIVE PB_NEW SCOPE_PARENT SCOPE_NEW GETSCOPE_DYN GETSCOPE_LEX
 
 %token DIV MUL ADD SUB SHL SHR NE EQ MOD
@@ -1709,6 +1709,12 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ASIN); }
 | ATAN OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ATAN); }
+| ROUND OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ROUND); }
+| TRUNC OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TRUNC); }
+| FLOOR OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FLOOR); }
 | CEIL OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CEIL); }
 | COS OPEN_PAREN expr CLOSE_PAREN

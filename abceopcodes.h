@@ -135,6 +135,9 @@ enum abce_opcode {
   ABCE_OPCODE_SCOPEVAR_NONRECURSIVE = 187,
   ABCE_OPCODE_SCOPE_HAS_NONRECURSIVE = 188,
   ABCE_OPCODE_LUACALL = 189,
+  // more math
+  ABCE_OPCODE_ROUND = 190,
+  ABCE_OPCODE_TRUNC = 191,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

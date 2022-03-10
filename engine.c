@@ -321,6 +321,28 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       return 0;
     }
+    case ABCE_OPCODE_TRUNC:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP();
+      if (abce_push_double(abce, trunc(dbl)) != 0)
+      {
+        abce_maybeabort();
+      }
+      return 0;
+    }
+    case ABCE_OPCODE_ROUND:
+    {
+      double dbl;
+      GETDBL(&dbl, -1);
+      POP();
+      if (abce_push_double(abce, round(dbl)) != 0)
+      {
+        abce_maybeabort();
+      }
+      return 0;
+    }
     case ABCE_OPCODE_SQRT:
     {
       double dbl;

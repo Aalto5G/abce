@@ -50,6 +50,9 @@ struct amyplan_csnippet luaSnippet = {
 @asin     return ASIN;
 @atan     return ATAN;
 @ceil     return CEIL;
+@floor    return FLOOR;
+@trunc    return TRUNC;
+@round    return ROUND;
 @cos      return COS;
 @sin      return SIN;
 @tan      return TAN;
