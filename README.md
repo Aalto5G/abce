@@ -283,3 +283,27 @@ Dictionary entry existence can be checked:
   @return $d{@?"c"}
 @endfunction
 ```
+
+## Executable Amyplan scripts
+
+Amyplan can be used to create executable scripts. The shebang line begins with
+a hash character so it is treated as a comment.
+
+An example Amyplan script:
+
+```
+#!/path/to/interpreter/of/amyplan
+
+@function $main($argv,$env)
+  @locvar $i = 0
+  @locvar $key = 0
+  @locvar $val = 0
+  @for($i = 0, $i < $argv[], $i = $i + 1)
+    @dump($argv[$i])
+  @endfor
+  @fordict $key, $val ($env)
+    @dump($key . "=" . $val)
+  @endfor
+  @return 0
+@endfunction
+```

@@ -1,3 +1,5 @@
+#!/usr/bin/env amyplan
+
 @function $main($argv,$env)
   @locvar $i = 0
   @locvar $key = 0
