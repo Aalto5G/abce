@@ -99,16 +99,16 @@ int main(int argc, char **argv, char **envp)
   {
     return 255;
   }
-  if (amyplanyy.abce.sp != 1)
+  if (amyplanyy.abce.sp < 1)
   {
     return 254;
   }
-  if (amyplanyy.abce.stackbase[0].typ != ABCE_T_D)
+  if (amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].typ != ABCE_T_D)
   {
     return 253;
   }
-  ret = (int)amyplanyy.abce.stackbase[0].u.d;
-  if (amyplanyy.abce.stackbase[0].u.d != (double)ret)
+  ret = (int)amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d;
+  if (amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d != (double)ret)
   {
     return 252;
   }
