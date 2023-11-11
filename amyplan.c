@@ -16,6 +16,7 @@ int main(int argc, char **argv, char **envp)
   size_t tmpsiz = 0;
   struct abce_mb *mbar = NULL;
   struct abce_mb *mbt = NULL;
+  const struct abce_mb *mbf = NULL;
   int64_t idx;
   int i;
   int ret;
@@ -44,8 +45,13 @@ int main(int argc, char **argv, char **envp)
   tmpsiz = 0;
   amyplanyy.abce.sp = 0;
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_PUSH_DBL);
-  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf),
-    abce_sc_get_rec_str_fun(&amyplanyy.abce.dynscope, "main", 1));
+  mbf = abce_sc_get_rec_str(&amyplanyy.abce.dynscope, "main", 1);
+  if (mbf == NULL || mbf->typ != ABCE_T_F)
+  {
+    fprintf(stderr, "Can't find main function\n");
+    exit(1);
+  }
+  abce_add_double_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), mbf->u.d);
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_FUNIFY);
 
   mbar = abce_mb_cpush_create_array(&amyplanyy.abce);
