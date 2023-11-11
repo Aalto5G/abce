@@ -295,9 +295,9 @@ An example Amyplan script:
 #!/path/to/interpreter/of/amyplan
 
 @function $main($argv,$env)
-  @locvar $i = 0
-  @locvar $key = 0
-  @locvar $val = 0
+  @locvar $i = @nil
+  @locvar $key = @nil
+  @locvar $val = @nil
   @for($i = 0, $i < $argv[], $i = $i + 1)
     @dump($argv[$i])
   @endfor

@@ -1,14 +1,15 @@
 #!/usr/bin/env amyplan
 
 @function $main($argv,$env)
-  @locvar $i = 0
-  @locvar $key = 0
-  @locvar $val = 0
+  @locvar $i = @nil
+  @locvar $key = @nil
+  @locvar $val = @nil
   @for($i = 0, $i < $argv[], $i = $i + 1)
     @dump($argv[$i])
   @endfor
   @fordict $key, $val ($env)
     @dump($key . "=" . $val)
   @endfor
+  @exit(5)
   @return 0
 @endfunction
