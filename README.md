@@ -313,3 +313,18 @@ An example Amyplan script:
 Amyplan can be installed after compilation by running `./install.sh`. By
 default it will install into `~/.local/bin` but installation can be made
 to another prefix by running for example `./install.sh /usr/local`.
+
+## Lack of read-eval-print loop
+
+Unfortunately, there is no read-eval-print loop available. The current
+implementation of Amyplan requires code to be inside functions. So it can't
+execute a single line of code isolated from a function.
+
+Also, since the parser of Amyplan is based on Yacc, it would be quite tricky to
+create a read-eval-print loop. Yacc reads its input from a file and expects the
+entire input to be available at once even though the algorithm used in Yacc
+would allow incremental parsing. A good read-eval-print loop would obviously be
+based on a line editor library such as BSD libedit. However, such a line editor
+library would read only one line at a time and would not know for example at
+what line an if statement ends if multiple lines are needed to be fed at once
+to Amyplan.
