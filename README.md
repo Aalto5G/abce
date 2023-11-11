@@ -307,3 +307,9 @@ An example Amyplan script:
   @return 0
 @endfunction
 ```
+
+## Installing Amyplan
+
+Amyplan can be installed after compilation by running `./install.sh`. By
+default it will install into `~/.local/bin` but installation can be made
+to another prefix by running for example `./install.sh /usr/local`.
