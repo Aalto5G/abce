@@ -604,8 +604,8 @@ statement:
   if (amyplanyy_do_emit(amyplanyy))
   {
     struct amyplan_locvarctx *ctx;
-    size_t locvarkey;
-    size_t locvarval;
+    int64_t locvarkey;
+    int64_t locvarval;
     locvarkey = amyplan_locvarctx_search_rec(amyplanyy->ctx, $2);
     if (locvarkey < 0)
     {
