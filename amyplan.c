@@ -103,19 +103,37 @@ int main(int argc, char **argv, char **envp)
   abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
   if (abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz) != 0)
   {
+    fprintf(stderr, "error %s\n", abce_err_to_str(amyplanyy.abce.err.code));
+    fprintf(stderr, "Backtrace:\n");
+    for (i = 0; i < amyplanyy.abce.btsz; i++)
+    {
+      if (amyplanyy.abce.btbase[i].typ == ABCE_T_S)
+      {
+        fprintf(stderr, "%s\n", amyplanyy.abce.btbase[i].u.area->u.str.buf);
+      }
+      else
+      {
+        fprintf(stderr, "(-)\n");
+      }
+    }
+    fprintf(stderr, "Additional information:\n");
+    abce_mb_dump(&amyplanyy.abce.err.mb);
     return 255;
   }
   if (amyplanyy.abce.sp < 1)
   {
+    fprintf(stderr, "No return value from engine\n");
     return 254;
   }
   if (amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].typ != ABCE_T_D)
   {
+    fprintf(stderr, "Return value from engine not a number\n");
     return 253;
   }
   ret = (int)amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d;
   if (amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d != (double)ret)
   {
+    fprintf(stderr, "Return value from engine not an integer\n");
     return 252;
   }
 
