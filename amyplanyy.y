@@ -196,7 +196,11 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     //abce_push_c(get_abce(amyplanyy)); // FIXME required? only for GC?
 
     oldscope = get_abce(amyplanyy)->dynscope;
-    abce_cpush_mb(get_abce(amyplanyy), &oldscope);
+    if (abce_cpush_mb(get_abce(amyplanyy), &oldscope) != 0)
+    {
+      fprintf(stderr, "out of memory\n");
+      YYABORT;
+    }
     abce_mb_refdn(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope);
     oldscopeidx = oldscope.u.area->u.sc.locidx;
     newscope = abce_mb_cpush_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);

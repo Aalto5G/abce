@@ -786,7 +786,11 @@ struct abce_mb *abce_mb_cpush_concat_string(struct abce *abce, const char *str1,
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -824,7 +828,11 @@ struct abce_mb *abce_mb_cpush_rep_string(struct abce *abce, const char *str, siz
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -859,7 +867,11 @@ struct abce_mb *abce_mb_cpush_create_string_to_be_filled(struct abce *abce, size
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -894,7 +906,11 @@ struct abce_mb *abce_mb_cpush_create_string(struct abce *abce, const char *str, 
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -933,7 +949,11 @@ struct abce_mb *abce_mb_cpush_create_pb(struct abce *abce)
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -977,7 +997,11 @@ struct abce_mb *abce_mb_cpush_create_pb_from_buf(struct abce *abce, const void *
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -1010,7 +1034,11 @@ struct abce_mb *abce_mb_cpush_create_tree(struct abce *abce)
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
@@ -1049,7 +1077,11 @@ struct abce_mb *abce_mb_cpush_create_array(struct abce *abce)
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }

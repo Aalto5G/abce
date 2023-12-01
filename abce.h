@@ -1092,7 +1092,11 @@ static inline struct abce_mb *abce_mb_cpush_create_scope(struct abce *abce, size
     return NULL;
   }
   // This is dangerous. Quickly, store it so the garbage collector sees it.
-  abce_cpush_mb(abce, &mb);
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
   abce_mb_refdn(abce, &mb);
   return &abce->cstackbase[abce->csp-1];
 }
