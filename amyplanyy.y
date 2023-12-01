@@ -438,16 +438,19 @@ locvarlines:
     if (ret == -EEXIST)
     {
       printf("Local variable %s exists already\n", $3);
+      amyplanyyerror(scanner, amyplanyy, "can't have two same names");
       YYABORT;
     }
     else if (ret == -ENOMEM)
     {
       printf("Not enough memory for local variable %s\n", $3);
+      amyplanyyerror(scanner, amyplanyy, "not enough memory");
       YYABORT;
     }
     else if (ret != 0)
     {
       printf("Can't create local variable %s\n", $3);
+      amyplanyyerror(scanner, amyplanyy, "unknown error");
       YYABORT;
     }
   }
