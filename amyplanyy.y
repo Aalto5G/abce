@@ -75,6 +75,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
 %token D L I DO LO IO DP LP IP DPO LPO IPO LOC
+%token SC SCO
 %token APPEND APPEND_LIST
 %token RETURN PRINT PERIOD
 
@@ -1357,6 +1358,14 @@ scopetype:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_SCOPE_PARENT);
   }
+  $$ = 1;
+}
+| SC OPEN_PAREN expr CLOSE_PAREN
+{
+  $$ = 0;
+}
+| SCO OPEN_PAREN expr CLOSE_PAREN
+{
   $$ = 1;
 }
 ;

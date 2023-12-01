@@ -96,6 +96,8 @@ struct amyplan_csnippet luaSnippet = {
 @DPO     return DPO;
 @LPO     return LPO;
 @IPO     return IPO;
+@SC      return SC;
+@SCO     return SCO;
 @dyn   return DYN;
 @lex   return LEX;
 @imm   return IMM;
