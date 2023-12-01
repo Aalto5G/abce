@@ -434,7 +434,22 @@ locvarlines:
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    amyplan_locvarctx_add(amyplanyy->ctx, $3);
+    int ret = amyplan_locvarctx_add(amyplanyy->ctx, $3);
+    if (ret == -EEXIST)
+    {
+      printf("Local variable %s exists already\n", $3);
+      YYABORT;
+    }
+    else if (ret == -ENOMEM)
+    {
+      printf("Not enough memory for local variable %s\n", $3);
+      YYABORT;
+    }
+    else if (ret != 0)
+    {
+      printf("Can't create local variable %s\n", $3);
+      YYABORT;
+    }
   }
   free($3);
 }
