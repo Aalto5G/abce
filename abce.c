@@ -394,7 +394,6 @@ void abce_check_heap_object(struct abce *abce, size_t *stackbase, struct abce_mb
 
 void abce_deep_check_heap_object(struct abce *abce, size_t *stackbase, struct abce_mb *mb)
 {
-  struct abce_mb obj;
   const struct abce_mb *key, *val;
   const struct abce_mb nil = {.typ = ABCE_T_N};
   size_t i;
@@ -408,7 +407,7 @@ void abce_deep_check_heap_object(struct abce *abce, size_t *stackbase, struct ab
   {
     case ABCE_T_T:
       key = &nil;
-      while (abce_tree_get_next(abce, &key, &val, &obj, key) == 0)
+      while (abce_tree_get_next(abce, &key, &val, mb, key) == 0)
       {
         if (!abce_is_dynamic_type(key->typ))
         {
