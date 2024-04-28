@@ -63,8 +63,8 @@ wcparser:
 LUAINC:=/usr/include/luajit-2.1
 LUALIB:=/usr/lib/x86_64-linux-gnu/libluajit-5.1.a
 
-CC=clang
-CPP=clang++
+CC=cc
+CPP=c++
 CFLAGS=-O3 -Wall -g
 CPPFLAGS=-O3 -Wall -g
 

@@ -2,7 +2,7 @@
 @strict
 
 # You can modify these during compilation
-$(CC) ?= "clang"
+$(CC) ?= "cc"
 $(CFLAGS) ?= ["-O3", "-Wall", "-g"]
 $(WITH_LUA) ?= @false
 $(LUAINCS) ?= ["-I/usr/include/luajit-2.1"]
