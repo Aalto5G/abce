@@ -734,9 +734,16 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       struct abce_word_iter it = {};
       struct abce_mb *mbbase;
+      struct abce_mb *mbbasemaybenil;
       struct abce_mb *mbsep;
       size_t i = 0;
       VERIFYMB(-1, ABCE_T_S);
+      GETMBPTR(&mbbasemaybenil, -2);
+      if (mbbasemaybenil->typ == ABCE_T_N)
+      {
+        abce_npoppushdbl(abce, 2, 0);
+        return 0;
+      }
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTRPTR(&mbsep, -1);
       GETMBSTRPTR(&mbbase, -2);
@@ -754,10 +761,23 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       struct abce_word_iter it = {};
       struct abce_mb *mbbase;
+      struct abce_mb *mbbasemaybenil;
       struct abce_mb *mbsep;
       struct abce_mb *mbar;
       struct abce_mb *mbit;
       VERIFYMB(-1, ABCE_T_S);
+      GETMBPTR(&mbbasemaybenil, -2);
+      if (mbbasemaybenil->typ == ABCE_T_N)
+      {
+        mbar = abce_mb_cpush_create_array(abce);
+        if (mbar == NULL)
+        {
+          return -ENOMEM;
+        }
+        abce_npoppushc(abce, 2);
+        abce_cpop(abce);
+        return 0;
+      }
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTRPTR(&mbsep, -1);
       GETMBSTRPTR(&mbbase, -2);
