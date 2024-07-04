@@ -1733,7 +1733,7 @@ expr0_without_string:
 | STRWORDCNT OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
 | STRWORDLIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
-{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDCNT); }
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRWORDLIST); }
 | ABS OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_ABS); }
 | ACOS OPEN_PAREN expr CLOSE_PAREN
