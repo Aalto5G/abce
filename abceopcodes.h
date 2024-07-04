@@ -138,6 +138,8 @@ enum abce_opcode {
   // more math
   ABCE_OPCODE_ROUND = 190,
   ABCE_OPCODE_TRUNC = 191,
+  //
+  ABCE_OPCODE_GETENV = 192,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

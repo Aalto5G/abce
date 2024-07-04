@@ -59,6 +59,7 @@ struct amyplan_csnippet luaSnippet = {
 @exp      return EXP;
 @log      return LOG;
 @sqrt     return SQRT;
+@getenv   return GETENV;
 @dupnonrec return DUP_NONRECURSIVE;
 @pbnew    return PB_NEW;
 @scopeparent return SCOPE_PARENT;

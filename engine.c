@@ -354,6 +354,32 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       return 0;
     }
+    case ABCE_OPCODE_GETENV:
+    {
+      struct abce_mb *mbbase;
+      char *myenv;
+      GETMBSTRPTR(&mbbase, -1);
+      myenv = getenv(mbbase->u.area->u.str.buf);
+      if (myenv == NULL)
+      {
+        if (abce_cpush_nil(abce) != 0)
+        {
+          return -ENOMEM;
+        }
+      }
+      else
+      {
+        if (abce_mb_cpush_create_string(abce,
+                                        myenv,
+                                        strlen(myenv)) == NULL)
+        {
+          return -ENOMEM;
+        }
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
+      return 0;
+    }
     case ABCE_OPCODE_LOG:
     {
       double dbl;
