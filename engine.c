@@ -1366,6 +1366,25 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_stackreplace(abce, -1, mbresval);
       break;
     }
+    case ABCE_OPCODE_CHOMP:
+    {
+      struct abce_mb *mbstr;
+      size_t sz;
+      GETMBSTRPTR(&mbstr, -1);
+      sz = mbstr->u.area->u.str.size;
+      if (sz > 0 && mbstr->u.area->u.str.buf[sz-1] == '\n')
+      {
+        if (abce_mb_cpush_create_string(abce,
+                                        mbstr->u.area->u.str.buf,
+                                        sz-1) == NULL)
+        {
+          return -ENOMEM;
+        }
+        abce_npoppushc(abce, 1);
+        abce_cpop(abce);
+      }
+      break;
+    }
     case ABCE_OPCODE_FP_CLASSIFY:
     case ABCE_OPCODE_FILE_OPEN:
     case ABCE_OPCODE_FILE_CLOSE:

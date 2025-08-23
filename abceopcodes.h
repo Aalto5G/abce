@@ -140,6 +140,7 @@ enum abce_opcode {
   ABCE_OPCODE_TRUNC = 191,
   //
   ABCE_OPCODE_GETENV = 192,
+  ABCE_OPCODE_CHOMP = 193,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

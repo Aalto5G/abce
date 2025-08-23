@@ -60,6 +60,7 @@ struct amyplan_csnippet luaSnippet = {
 @log      return LOG;
 @sqrt     return SQRT;
 @getenv   return GETENV;
+@chomp    return CHOMP;
 @dupnonrec return DUP_NONRECURSIVE;
 @pbnew    return PB_NEW;
 @scopeparent return SCOPE_PARENT;
