@@ -63,10 +63,10 @@ wcparser:
 LUAINC:=/usr/include/luajit-2.1
 LUALIB:=/usr/lib/x86_64-linux-gnu/libluajit-5.1.a
 
-CC=cc
-CPP=c++
-CFLAGS=-O3 -Wall -g
-CPPFLAGS=-O3 -Wall -g
+CC?=cc
+CPP?=c++
+CFLAGS?=-O3 -Wall -g
+CPPFLAGS?=-O3 -Wall -g
 
 ifeq ($(WITH_LUA),yes)
   CFLAGS += -I$(LUAINC) -DWITH_LUA
