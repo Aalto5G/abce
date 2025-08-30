@@ -2,8 +2,20 @@
 @strict
 
 # You can modify these during compilation
-$(CC) ?= "cc"
-$(CFLAGS) ?= ["-O3", "-Wall", "-g"]
+$(CC) ?= @nil
+@if(@type($(CC)) == @type(@nil))
+  $(CC) ``= ["sh", "-c", "echo $CC"]
+  @if($(CC)[] == 0)
+    $(CC) = ["cc"]
+  @endif
+@endif
+$(CFLAGS) ?= @nil
+@if(@type($(CFLAGS)) == @type(@nil))
+  $(CFLAGS) ``= ["sh", "-c", "echo $CFLAGS"]
+  @if($(CFLAGS)[] == 0)
+    $(CFLAGS) = ["-O3", "-Wall", "-g"]
+  @endif
+@endif
 $(WITH_LUA) ?= @false
 $(LUAINCS) ?= ["-I/usr/include/luajit-2.1"]
 $(LUALIBS) ?= ["/usr/lib/x86_64-linux-gnu/libluajit-5.1.a"]
@@ -46,19 +58,19 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @	["wc", "-l", @$(LEX_LIB), @$(YACC_LIB), @$(SRC), @@suffilterout(@suffilterout(@glob("*.h"),".lex.h"),".tab.h")]
 
 @patrule: $(PROG): '%': '%.o' 'libabce.a'
-@	[$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm', '-ldl']
+@	[@$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm', '-ldl']
 
 @patrule: $(OBJ): '%.o': '%.c' '%.d'
-@	[$(CC), @$(CFLAGS), "-c", "-o", $@, $<]
+@	[@$(CC), @$(CFLAGS), "-c", "-o", $@, $<]
 
 @patrule: $(OBJGEN_LIB): '%.o': '%.c' '%.h' '%.d'
-@	[$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-c", "-o", $@, $<]
+@	[@$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-c", "-o", $@, $<]
 
 @patrule: $(DEP): '%.d': '%.c'
-@	[$(CC), @$(CFLAGS), "-MM", "-o", $@, $<]
+@	[@$(CC), @$(CFLAGS), "-MM", "-o", $@, $<]
 
 @patrule: $(DEPGEN_LIB): '%.d': '%.c' '%.h'
-@	[$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-MM", "-o", $@, $<]
+@	[@$(CC), @$(CFLAGS), "-Wno-sign-compare", "-Wno-missing-prototypes", "-MM", "-o", $@, $<]
 
 'libabce.a': $(OBJ_LIB) $(OBJGEN_LIB)
 @	["rm", "-f", $@]
