@@ -1847,8 +1847,8 @@ calltrailer:
             ret = -EINVAL;
             break;
           }
-          GETDBL(&off, -2);
-          GETDBL(&sz, -3);
+          GETDBL(&off, -3);
+          GETDBL(&sz, -2);
           if ((double)(size_t)off != off)
           {
             abce->err.code = ABCE_E_PB_OFF_NOT_UINT;
@@ -1936,8 +1936,8 @@ outpbset:
           double sz;
           int isz;
           uint32_t val;
-          GETDBL(&off, -1);
-          GETDBL(&sz, -2);
+          GETDBL(&off, -2);
+          GETDBL(&sz, -1);
           if ((double)(size_t)off != off)
           {
             abce->err.code = ABCE_E_PB_OFF_NOT_UINT;
@@ -1987,7 +1987,6 @@ outpbset:
               abort();
           }
           abce_npoppushdbl(abce, 3, val);
-          abce_mb_refdn_typ(abce, mbpb, ABCE_T_PB);
           break;
         }
         case ABCE_OPCODE_PBLEN:

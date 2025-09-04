@@ -997,9 +997,9 @@ varref_tail:
 {
   $$ = ABCE_OPCODE_STRLEN; // This is special. Can't assign to length query.
 }
-| OPEN_BRACE AT expr CLOSE_BRACE
+| OPEN_BRACE AT expr COMMA expr CLOSE_BRACE
 {
-  $$ = ABCE_OPCODE_PBGET; // FIXME needs transfer size of operation
+  $$ = ABCE_OPCODE_PBGET; // offset comma transfer size (0, 1, 2, -1, -2)
 }
 | OPEN_BRACE AT CLOSE_BRACE
 {
