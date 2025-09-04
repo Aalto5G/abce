@@ -114,7 +114,11 @@ small.
 Amyplan is strongly typed, and indexing of different types of objects is
 different. Arrays are indexed as `$ARRAY[2]` (indexing is zero-based),
 dictionries as `$DICT{2}`, strings as `$STRING[@2]` an packet buffers as
-`$PBUF{@2}`.
+`$PBUF{@2,@le8}` or `$PBUF{@2,@be8}`. Note that packet buffers allow access to
+16-bit or 32-bit entire fields with `$PBUF{@2,@le16}` or `$PBUF{@2,@be32}` for
+little-endian 16-bit and big-endian 32-bit. 64-bit fields cannot be accessed,
+since IEEE double precision floating-point data type does not have enough
+mantissa bits for 64-bit integers.
 
 A variable `$VAR` inside a function always refers to a local variable. To
 refer to global variables, the scope has to be specified: `@D $VAR` is a

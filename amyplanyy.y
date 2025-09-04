@@ -61,6 +61,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 
 %token AT ATTAB NEWLINE TOSTRING TONUMBER
 
+%token EIGHT SIXTEENBE THIRTYTWOBE SIXTEENLE THIRTYTWOLE
+
 %token EQUALS QMEQUALS PLUSEQUALS COLON COMMA
 %token <str> STRING_LITERAL
 %token <d> NUMBER
@@ -1668,6 +1670,46 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TYPE); }
 | FALSE { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FALSE); }
 | NIL { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_NIL); }
+| EIGHT
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, 0);
+  }
+}
+| SIXTEENBE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, 1);
+  }
+}
+| THIRTYTWOBE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, 2);
+  }
+}
+| SIXTEENLE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -1);
+  }
+}
+| THIRTYTWOLE
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
+    amyplanyy_add_double(amyplanyy, -2);
+  }
+}
 | STR_FROMCHR OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR_FROMCHR); }
 | STR_LOWER OPEN_PAREN expr CLOSE_PAREN
