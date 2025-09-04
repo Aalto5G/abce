@@ -88,6 +88,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token ABS ACOS ASIN ATAN CEIL FLOOR TRUNC ROUND COS SIN TAN EXP LOG SQRT
 %token DUP_NONRECURSIVE PB_NEW SCOPE_PARENT SCOPE_NEW GETSCOPE_DYN GETSCOPE_LEX
 %token GETENV CHOMP
+%token STR2PB PB2STR
 
 %token DIV MUL ADD SUB SHL SHR NE EQ MOD
 %token LOGICAL_AND LOGICAL_OR LOGICAL_NOT
@@ -1767,6 +1768,10 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETENV); }
 | CHOMP OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CHOMP); }
+| STR2PB OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STR2PB); }
+| PB2STR OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PB2STR); }
 | DUP_NONRECURSIVE OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DUP_NONRECURSIVE); }
 | PB_NEW OPEN_PAREN CLOSE_PAREN

@@ -63,6 +63,8 @@ struct amyplan_csnippet luaSnippet = {
 @chomp    return CHOMP;
 @dupnonrec return DUP_NONRECURSIVE;
 @pbnew    return PB_NEW;
+@str2pb   return STR2PB;
+@pb2str   return PB2STR;
 @scopeparent return SCOPE_PARENT;
 @scopenew return SCOPE_NEW;
 @scope    return SCOPE;

@@ -1366,6 +1366,38 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_mb_stackreplace(abce, -1, mbresval);
       break;
     }
+    case ABCE_OPCODE_STR2PB:
+    {
+      struct abce_mb *mbstr;
+      size_t sz;
+      struct abce_mb *mb;
+      GETMBSTRPTR(&mbstr, -1);
+      sz = mbstr->u.area->u.str.size;
+      mb = abce_mb_cpush_create_pb_from_buf(abce, mbstr->u.area->u.str.buf, sz);
+      if (mb == NULL)
+      {
+        return -ENOMEM;
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
+      break;
+    }
+    case ABCE_OPCODE_PB2STR:
+    {
+      struct abce_mb *mbstr;
+      size_t sz;
+      struct abce_mb *mb;
+      GETMBPBPTR(&mbstr, -1);
+      sz = mbstr->u.area->u.pb.size;
+      mb = abce_mb_cpush_create_string(abce, mbstr->u.area->u.pb.buf, sz);
+      if (mb == NULL)
+      {
+        return -ENOMEM;
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
+      break;
+    }
     case ABCE_OPCODE_CHOMP:
     {
       struct abce_mb *mbstr;
