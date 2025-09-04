@@ -74,6 +74,7 @@ struct amyplan_csnippet luaSnippet = {
 @scopeparent return SCOPE_PARENT;
 @scopenew return SCOPE_NEW;
 @scope    return SCOPE;
+@splice   return SPLICE;
 @getscopedyn return GETSCOPE_DYN;
 @getscopelex return GETSCOPE_LEX;
 @beginscope return BEGINSCOPE;

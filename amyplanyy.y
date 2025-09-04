@@ -85,6 +85,7 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP
 %token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
 %token STRWORD STRWORDCNT STRWORDLIST
+%token SPLICE
 
 %token STDOUT STDERR ERROR DUMP EXIT
 %token ABS ACOS ASIN ATAN CEIL FLOOR TRUNC ROUND COS SIN TAN EXP LOG SQRT
@@ -1766,6 +1767,8 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRAPPEND); }
 | STRSTRIP OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTRIP); }
+| SPLICE OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTSPLICE); }
 | STRSUB OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSUB); }
 | STRGSUB OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN

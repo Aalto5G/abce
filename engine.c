@@ -1428,6 +1428,74 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     case ABCE_OPCODE_JSON_ENCODE:
     case ABCE_OPCODE_JSON_DECODE:
     case ABCE_OPCODE_LISTSPLICE:
+    {
+      struct abce_mb *mbar;
+      struct abce_mb *mbar2;
+      double start, end;
+      size_t i;
+      GETDBL(&end, -1);
+      if (end < 0)
+      {
+        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = end;
+        return -ERANGE;
+      }
+      if ((double)(size_t)end != end)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = end;
+        return -ERANGE;
+      }
+      GETDBL(&start, -2);
+      if (start < 0)
+      {
+        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = start;
+        return -ERANGE;
+      }
+      if ((double)(size_t)start != start)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = start;
+        return -ERANGE;
+      }
+      if (end < start)
+      {
+        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = start;
+        abce->err.val2 = end;
+        return -ERANGE;
+      }
+      GETMBARPTR(&mbar, -3);
+      if (end > mbar->u.area->u.ar.size)
+      {
+        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = end;
+        return -ERANGE;
+      }
+      mbar2 = abce_mb_cpush_create_array(abce);
+      if (mbar2 == NULL)
+      {
+        return -ENOMEM;
+      }
+      for (i = start; i < end; i++)
+      {
+        if (abce_mb_array_append(abce, mbar2, &mbar->u.area->u.ar.mbs[i]) != 0)
+        {
+          abce_cpop(abce);
+          return -ENOMEM;
+        }
+      }
+      abce_npoppushc(abce, 3);
+      abce_cpop(abce);
+      break;
+    }
     case ABCE_OPCODE_STRFMT:
     default:
       abce->err.code = ABCE_E_UNKNOWN_INSTRUCTION;
