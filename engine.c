@@ -1629,9 +1629,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_npoppushdbl(abce, 4, bytes_written);
       break;
     }
-    case ABCE_OPCODE_MEMFILE_IOPEN:
-    case ABCE_OPCODE_JSON_ENCODE:
-    case ABCE_OPCODE_JSON_DECODE:
     case ABCE_OPCODE_LISTSPLICE:
     {
       struct abce_mb *mbar;
@@ -1702,6 +1699,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       break;
     }
     case ABCE_OPCODE_STRFMT:
+    case ABCE_OPCODE_MEMFILE_IOPEN:
+    case ABCE_OPCODE_JSON_ENCODE:
+    case ABCE_OPCODE_JSON_DECODE:
     default:
       abce->err.code = ABCE_E_UNKNOWN_INSTRUCTION;
       abce->err.mb.typ = ABCE_T_D;
