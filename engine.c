@@ -1385,17 +1385,54 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     }
     case ABCE_OPCODE_PB2STR:
     {
-      struct abce_mb *mbstr;
-      size_t sz;
+      struct abce_mb *mbpb;
       struct abce_mb *mb;
-      GETMBPBPTR(&mbstr, -1);
-      sz = mbstr->u.area->u.pb.size;
-      mb = abce_mb_cpush_create_string(abce, mbstr->u.area->u.pb.buf, sz);
+      double nbytes;
+      double off;
+      GETDBL(&nbytes, -1);
+      GETDBL(&off, -2);
+      GETMBPBPTR(&mbpb, -3);
+      if ((double)(size_t)nbytes != nbytes)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if ((double)(size_t)off != off)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (nbytes < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if (off < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (mbpb->u.area->u.pb.size < (size_t)nbytes+(size_t)off)
+      {
+        abce->err.code = ABCE_E_PB_SET_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      mb = abce_mb_cpush_create_string(abce, &mbpb->u.area->u.pb.buf[(size_t)off], nbytes);
       if (mb == NULL)
       {
         return -ENOMEM;
       }
-      abce_npoppushc(abce, 1);
+      abce_npoppushc(abce, 3);
       abce_cpop(abce);
       break;
     }
@@ -1485,6 +1522,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
         abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if ((double)(size_t)off != off)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
         return -ERANGE;
       }
       if (nbytes < 0)
