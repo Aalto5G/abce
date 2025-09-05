@@ -623,7 +623,11 @@ void abce_gc(struct abce *abce)
           abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
           break;
         case ABCE_T_IOS:
-          fclose(mba->u.ios.f);
+          if (mba->u.ios.f)
+          {
+            fclose(mba->u.ios.f);
+            mba->u.ios.f = NULL;
+          }
           abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
           break;
         case ABCE_T_A:
@@ -940,6 +944,41 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
   abce_setup_mb_for_gc(abce, mba, ABCE_T_PB);
   return mb;
 }
+struct abce_mb abce_mb_create_ios(struct abce *abce, FILE *f)
+{
+  struct abce_mb_area *mba;
+  struct abce_mb mb = {};
+  mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
+  if (mba == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.val2 = sizeof(*mba);
+    mb.typ = ABCE_T_N;
+    return mb;
+  }
+  mba->u.ios.f = f;
+  mba->refcnt = 1;
+  mb.typ = ABCE_T_IOS;
+  mb.u.area = mba;
+  abce_setup_mb_for_gc(abce, mba, ABCE_T_IOS);
+  return mb;
+}
+struct abce_mb *abce_mb_cpush_create_ios(struct abce *abce, FILE *f)
+{
+  struct abce_mb mb = abce_mb_create_ios(abce, f);
+  if (mb.typ == ABCE_T_N)
+  {
+    return NULL;
+  }
+  // This is dangerous. Quickly, store it so the garbage collector sees it.
+  if (abce_cpush_mb(abce, &mb) != 0)
+  {
+    abce_mb_refdn(abce, &mb);
+    return NULL;
+  }
+  abce_mb_refdn(abce, &mb);
+  return &abce->cstackbase[abce->csp-1];
+}
 struct abce_mb *abce_mb_cpush_create_pb(struct abce *abce)
 {
   struct abce_mb mb = abce_mb_create_pb(abce);
@@ -1253,7 +1292,11 @@ void abce_maybe_mv_obj_to_scratch_tail(struct abce *abce, const struct abce_mb *
     case ABCE_T_IOS:
       if (1)
       {
-        fclose(mba->u.ios.f);
+        if (mba->u.ios.f)
+        {
+          fclose(mba->u.ios.f);
+          mba->u.ios.f = NULL;
+        }
         abce->alloc(mba, sizeof(*mba), 0, &abce->alloc_baton);
       }
       return;

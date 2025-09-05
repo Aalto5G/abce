@@ -74,6 +74,8 @@ void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 %token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
 %token FORDICT FORDICTPREV FOR ENDFOR
 
+%token FOPEN FCLOSE FREAD FSEEK FFLUSH FWRITE
+
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
 %token D L I DO LO IO DP LP IP DPO LPO IPO LOC
@@ -1767,6 +1769,18 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRAPPEND); }
 | STRSTRIP OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTRIP); }
+| FOPEN OPEN_PAREN expr COMMA expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_OPEN); }
+| FCLOSE OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_CLOSE); }
+| FFLUSH OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_FLUSH); }
+| FREAD OPEN_PAREN expr COMMA expr COMMA expr COMMA expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_GET); }
+| FSEEK OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_SEEK_TELL); }
+| FWRITE OPEN_PAREN expr COMMA expr COMMA expr COMMA expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_WRITE); }
 | SPLICE OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTSPLICE); }
 | STRSUB OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN

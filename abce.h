@@ -487,6 +487,10 @@ static inline int abce_getmbstrptr(struct abce_mb **mb, struct abce *abce, int64
 {
   return abce_getmbtypedptr(mb, abce, idx, ABCE_T_S);
 }
+static inline int abce_getmbiosptr(struct abce_mb **mb, struct abce *abce, int64_t idx)
+{
+  return abce_getmbtypedptr(mb, abce, idx, ABCE_T_IOS);
+}
 static inline int abce_verifyaddr(struct abce *abce, int64_t idx)
 {
   size_t addr;
@@ -1272,6 +1276,8 @@ abce_fetch_i(uint16_t *ins, struct abce *abce, unsigned char *addcode, size_t ad
 struct abce_mb *abce_mb_cpush_create_tree(struct abce *abce);
 
 struct abce_mb *abce_mb_cpush_create_pb(struct abce *abce);
+
+struct abce_mb *abce_mb_cpush_create_ios(struct abce *abce, FILE *f);
 
 struct abce_mb *abce_mb_cpush_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz);
 

@@ -62,6 +62,11 @@ enum abce_errcode {
   ABCE_E_INS_NOT_PERMITTED = 57, // value: ins
   ABCE_E_LUA_ERR = 58, // value: nil
   ABCE_E_TREE_ITER_NOT_STR_OR_NUL = 59, // value: mb
+  ABCE_E_INVALID_MODE = 60, // value: mb
+  ABCE_E_FILE_OPEN = 61,
+  ABCE_E_NEGATIVE = 62,
+  ABCE_E_FILE_IS_CLOSED = 63,
+  ABCE_E_INVALID_WHENCE = 64,
   ABCE_E_LAST = 0x7FFFFFFF, // unused
 };
 

@@ -65,6 +65,7 @@ static inline void abce_maybeabort()
 #define GETMBARPTR(mb, idx) GETGENERIC(abce_getmbarptr, mb, idx)
 #define GETMBPBPTR(mb, idx) GETGENERIC(abce_getmbpbptr, mb, idx)
 #define GETMBSTRPTR(mb, idx) GETGENERIC(abce_getmbstrptr, mb, idx)
+#define GETMBIOSPTR(mb, idx) GETGENERIC(abce_getmbiosptr, mb, idx)
 
 static inline void abce_npoppushnil(struct abce *abce, size_t n)
 {
@@ -1419,11 +1420,215 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     }
     case ABCE_OPCODE_FP_CLASSIFY:
     case ABCE_OPCODE_FILE_OPEN:
+    {
+      struct abce_mb *mbpath;
+      struct abce_mb *mbmode;
+      FILE *f;
+      GETMBSTRPTR(&mbmode, -1);
+      GETMBSTRPTR(&mbpath, -2);
+      if (strcmp(mbmode->u.area->u.str.buf, "r") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "r+") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "w") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "w+") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "a") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "a+") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "rb") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "r+b") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "wb") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "w+b") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "ab") != 0 &&
+          strcmp(mbmode->u.area->u.str.buf, "a+b") != 0)
+      {
+        abce->err.code = ABCE_E_INVALID_MODE;
+        abce_mb_errreplace_noinline(abce, mbmode);
+        return -EINVAL;
+      }
+      f = fopen(mbpath->u.area->u.str.buf, mbmode->u.area->u.str.buf);
+      if (f == NULL)
+      {
+        abce->err.code = ABCE_E_FILE_OPEN;
+        return -ENOENT;
+      }
+      if (abce_mb_cpush_create_ios(abce, f) == NULL)
+      {
+        return -ENOMEM;
+      }
+      abce_npoppushc(abce, 2);
+      abce_cpop(abce);
+      break;
+    }
     case ABCE_OPCODE_FILE_CLOSE:
+    {
+      struct abce_mb *mbios;
+      GETMBIOSPTR(&mbios, -1);
+      if (mbios->u.area->u.ios.f != NULL)
+      {
+        fclose(mbios->u.area->u.ios.f);
+	mbios->u.area->u.ios.f = NULL;
+      }
+      abce_npoppushnil(abce, 1);
+      break;
+    }
     case ABCE_OPCODE_FILE_GET:
+    {
+      struct abce_mb *mbios;
+      struct abce_mb *mbpb;
+      double nbytes;
+      double off;
+      size_t bytes_read;
+      GETDBL(&nbytes, -1);
+      GETDBL(&off, -2);
+      GETMBPBPTR(&mbpb, -3);
+      GETMBIOSPTR(&mbios, -4);
+      if ((double)(size_t)nbytes != nbytes)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if (nbytes < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if (off < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (mbpb->u.area->u.pb.size < (size_t)nbytes+(size_t)off)
+      {
+        abce->err.code = ABCE_E_PB_SET_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if (mbios->u.area->u.ios.f == NULL)
+      {
+        abce->err.code = ABCE_E_FILE_IS_CLOSED;
+        return -EINVAL;
+      }
+      bytes_read = fread(&mbpb->u.area->u.pb.buf[(size_t)off], 1, (size_t)nbytes, mbios->u.area->u.ios.f);
+      abce_npoppushdbl(abce, 4, bytes_read);
+      break;
+    }
     case ABCE_OPCODE_FILE_SEEK_TELL:
+    {
+      struct abce_mb *mbios;
+      double whence;
+      double off;
+      int iwhence;
+      GETDBL(&whence, -1);
+      GETDBL(&off, -2);
+      GETMBIOSPTR(&mbios, -3);
+      if (whence == 0)
+      {
+        iwhence = SEEK_SET;
+      }
+      else if (whence == 1)
+      {
+        iwhence = SEEK_CUR;
+      }
+      else if (whence == 2)
+      {
+        iwhence = SEEK_END;
+      }
+      else
+      {
+        abce->err.code = ABCE_E_INVALID_WHENCE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = whence;
+        return -EINVAL;
+      }
+      if ((double)(size_t)off != off)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (mbios->u.area->u.ios.f == NULL)
+      {
+        abce->err.code = ABCE_E_FILE_IS_CLOSED;
+        return -EINVAL;
+      }
+      fseek(mbios->u.area->u.ios.f, (long)off, iwhence);
+      abce_npoppushdbl(abce, 3, ftell(mbios->u.area->u.ios.f));
+      break;
+    }
     case ABCE_OPCODE_FILE_FLUSH:
+    {
+      struct abce_mb *mbios;
+      GETMBIOSPTR(&mbios, -1);
+      if (mbios->u.area->u.ios.f == NULL)
+      {
+        abce->err.code = ABCE_E_FILE_IS_CLOSED;
+        return -EINVAL;
+      }
+      fflush(mbios->u.area->u.ios.f);
+      abce_npoppushnil(abce, 1);
+      break;
+    }
     case ABCE_OPCODE_FILE_WRITE:
+    {
+      struct abce_mb *mbios;
+      struct abce_mb *mbpb;
+      double nbytes;
+      double off;
+      size_t bytes_written;
+      GETDBL(&nbytes, -1);
+      GETDBL(&off, -2);
+      GETMBPBPTR(&mbpb, -3);
+      GETMBIOSPTR(&mbios, -4);
+      if ((double)(size_t)nbytes != nbytes)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if ((double)(size_t)off != off)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (nbytes < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if (off < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (mbpb->u.area->u.pb.size < (size_t)nbytes + (size_t)off)
+      {
+        abce->err.code = ABCE_E_PB_SET_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = nbytes;
+        return -ERANGE;
+      }
+      if (mbios->u.area->u.ios.f == NULL)
+      {
+        abce->err.code = ABCE_E_FILE_IS_CLOSED;
+        return -EINVAL;
+      }
+      bytes_written = fwrite(&mbpb->u.area->u.pb.buf[(size_t)off], 1, (size_t)nbytes, mbios->u.area->u.ios.f);
+      abce_npoppushdbl(abce, 4, bytes_written);
+      break;
+    }
     case ABCE_OPCODE_MEMFILE_IOPEN:
     case ABCE_OPCODE_JSON_ENCODE:
     case ABCE_OPCODE_JSON_DECODE:
