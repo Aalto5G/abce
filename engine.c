@@ -1506,6 +1506,129 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_npoppushnil(abce, 1);
       break;
     }
+    case ABCE_OPCODE_FILE_GETDELIM:
+    {
+      struct abce_mb *mbios;
+      struct abce_mb *mbpb;
+      struct abce_mb *mbdelim;
+      struct abce_mb *mbmaxbytes;
+      ssize_t maxbytes;
+      double off;
+      size_t bytes_read = 0;
+      char delim;
+      int hasdelim = 0;
+      GETMBPTR(&mbmaxbytes, -1);
+      GETDBL(&off, -2);
+      GETMBPBPTR(&mbpb, -3);
+      GETMBPTR(&mbdelim, -4);
+      GETMBIOSPTR(&mbios, -5);
+      if (mbdelim->typ == ABCE_T_S)
+      {
+        if (mbdelim->u.area->u.str.size != 1)
+        {
+          abce->err.code = ABCE_E_EXPECT_CHAR;
+          abce_mb_errreplace_noinline(abce, mbdelim);
+          return -EINVAL;
+        }
+        delim = mbdelim->u.area->u.str.buf[0];
+        hasdelim = 1;
+      }
+      else if (mbdelim->typ == ABCE_T_N)
+      {
+        delim = '\0';
+        hasdelim = 0;
+      }
+      else
+      {
+        abce->err.code = ABCE_E_EXPECT_STR;
+        abce_mb_errreplace_noinline(abce, mbdelim);
+        return -EINVAL;
+      }
+      if (mbmaxbytes->typ == ABCE_T_N)
+      {
+        maxbytes = -1;
+      }
+      else if (mbmaxbytes->typ == ABCE_T_D)
+      {
+        if ((double)(size_t)mbmaxbytes->u.d != mbmaxbytes->u.d)
+        {
+          abce->err.code = ABCE_E_INDEX_NOT_INT;
+          abce->err.mb.typ = ABCE_T_D;
+          abce->err.mb.u.d = mbmaxbytes->u.d;
+          return -ERANGE;
+        }
+        if (mbmaxbytes->u.d < 0)
+        {
+          abce->err.code = ABCE_E_NEGATIVE;
+          abce->err.mb.typ = ABCE_T_D;
+          abce->err.mb.u.d = mbmaxbytes->u.d;
+          return -ERANGE;
+        }
+        maxbytes = mbmaxbytes->u.d;
+      }
+      else
+      {
+        abce->err.code = ABCE_E_EXPECT_DBL;
+        abce_mb_errreplace_noinline(abce, mbmaxbytes);
+        return -EINVAL;
+      }
+      if ((double)(size_t)off != off)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (off < 0)
+      {
+        abce->err.code = ABCE_E_NEGATIVE;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = off;
+        return -ERANGE;
+      }
+      if (mbios->u.area->u.ios.f == NULL)
+      {
+        abce->err.code = ABCE_E_FILE_IS_CLOSED;
+        return -EINVAL;
+      }
+      if (hasdelim && maxbytes == -1)
+      {
+        size_t n = 0;
+        ssize_t bytes_read;
+        char *lineptr = NULL;
+        bytes_read = getdelim(&lineptr, &n, delim, mbios->u.area->u.ios.f);
+        if (bytes_read > 0 && bytes_read + (size_t)off > mbpb->u.area->u.pb.size)
+        {
+          if (abce_mb_pb_resize(abce, mbpb, bytes_read + (size_t)off))
+          {
+            free(lineptr);
+            return -ENOMEM;
+          }
+        }
+        if (bytes_read > 0)
+        {
+          memcpy(&mbpb->u.area->u.pb.buf[(size_t)off], lineptr, bytes_read);
+        }
+        free(lineptr);
+        abce_npoppushdbl(abce, 5, bytes_read);
+        break;
+      }
+      else if (!hasdelim && maxbytes < 0)
+      {
+        // read entire file
+      }
+      else if (!hasdelim && maxbytes >= 0)
+      {
+        // read at most maxbytes
+      }
+      else if (hasdelim && maxbytes >= 0)
+      {
+        // read at most maxbytes, delimited by delim
+      }
+      //bytes_read = fread(&mbpb->u.area->u.pb.buf[(size_t)off], 1, (size_t)nbytes, mbios->u.area->u.ios.f);
+      abce_npoppushdbl(abce, 5, bytes_read);
+      break;
+    }
     case ABCE_OPCODE_FILE_GET:
     {
       struct abce_mb *mbios;

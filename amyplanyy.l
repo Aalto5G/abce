@@ -88,6 +88,7 @@ struct amyplan_csnippet luaSnippet = {
 @fclose   return FCLOSE;
 @fread    return FREAD;
 @fseek    return FSEEK;
+@fgetdelim return FGETDELIM;
 @fflush   return FFLUSH;
 @fwrite   return FWRITE;
 

@@ -118,7 +118,7 @@ enum abce_opcode {
   // I/O
   ABCE_OPCODE_FILE_OPEN = 172,
   ABCE_OPCODE_FILE_CLOSE = 173,
-  ABCE_OPCODE_FILE_GET = 174, // GET(delim, maxcnt), GET(NaN, maxcnt), GET(delim, Inf), GET(NaN, Inf)
+  ABCE_OPCODE_FILE_GET = 174,
   ABCE_OPCODE_FILE_SEEK_TELL = 175,
   ABCE_OPCODE_FILE_FLUSH = 176,
   ABCE_OPCODE_FILE_WRITE = 177,
@@ -143,6 +143,7 @@ enum abce_opcode {
   ABCE_OPCODE_CHOMP = 193,
   ABCE_OPCODE_PB2STR = 194,
   ABCE_OPCODE_STR2PB = 195,
+  ABCE_OPCODE_FILE_GETDELIM = 196, // GET(delim, maxcnt), GET(@nil, maxcnt), GET(delim, @nil), GET(@nil, @nil)
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 
