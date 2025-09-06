@@ -2,6 +2,7 @@
 #include "abcetrees.h"
 #include <unistd.h>
 #include <sys/mman.h>
+#include "abce_caj_out.h"
 
 static inline size_t abce_topages(size_t limit)
 {
@@ -1396,4 +1397,212 @@ const char *abce_err_to_str(enum abce_errcode code)
   case ABCE_E_LAST: abort();
   default: return "Unknown error";
   }
+}
+struct abce_json_encode_struct {
+  char *buf;
+  size_t sz;
+  size_t capacity;
+  struct abce *abce;
+};
+static int abce_json_datasink(struct abce_caj_out_ctx *ctx, const char *data, size_t sz)
+{
+  struct abce_json_encode_struct *je = ctx->userdata;
+  if (sz + je->sz > je->capacity)
+  {
+    size_t newcap = je->capacity*2;
+    char *newbuf;
+    if (newcap < sz + je->sz)
+    {
+      newcap = sz + je->sz;
+    }
+    newbuf = realloc(je->buf, newcap);
+    if (newbuf == NULL)
+    {
+      return -ENOMEM;
+    }
+    je->buf = newbuf;
+    je->capacity = newcap;
+  }
+  memcpy(&je->buf[je->sz], data, sz);
+  je->sz += sz;
+  return 0;
+}
+int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, struct abce_caj_out_ctx *ctx, size_t recdepth)
+{
+  size_t i;
+  if (recdepth == 0)
+  {
+    return -ENOMEM;
+  }
+  switch (mb->typ)
+  {
+    case ABCE_T_T:
+    {
+       struct abce_mb nil = {.typ = ABCE_T_N};
+       const struct abce_mb *mbkey = &nil;
+       const struct abce_mb *mbval = NULL;
+       abce_caj_out_add_start_dict(ctx);
+       while (abce_tree_get_next(abce, &mbkey, &mbval, mb, mbkey) == 0)
+       {
+         const char *buf = mbkey->u.area->u.str.buf;
+         size_t sz = mbkey->u.area->u.str.size;
+         switch (mbval->typ)
+         {
+          case ABCE_T_N:
+            abce_caj_out_put2_null(ctx, buf, sz);
+            break;
+          case ABCE_T_D:
+            abce_caj_out_put2_number(ctx, buf, sz, mbval->u.d);
+            break;
+          case ABCE_T_B:
+            if (mb->u.d)
+            {
+              abce_caj_out_put2_boolean(ctx, buf, sz, 1);
+            }
+            else
+            {
+              abce_caj_out_put2_boolean(ctx, buf, sz, 0);
+            }
+            break;
+          case ABCE_T_S:
+            abce_caj_out_put22_string(ctx, buf, sz, mbval->u.area->u.str.buf, mb->u.area->u.str.size);
+            break;
+          case ABCE_T_A:
+          {
+            int ret;
+            abce_caj_out_put2_start_array(ctx, buf, sz);
+            ret = abce_json_encode_rec_cpush(abce, mbval, ctx, recdepth-1);
+            if (ret)
+            {
+              return ret;
+            }
+            abce_caj_out_end_array(ctx);
+            break;
+          }
+          case ABCE_T_T:
+          {
+            int ret;
+            abce_caj_out_put2_start_dict(ctx, buf, sz);
+            ret = abce_json_encode_rec_cpush(abce, mbval, ctx, recdepth-1);
+            if (ret)
+            {
+              return ret;
+            }
+            abce_caj_out_end_dict(ctx);
+            break;
+          }
+          default:
+            abce->err.code = ABCE_E_NONJSON_TYPE;
+            abce_mb_errreplace_noinline(abce, mbval);
+            return -EINVAL;
+         }
+       }
+       abce_caj_out_end_dict(ctx);
+       break;
+    }
+    case ABCE_T_A:
+      for (i = 0; i < mb->u.area->u.ar.size; i++)
+      {
+        switch (mb->u.area->u.ar.mbs[i].typ)
+        {
+          case ABCE_T_N:
+            abce_caj_out_add_null(ctx);
+            break;
+          case ABCE_T_D:
+            abce_caj_out_add_number(ctx, mb->u.area->u.ar.mbs[i].u.d);
+            break;
+          case ABCE_T_B:
+            if (mb->u.area->u.ar.mbs[i].u.d)
+            {
+              abce_caj_out_add_boolean(ctx, 1);
+            }
+            else
+            {
+              abce_caj_out_add_boolean(ctx, 0);
+            }
+            break;
+          case ABCE_T_S:
+            abce_caj_out_add2_string(ctx, mb->u.area->u.ar.mbs[i].u.area->u.str.buf, mb->u.area->u.ar.mbs[i].u.area->u.str.size);
+            break;
+          case ABCE_T_A:
+          {
+            int ret;
+            abce_caj_out_add_start_array(ctx);
+            ret = abce_json_encode_rec_cpush(abce, &mb->u.area->u.ar.mbs[i], ctx, recdepth-1);
+            if (ret)
+            {
+              return ret;
+            }
+            abce_caj_out_end_array(ctx);
+            break;
+          }
+          case ABCE_T_T:
+          {
+            int ret;
+            abce_caj_out_add_start_dict(ctx);
+            ret = abce_json_encode_rec_cpush(abce, &mb->u.area->u.ar.mbs[i], ctx, recdepth-1);
+            if (ret)
+            {
+              return ret;
+            }
+            abce_caj_out_end_dict(ctx);
+            break;
+          }
+          default:
+            abce->err.code = ABCE_E_NONJSON_TYPE;
+            abce_mb_errreplace_noinline(abce, &mb->u.area->u.ar.mbs[i]);
+            return -EINVAL;
+        }
+      }
+      break;
+    case ABCE_T_S:
+      abce_caj_out_add2_string(ctx, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      break;
+    case ABCE_T_D:
+      abce_caj_out_add_number(ctx, mb->u.d);
+      break;
+    case ABCE_T_B:
+      if (mb->u.d)
+      {
+        abce_caj_out_add_boolean(ctx, 1);
+      }
+      else
+      {
+        abce_caj_out_add_boolean(ctx, 0);
+      }
+      break;
+    case ABCE_T_N:
+      abce_caj_out_add_null(ctx);
+      break;
+    default:
+      abce->err.code = ABCE_E_NONJSON_TYPE;
+      abce_mb_errreplace_noinline(abce, mb);
+      return -EINVAL;
+  }
+  return 0;
+}
+int abce_json_encode_cpush(struct abce *abce, struct abce_mb *mb)
+{
+  struct abce_caj_out_ctx ctx;
+  struct abce_json_encode_struct je = {
+    .buf = NULL,
+    .sz = 0,
+    .capacity = 0,
+    .abce = abce,
+  };
+  int ret;
+  abce_caj_out_init(&ctx, 0, 2, abce_json_datasink, &je);
+  ret = abce_json_encode_rec_cpush(abce, mb, &ctx, 2048);
+  if (ret != 0)
+  {
+    free(je.buf);
+    return ret;
+  }
+  if (abce_mb_cpush_create_string(abce, je.buf, je.sz) == NULL)
+  {
+    free(je.buf);
+    return -ENOMEM;
+  }
+  free(je.buf);
+  return 0;
 }

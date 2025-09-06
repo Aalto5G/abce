@@ -1899,9 +1899,22 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_cpop(abce);
       break;
     }
+    case ABCE_OPCODE_JSON_ENCODE:
+    {
+      int ret;
+      struct abce_mb *mb;
+      GETMBPTR(&mb, -1);
+      ret = abce_json_encode_cpush(abce, mb);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
+      break;
+    }
     case ABCE_OPCODE_STRFMT:
     case ABCE_OPCODE_MEMFILE_IOPEN:
-    case ABCE_OPCODE_JSON_ENCODE:
     case ABCE_OPCODE_JSON_DECODE:
     default:
       abce->err.code = ABCE_E_UNKNOWN_INSTRUCTION;

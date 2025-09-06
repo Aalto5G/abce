@@ -24,7 +24,7 @@ $(LUALIBS) ?= ["/usr/lib/x86_64-linux-gnu/libluajit-5.1.a"]
 $(SRC_LIB) = ["amyplanyyutils.c", "memblock.c", "abcerbtree.c", \
               "amyplanlocvarctx.c", "engine.c", "abcestring.c", "abcetrees.c", \
               "abcescopes.c", "abce.c", "abceapi.c", "safemode.c", \
-              "abcejmalloc.c"]
+              "abcejmalloc.c", "abceprettyftoa.c", "abce_caj_out.c"]
 $(SRC_PROG) = ["gctest.c", "reftest.c", "ret.c", "breaktest.c", "main.c", \
                "locvartest.c", "treetest.c", "amyplantest.c", "fiboefftest.c", \
                "fortest.c", "iftest.c", "dumptest.c", "fibonaccitest.c", \

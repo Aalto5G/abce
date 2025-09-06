@@ -1,0 +1,8 @@
+@function $main($argv,$env)
+  @locvar $json = {"a": [1,2,3,@nil,@false,"foo"], "b": @false, "c": 4.5, "d": @nil}
+  @locvar $f = @fopen("json.txt", "w")
+  @locvar $pb = @nil
+  $pb = @str2pb(@jsonenc($json))
+  @fwrite($f, $pb, 0, $pb{@})
+  @return 0
+@endfunction

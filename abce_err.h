@@ -68,6 +68,7 @@ enum abce_errcode {
   ABCE_E_FILE_IS_CLOSED = 63,
   ABCE_E_INVALID_WHENCE = 64,
   ABCE_E_EXPECT_CHAR = 65, // value: mb
+  ABCE_E_NONJSON_TYPE = 66,
   ABCE_E_LAST = 0x7FFFFFFF, // unused
 };
 
