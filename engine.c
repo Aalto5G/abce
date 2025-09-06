@@ -1515,7 +1515,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       ssize_t maxbytes;
       double off;
       size_t bytes_read = 0;
-      char delim;
+      char delim = '\0';
       int hasdelim = 0;
       GETMBPTR(&mbmaxbytes, -1);
       GETDBL(&off, -2);
@@ -1591,6 +1591,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.code = ABCE_E_FILE_IS_CLOSED;
         return -EINVAL;
       }
+#if 0
       if (hasdelim && maxbytes == -1)
       {
         size_t n = 0;
@@ -1613,19 +1614,52 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_npoppushdbl(abce, 5, bytes_read);
         break;
       }
-      else if (!hasdelim && maxbytes < 0)
+      else
+#endif
       {
-        // read entire file
+        int chr;
+        size_t curoff = (size_t)off;
+        int resized = 0;
+        for (;;)
+	{
+          chr = getc(mbios->u.area->u.ios.f);
+	  if (chr == EOF)
+	  {
+            if (resized && abce_mb_pb_resize(abce, mbpb, curoff))
+            {
+              return -ENOMEM;
+            }
+            break;
+	  }
+          if (curoff >= mbpb->u.area->u.pb.size)
+          {
+            if (abce_mb_pb_resize(abce, mbpb, curoff + mbpb->u.area->u.pb.size + 1))
+            {
+              return -ENOMEM;
+            }
+            resized = 1;
+          }
+          mbpb->u.area->u.pb.buf[curoff] = (char)chr;
+          curoff++;
+          bytes_read++;
+          if ((char)chr == delim && hasdelim)
+          {
+            if (resized && abce_mb_pb_resize(abce, mbpb, curoff))
+            {
+              return -ENOMEM;
+            }
+            break;
+          }
+          if (maxbytes >= 0 && curoff-(size_t)off >= maxbytes)
+          {
+            if (resized && abce_mb_pb_resize(abce, mbpb, curoff))
+            {
+              return -ENOMEM;
+            }
+            break;
+          }
+        }
       }
-      else if (!hasdelim && maxbytes >= 0)
-      {
-        // read at most maxbytes
-      }
-      else if (hasdelim && maxbytes >= 0)
-      {
-        // read at most maxbytes, delimited by delim
-      }
-      //bytes_read = fread(&mbpb->u.area->u.pb.buf[(size_t)off], 1, (size_t)nbytes, mbios->u.area->u.ios.f);
       abce_npoppushdbl(abce, 5, bytes_read);
       break;
     }
