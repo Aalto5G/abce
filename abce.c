@@ -1455,7 +1455,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             abce_caj_out_put2_number(ctx, buf, sz, mbval->u.d);
             break;
           case ABCE_T_B:
-            if (mb->u.d)
+            if (mbval->u.d)
             {
               abce_caj_out_put2_boolean(ctx, buf, sz, 1);
             }
