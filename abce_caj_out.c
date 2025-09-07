@@ -115,7 +115,7 @@ struct caj_escape {
 	const char *buf;
 	size_t sz;
 };
-const struct caj_escape caj_escape[] = {
+const struct caj_escape abce_caj_escape[] = {
 	{.buf = "\\u0000", .sz = 6},
 	{.buf = "\\u0001", .sz = 6},
 	{.buf = "\\u0002", .sz = 6},
@@ -182,7 +182,7 @@ static int abce_caj_internal_put_string(struct abce_caj_out_ctx *ctx, const char
 			}
 			else
 			{
-				ret = ctx->datasink(ctx, caj_escape[(int)s[i]].buf, caj_escape[(int)s[i]].sz);
+				ret = ctx->datasink(ctx, abce_caj_escape[(int)s[i]].buf, abce_caj_escape[(int)s[i]].sz);
 				if (ret)
 				{
 					return ret;

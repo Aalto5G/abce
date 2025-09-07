@@ -29,12 +29,12 @@ static inline int is_autocall(struct amyplanyy *amyplanyy)
 {
   return 0;
 }
-void add_corresponding_get(struct amyplanyy *amyplanyy, double get)
+static void amyplanyy_add_corresponding_get(struct amyplanyy *amyplanyy, double get)
 {
   uint16_t uget = (uint16_t)get;
   amyplanyy_add_byte(amyplanyy, uget);
 }
-void add_corresponding_set(struct amyplanyy *amyplanyy, double get)
+static void amyplanyy_add_corresponding_set(struct amyplanyy *amyplanyy, double get)
 {
   uint16_t uset = (uint16_t)get_corresponding_set((uint16_t)get);
   amyplanyy_add_byte(amyplanyy, uset);
@@ -528,7 +528,7 @@ statement:
       printf("Can't assign to length query (except for PB)\n");
       YYABORT;
     }
-    add_corresponding_set(amyplanyy, $1);
+    amyplanyy_add_corresponding_set(amyplanyy, $1);
     if ($1 == ABCE_OPCODE_DICTGET) // prev. changes from GET to SET_MAINTAIN
     {
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
@@ -1869,14 +1869,14 @@ expr0_without_string:
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    add_corresponding_get(amyplanyy, $1);
+    amyplanyy_add_corresponding_get(amyplanyy, $1);
   }
 }
 | lvalue
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    add_corresponding_get(amyplanyy, $1);
+    amyplanyy_add_corresponding_get(amyplanyy, $1);
   }
 }
   OPEN_PAREN maybe_arglist CLOSE_PAREN
@@ -1926,7 +1926,7 @@ expr0_without_string:
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    add_corresponding_get(amyplanyy, $1);
+    amyplanyy_add_corresponding_get(amyplanyy, $1);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_CALL_IF_FUN);
   }
 }

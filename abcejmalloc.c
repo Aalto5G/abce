@@ -19,20 +19,20 @@ struct jmalloc_block {
   } u;
 };
 
-size_t arenaremain;
-char *arena;
+static size_t abce_arenaremain;
+static char *abce_arena;
 
 // 16, 32, 64, 128, 256, 512, 1024, 2048
-struct jmalloc_block *blocks[8];
+static struct jmalloc_block *abce_blocks[8];
 // 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576
-struct jmalloc_block *blocks2[9] = {};
+static struct jmalloc_block *abce_blocks2[9] = {};
 
 
-const uint8_t lookup[129] = {
+static const uint8_t abce_lookup[129] = {
 0,0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
 };
 
-const uint8_t lookup2[256] = {
+static const uint8_t abce_lookup2[256] = {
 0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
 };
 
@@ -78,13 +78,13 @@ void *abce_jmalloc(size_t sz)
       }
       return ret;
     }
-    lookupval = lookup2[(sz-1)/4096];
-    ls = &blocks2[lookupval];
+    lookupval = abce_lookup2[(sz-1)/4096];
+    ls = &abce_blocks2[lookupval];
     sz = 1<<(12+lookupval);
   }
   else
   {
-    lookupval = lookup[(sz+15)/16];
+    lookupval = abce_lookup[(sz+15)/16];
     if (lookupval == 0 && sizeof(struct jmalloc_block) > 16)
     {
       lookupval = 1;
@@ -117,27 +117,27 @@ void *abce_jmalloc(size_t sz)
     {
       abort();
     }
-    ls = &blocks[lookupval];
+    ls = &abce_blocks[lookupval];
     sz = 1<<(4+lookupval);
   }
   if (unlikely(!*ls))
   {
-    if (unlikely(arenaremain < sz))
+    if (unlikely(abce_arenaremain < sz))
     {
-      arenaremain = 32*1024*1024;
-      arena = mmap(NULL, arenaremain, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-      if (unlikely(arena == MAP_FAILED || arena == NULL))
+      abce_arenaremain = 32*1024*1024;
+      abce_arena = mmap(NULL, abce_arenaremain, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+      if (unlikely(abce_arena == MAP_FAILED || abce_arena == NULL))
       {
         abort();
       }
     }
-    if (unlikely(arenaremain < sz))
+    if (unlikely(abce_arenaremain < sz))
     {
       abort();
     }
-    ret = arena;
-    arenaremain -= sz;
-    arena += sz;
+    ret = abce_arena;
+    abce_arenaremain -= sz;
+    abce_arena += sz;
     return ret;
   }
   blk = *ls;
@@ -157,12 +157,12 @@ void abce_jmfree(void *ptr, size_t sz)
       munmap(ptr, abce_jm_topages(sz));
       return;
     }
-    lookupval = lookup2[(sz-1)/4096];
-    ls = &blocks2[lookupval];
+    lookupval = abce_lookup2[(sz-1)/4096];
+    ls = &abce_blocks2[lookupval];
   }
   else
   {
-    lookupval = lookup[(sz+15)/16];
+    lookupval = abce_lookup[(sz+15)/16];
     if (lookupval == 0 && sizeof(struct jmalloc_block) > 16)
     {
       lookupval = 1;
@@ -195,7 +195,7 @@ void abce_jmfree(void *ptr, size_t sz)
     {
       abort();
     }
-    ls = &blocks[lookupval];
+    ls = &abce_blocks[lookupval];
   }
   blk->u.next = *ls;
   *ls = blk;
