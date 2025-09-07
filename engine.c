@@ -15,6 +15,7 @@
 #include "abcetrees.h"
 #include "abcescopes.h"
 #include "abceworditer.h"
+#include "abce_caj.h"
 
 #define POPABORTS 1
 
@@ -190,6 +191,15 @@ static inline void abce_npoppushc(struct abce *abce, size_t n)
 #else
 #define POP() abce_pop(abce)
 #endif
+
+void abce_ncpop(struct abce *abce, size_t n)
+{
+  size_t i;
+  for (i = 0; i < n; i++)
+  {
+    abce_cpop(abce);
+  }
+}
 
 int
 abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
@@ -1913,9 +1923,320 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_cpop(abce);
       break;
     }
+    case ABCE_OPCODE_JSON_DECODE:
+    {
+      int ret;
+      struct abce_mb *mbstr;
+      struct abce_pullcaj_ctx ctx;
+      struct abce_pullcaj_event_info ev;
+      int pushed = 0;
+      size_t pushedc = 0;
+      struct abce_mb *mbtop;
+      struct abce_mb *mb;
+      struct abce_mb *mbkey;
+      GETMBSTRPTR(&mbstr, -1);
+      abce_pullcaj_init(&ctx);
+      abce_pullcaj_set_buf(&ctx, mbstr->u.area->u.str.buf, mbstr->u.area->u.str.size, 1);
+      while ((ret = abce_pullcaj_get_event(&ctx, &ev)) > 0)
+      {
+        switch (ev.ev) { // ev.key, ev.keysz
+          case ABCE_CAJ_EV_START_DICT:
+            if (!pushed)
+            {
+              mbtop = abce_mb_cpush_create_tree(abce);
+              if (mbtop == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+            }
+            else if (ev.key)
+            {
+              mb = abce_mb_cpush_create_tree(abce);
+              if (mb == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mbkey = abce_mb_cpush_create_string(abce, ev.key, ev.keysz);
+              if (mbkey == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_tree_set_str(abce, &abce->cstackbase[abce->csp-3], mbkey, mb);
+              abce_cpop(abce);
+              pushedc--;
+            }
+            else
+            {
+              mb = abce_mb_cpush_create_tree(abce);
+              if (mbtop == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_mb_array_append(abce, &abce->cstackbase[abce->csp-2], mb);
+            }
+            break;
+          case ABCE_CAJ_EV_END_DICT:
+            abce_cpop(abce);
+            pushedc--;
+            break;
+          case ABCE_CAJ_EV_START_ARRAY:
+            if (!pushed)
+            {
+              mbtop = abce_mb_cpush_create_array(abce);
+              if (mbtop == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+            }
+            else if (ev.key)
+            {
+              mb = abce_mb_cpush_create_array(abce);
+              if (mb == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mbkey = abce_mb_cpush_create_string(abce, ev.key, ev.keysz);
+              if (mbkey == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_tree_set_str(abce, &abce->cstackbase[abce->csp-3], mbkey, mb);
+              abce_cpop(abce);
+              pushedc--;
+            }
+            else
+            {
+              mb = abce_mb_cpush_create_array(abce);
+              if (mb == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_mb_array_append(abce, &abce->cstackbase[abce->csp-2], mb);
+            }
+            break;
+          case ABCE_CAJ_EV_END_ARRAY:
+            abce_cpop(abce);
+            pushedc--;
+            break;
+          case ABCE_CAJ_EV_NULL:
+            if (!pushed)
+            {
+              if (abce_cpush_nil(abce) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mbtop = &abce->cstackbase[abce->csp-1];
+            }
+            else if (ev.key)
+            {
+              if (abce_cpush_nil(abce) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mb = &abce->cstackbase[abce->csp-1];
+              mbkey = abce_mb_cpush_create_string(abce, ev.key, ev.keysz);
+              if (mbkey == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_tree_set_str(abce, &abce->cstackbase[abce->csp-3], mbkey, mb);
+              abce_cpop(abce);
+              pushedc--;
+              abce_cpop(abce);
+              pushedc--;
+            }
+            else
+            {
+              if (abce_cpush_nil(abce) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mb = &abce->cstackbase[abce->csp-1];
+              abce_mb_array_append(abce, &abce->cstackbase[abce->csp-2], mb);
+              abce_cpop(abce);
+              pushedc--;
+            }
+            break;
+          case ABCE_CAJ_EV_STR:
+            // ev.u.str.val, ev.u.str.valsz
+            if (!pushed)
+            {
+              mbtop = abce_mb_cpush_create_string(abce, ev.u.str.val, ev.u.str.valsz);
+              if (mbtop == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+            }
+            else if (ev.key)
+            {
+              mb = abce_mb_cpush_create_string(abce, ev.u.str.val, ev.u.str.valsz);
+              if (mb == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mbkey = abce_mb_cpush_create_string(abce, ev.key, ev.keysz);
+              if (mbkey == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_tree_set_str(abce, &abce->cstackbase[abce->csp-3], mbkey, mb);
+              abce_cpop(abce);
+              pushedc--;
+              abce_cpop(abce);
+              pushedc--;
+            }
+            else
+            {
+              mb = abce_mb_cpush_create_string(abce, ev.u.str.val, ev.u.str.valsz);
+              if (mb == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_mb_array_append(abce, &abce->cstackbase[abce->csp-2], mb);
+              abce_cpop(abce);
+              pushedc--;
+            }
+            break;
+          case ABCE_CAJ_EV_NUM:
+            // ev.u.num.d
+            if (!pushed)
+            {
+              if (abce_cpush_double(abce, ev.u.num.d) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mbtop = &abce->cstackbase[abce->csp-1];
+            }
+            else if (ev.key)
+            {
+              if (abce_cpush_double(abce, ev.u.num.d) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mb = &abce->cstackbase[abce->csp-1];
+              mbkey = abce_mb_cpush_create_string(abce, ev.key, ev.keysz);
+              if (mbkey == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_tree_set_str(abce, &abce->cstackbase[abce->csp-3], mbkey, mb);
+              abce_cpop(abce);
+              pushedc--;
+              abce_cpop(abce);
+              pushedc--;
+            }
+            else
+            {
+              if (abce_cpush_double(abce, ev.u.num.d) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mb = &abce->cstackbase[abce->csp-1];
+              abce_mb_array_append(abce, &abce->cstackbase[abce->csp-2], mb);
+              abce_cpop(abce);
+              pushedc--;
+            }
+            break;
+          case ABCE_CAJ_EV_BOOL:
+            // ev.u.b.b
+            if (!pushed)
+            {
+              if (abce_cpush_boolean(abce, ev.u.b.b) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mbtop = &abce->cstackbase[abce->csp-1];
+            }
+            else if (ev.key)
+            {
+              if (abce_cpush_boolean(abce, ev.u.b.b) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mb = &abce->cstackbase[abce->csp-1];
+              mbkey = abce_mb_cpush_create_string(abce, ev.key, ev.keysz);
+              if (mbkey == NULL)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              abce_tree_set_str(abce, &abce->cstackbase[abce->csp-3], mbkey, mb);
+              abce_cpop(abce);
+              pushedc--;
+              abce_cpop(abce);
+              pushedc--;
+            }
+            else
+            {
+              if (abce_cpush_boolean(abce, ev.u.b.b) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              mb = &abce->cstackbase[abce->csp-1];
+              abce_mb_array_append(abce, &abce->cstackbase[abce->csp-2], mb);
+              abce_cpop(abce);
+              pushedc--;
+            }
+            break;
+        }
+      }
+      if (pushedc != 1)
+      {
+        return -EINVAL;
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
+      break;
+    }
     case ABCE_OPCODE_STRFMT:
     case ABCE_OPCODE_MEMFILE_IOPEN:
-    case ABCE_OPCODE_JSON_DECODE:
     default:
       abce->err.code = ABCE_E_UNKNOWN_INSTRUCTION;
       abce->err.mb.typ = ABCE_T_D;

@@ -88,7 +88,7 @@ static void amyplanyy_add_corresponding_set(struct amyplanyy *amyplanyy, double 
 %token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
 %token STRWORD STRWORDCNT STRWORDLIST
 %token SPLICE
-%token JSONENC
+%token JSONENC JSONDEC
 
 %token STDOUT STDERR ERROR DUMP EXIT
 %token ABS ACOS ASIN ATAN CEIL FLOOR TRUNC ROUND COS SIN TAN EXP LOG SQRT
@@ -1727,6 +1727,8 @@ expr0_without_string:
 | STRSTR OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTR); }
 | JSONENC OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JSON_ENCODE); }
+| JSONDEC OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JSON_ENCODE); }
 | STRREP OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRREP); }

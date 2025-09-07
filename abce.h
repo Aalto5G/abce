@@ -536,6 +536,32 @@ static inline int abce_cpush_nil(struct abce *abce)
   abce->csp++;
   return 0;
 }
+static inline int abce_cpush_boolean(struct abce *abce, int val)
+{
+  if (abce_unlikely(abce->csp >= abce->cstacklimit))
+  {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_N;
+    return -EOVERFLOW;
+  }
+  abce->cstackbase[abce->csp].typ = ABCE_T_B;
+  abce->cstackbase[abce->csp].u.d = (double)!!val;
+  abce->csp++;
+  return 0;
+}
+static inline int abce_cpush_double(struct abce *abce, double d)
+{
+  if (abce_unlikely(abce->csp >= abce->cstacklimit))
+  {
+    abce->err.code = ABCE_E_STACK_OVERFLOW;
+    abce->err.mb.typ = ABCE_T_N;
+    return -EOVERFLOW;
+  }
+  abce->cstackbase[abce->csp].typ = ABCE_T_D;
+  abce->cstackbase[abce->csp].u.d = d;
+  abce->csp++;
+  return 0;
+}
 static inline int abce_cpush_mb(struct abce *abce, const struct abce_mb *mb)
 {
   if (abce_unlikely(abce->csp >= abce->cstacklimit))
