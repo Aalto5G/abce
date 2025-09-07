@@ -1,6 +1,6 @@
 .SUFFIXES:
 
-SRC_LIB := amyplanyyutils.c memblock.c abcerbtree.c amyplanlocvarctx.c engine.c abcestring.c abcetrees.c abcescopes.c abce.c abceapi.c safemode.c abcejmalloc.c
+SRC_LIB := amyplanyyutils.c memblock.c abcerbtree.c amyplanlocvarctx.c engine.c abcestring.c abcetrees.c abcescopes.c abce.c abceapi.c safemode.c abcejmalloc.c abceprettyftoa.c abce_caj_out.c abcestreamingatof.c abce_caj.c
 SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c ret.c breaktest.c gctest.c reftest.c fortest.c iftest.c dumptest.c shortcut.c dictnext.c amyplan.c
 
 SRC_CPP_LIB :=
