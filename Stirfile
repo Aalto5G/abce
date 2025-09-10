@@ -16,6 +16,20 @@ $(CFLAGS) ?= @nil
     $(CFLAGS) = ["-O3", "-Wall", "-g"]
   @endif
 @endif
+$(FLEX) ?= @nil
+@if(@type($(FLEX)) == @type(@nil))
+  $(FLEX) ``= ["sh", "-c", "echo $FLEX"]
+  @if($(FLEX)[] == 0)
+    $(FLEX) = ["flex"]
+  @endif
+@endif
+$(BYACC) ?= @nil
+@if(@type($(BYACC)) == @type(@nil))
+  $(BYACC) ``= ["sh", "-c", "echo $BYACC"]
+  @if($(BYACC)[] == 0)
+    $(BYACC) = ["byacc"]
+  @endif
+@endif
 $(WITH_LUA) ?= @false
 $(LUAINCS) ?= ["-I/usr/include/luajit-2.1"]
 $(LUALIBS) ?= ["/usr/lib/x86_64-linux-gnu/libluajit-5.1.a"]
@@ -91,9 +105,9 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 
 # FIXME test breaking long command line to many shorter lines
 @patrule: $(LEXGEN_LIB): '%.lex.c' '%.lex.h': '%.l'
-@	["flex", "--outfile=".$@, "--header-file=".@sufsubone($@,".c",".h"), $<]
+@	[@$(FLEX), "--outfile=".$@, "--header-file=".@sufsubone($@,".c",".h"), $<]
 
 @patrule: $(YACCGEN_LIB): '%.tab.c' '%.tab.h': '%.y'
-@	["byacc", "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", @sufsubone($@, ".tab.c", ""), "-o", $@, $<]
+@	[@$(BYACC), "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", @sufsubone($@, ".tab.c", ""), "-o", $@, $<]
 
 @cdepincludes @autophony @autotarget @ignore [@$(DEP), @$(DEPGEN_LIB)]
