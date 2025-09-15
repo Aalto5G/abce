@@ -72,7 +72,7 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @phonyrule: 'wc':
 @	["wc", "-l", @$(LEX_LIB), @$(YACC_LIB), @$(SRC), @@suffilterout(@suffilterout(@glob("*.h"),".lex.h"),".tab.h")]
 
-@patrule: $(PROG): '%': '%.o' 'libabce.a'
+@patrule @distrule: $(PROG): '%': '%.o' 'libabce.a'
 @	[@$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm', '-ldl']
 
 @patrule: $(OBJ): '%.o': '%.c' '%.d'
