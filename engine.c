@@ -1465,7 +1465,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       break;
     }
-    case ABCE_OPCODE_FP_CLASSIFY:
     case ABCE_OPCODE_FILE_OPEN:
     {
       struct abce_mb *mbpath;
@@ -2233,6 +2232,34 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       abce_npoppushc(abce, 1);
       abce_cpop(abce);
+      break;
+    }
+    case ABCE_OPCODE_FP_CLASSIFY:
+    {
+      double d;
+      int c;
+      GETDBL(&d, -1);
+      switch (fpclassify(d))
+      {
+        case FP_NAN:
+          c = 4;
+	  break;
+        case FP_INFINITE:
+          c = 3;
+	  break;
+	case FP_ZERO:
+          c = 0;
+	  break;
+	case FP_SUBNORMAL:
+	  c = 1;
+	  break;
+	case FP_NORMAL:
+	  c = 2;
+	  break;
+	default:
+	  abort();
+      }
+      abce_npoppushdbl(abce, 1, c);
       break;
     }
     case ABCE_OPCODE_STRFMT:

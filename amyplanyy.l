@@ -63,6 +63,7 @@ struct amyplan_csnippet luaSnippet = {
 @chomp    return CHOMP;
 @dupnonrec return DUP_NONRECURSIVE;
 @pbnew    return PB_NEW;
+@fpclassify return FP_CLASSIFY;
 @be8      return EIGHT;
 @le8      return EIGHT;
 @be16     return SIXTEENBE;
