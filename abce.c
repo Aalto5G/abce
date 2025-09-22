@@ -1624,3 +1624,24 @@ int abce_json_encode_cpush(struct abce *abce, struct abce_mb *mb)
   free(je.buf);
   return 0;
 }
+
+void abce_try_grow_gcblock(struct abce *abce)
+{
+  size_t gcblocknewcap = abce->gcblockcap*2;
+  struct abce_mb *newblock;
+  size_t scratchnewstart;
+  size_t scratchnewsize;
+  newblock = abce_alloc_stack(abce, gcblocknewcap);
+  if (newblock == NULL)
+  {
+    abort();
+  }
+  memcpy(newblock, abce->gcblockbase, abce->gcblocksz*sizeof(*newblock));
+  scratchnewsize = (abce->gcblockcap - abce->scratchstart);
+  scratchnewstart = gcblocknewcap - scratchnewsize;
+  memcpy(&newblock[scratchnewstart], &abce->gcblockbase[abce->scratchstart], scratchnewsize*sizeof(*newblock));
+  abce_free_stack(abce, abce->gcblockbase, abce->gcblockcap);
+  abce->gcblockbase = newblock;
+  abce->gcblockcap = gcblocknewcap;
+  abce->scratchstart = scratchnewstart;
+}

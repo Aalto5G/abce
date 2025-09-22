@@ -57,7 +57,11 @@ void *abce_jm_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
     }
     if (abce->gcblocksz >= abce->gcblockcap)
     {
-      return NULL;
+      abce_try_grow_gcblock(abce);
+      if (abce->gcblocksz >= abce->gcblockcap)
+      {
+        return NULL;
+      }
     }
     result = abce_jmalloc(newsz);
     if (result)

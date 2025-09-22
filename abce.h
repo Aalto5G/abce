@@ -1400,9 +1400,15 @@ static inline void abce_maybe_mv_obj_to_scratch(struct abce *abce, const struct 
 
 void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ);
 
+void abce_try_grow_gcblock(struct abce *abce);
+
 static inline void abce_setup_mb_for_gc(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ)
 {
   size_t locidx = abce->gcblocksz;
+  if (locidx >= abce->gcblockcap)
+  {
+    abce_try_grow_gcblock(abce);
+  }
   if (locidx >= abce->gcblockcap)
   {
     abort();
