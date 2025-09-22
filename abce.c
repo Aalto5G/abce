@@ -228,27 +228,27 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->ins_budget_fn = NULL;
   abce->ins_budget_baton = NULL;
   abce->userdata = NULL;
-  abce->stacklimit = 1024*1024;
+  abce->stacklimit = 1024*1024; // FIXME this needs better strategy
   abce->stackbase = abce_alloc_stack(abce, abce->stacklimit);
-  abce->cstacklimit = 8*1024;
+  abce->cstacklimit = 8*1024; // this is usually small
   abce->cstackbase = abce_alloc_stack(abce, abce->cstacklimit);
-  abce->gcblockcap = 1024*1024;
+  abce->gcblockcap = 8*1024; // fits medium sized projects without growing need
   abce->gcblocksz = 0;
   abce->scratchstart = abce->gcblockcap;
   abce->gcblockbase = abce_alloc_stack(abce, abce->gcblockcap);
-  abce->btcap = 1024*1024;
+  abce->btcap = 1024; // 4x 4KB page
   abce->btsz = 0;
   abce->btbase = abce_alloc_stack(abce, abce->btcap);
   abce->sp = 0;
   abce->csp = 0;
   abce->bp = 0;
   abce->ip = 0;
-  abce->bytecodecap = 32*1024*1024;
+  abce->bytecodecap = 32*1024*1024; // FIXME this needs better strategy
   abce->bytecode = abce_alloc_bcode(abce, abce->bytecodecap);
   abce->bytecodesz = 0;
   abce->oneblock.typ = ABCE_T_N;
 
-  abce->cachecap = 1024*1024;
+  abce->cachecap = 1024*1024; // FIXME this needs better strategy
   abce->cachebase = abce_alloc_stack(abce, abce->cachecap);
   abce->cachesz = 0;
 
