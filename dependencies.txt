@@ -2,12 +2,11 @@ The following UNIX headers are required:
 
 netinet/in.h: ntohl, htonl, ntohs, htons
 libgen.h: dirname for amyplanyydirparse
-errno.h: standard errno constants
-endian.h: __BYTE_ORDER, __LITTLE_ENDIAN, __BIG_ENDIAN
+errno.h: standard errno constants in POSIX
 string.h: strdup
-sys/mman.h: mmap, munmap
-unistd.h: sysconf
+sys/mman.h: mmap, munmap, potentially madvise
+unistd.h: sysconf of _SC_PAGE_SIZE
 
 Also, GCC's __builtin_expect is required.
 
-Some test programs require fmemopen in stdio.h.
+Some test programs and amyplanyydomemparse require fmemopen in stdio.h.
