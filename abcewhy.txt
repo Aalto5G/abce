@@ -55,4 +55,4 @@ Design criteria
 What's not included in design criteria
 - Optimization and/or JIT compilation of compiled code
 - Coroutines
-- Garbage collector
+- Garbage collector (but this has been implemented now)
