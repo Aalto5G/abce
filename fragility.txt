@@ -46,3 +46,6 @@ There is also abce->oneblock that allows one temporary block to be stored in
 such a manner that GC sees it (just remember to set it back to nil), and cstack
 accessed by abce_cpop and abce_cpush_* if one block is not enough, but a
 parallel stack independent of the abce stack is needed.
+
+Today, GETMBAR and GETMB are no longer defined, and GETMBARPTR and GETMBPTR
+get pointers to the blocks in stack, which avoids the fragility.
