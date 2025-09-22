@@ -60,6 +60,16 @@ void *abce_do_mmap_madvise(size_t bytes, int shared)
   }
   #endif
 #endif
+#ifdef MADV_FREE
+  #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+  if (ptr && ptr != MAP_FAILED)
+  {
+    madvise(ptr, bytes, MADV_FREE); // *BSD-ism
+    // on Linux, MADV_FREE works only on private anonymous pages
+    // TODO: not sure about FreeBSD
+  }
+  #endif
+#endif
   if (ptr == MAP_FAILED)
   {
     return NULL;
