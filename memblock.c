@@ -252,6 +252,10 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   }
   if (abce->cachesz >= abce->cachecap)
   {
+    abce_double_cache(abce);
+  }
+  if (abce->cachesz >= abce->cachecap)
+  {
     return -EOVERFLOW;
   }
   mb = abce_mb_cpush_create_string(abce, str, len);

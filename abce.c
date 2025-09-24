@@ -248,7 +248,7 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->bytecodesz = 0;
   abce->oneblock.typ = ABCE_T_N;
 
-  abce->cachecap = 1024*1024; // FIXME this needs better strategy
+  abce->cachecap = 8*1024;
   abce->cachebase = abce_alloc_stack(abce, abce->cachecap);
   abce->cachesz = 0;
 
@@ -1672,4 +1672,18 @@ void abce_double_stack(struct abce *abce)
   memcpy(newblock, abce->stackbase, abce->sp*sizeof(*newblock));
   abce->stackbase = newblock;
   abce->stacklimit = stacknewlimit;
+}
+
+void abce_double_cache(struct abce *abce)
+{
+  size_t cachenewcap = 2*abce->cachecap;
+  struct abce_mb *newblock;
+  newblock = abce_alloc_stack(abce, cachenewcap);
+  if (newblock == NULL)
+  {
+    abort();
+  }
+  memcpy(newblock, abce->cachebase, abce->cachesz*sizeof(*newblock));
+  abce->cachebase = newblock;
+  abce->cachecap = cachenewcap;
 }

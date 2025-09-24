@@ -95,6 +95,7 @@ abce_add_double_alt(void *bcode, size_t *bsz, size_t cap, double dbl)
 }
 void abce_double_bytecode(struct abce *abce);
 void abce_double_stack(struct abce *abce);
+void abce_double_cache(struct abce *abce);
 
 static inline int abce_add_double(struct abce *abce, double dbl)
 {
@@ -209,6 +210,10 @@ abce_mb_errreplace_noinline(struct abce *abce, const struct abce_mb *mbnew);
 static inline int64_t abce_cache_add(struct abce *abce, const struct abce_mb *mb)
 {
   int64_t res;
+  if (abce->cachesz >= abce->cachecap)
+  {
+    abce_double_cache(abce);
+  }
   if (abce->cachesz >= abce->cachecap)
   {
     return -EOVERFLOW;
