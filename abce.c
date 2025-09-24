@@ -1649,7 +1649,7 @@ void abce_try_grow_gcblock(struct abce *abce)
 void abce_double_bytecode(struct abce *abce)
 {
   size_t bytecodenewcap = 2*abce->bytecodecap;
-  char *newblock;
+  unsigned char *newblock;
   newblock = abce_alloc_bcode(abce, bytecodenewcap);
   if (newblock == NULL)
   {
