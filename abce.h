@@ -94,6 +94,7 @@ abce_add_double_alt(void *bcode, size_t *bsz, size_t cap, double dbl)
   return 0;
 }
 void abce_double_bytecode(struct abce *abce);
+void abce_double_stack(struct abce *abce);
 
 static inline int abce_add_double(struct abce *abce, double dbl)
 {
@@ -583,6 +584,10 @@ static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
+    abce_double_stack(abce);
+  }
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce_mb_errreplace_noinline(abce, mb);
     return -EOVERFLOW;
@@ -593,6 +598,10 @@ static inline int abce_push_mb(struct abce *abce, const struct abce_mb *mb)
 }
 static inline int abce_push_c(struct abce *abce)
 {
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
+    abce_double_stack(abce);
+  }
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
@@ -614,6 +623,10 @@ static inline int abce_push_boolean(struct abce *abce, int boolean)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
+    abce_double_stack(abce);
+  }
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_B;
     abce->err.mb.u.d = boolean;
@@ -629,6 +642,10 @@ static inline int abce_push_nil(struct abce *abce)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
+    abce_double_stack(abce);
+  }
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_N;
     return -EOVERFLOW;
@@ -640,6 +657,10 @@ static inline int abce_push_nil(struct abce *abce)
 
 static inline int abce_push_ip(struct abce *abce)
 {
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
+    abce_double_stack(abce);
+  }
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
@@ -656,6 +677,10 @@ static inline int abce_push_rg(struct abce *abce)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
+    abce_double_stack(abce);
+  }
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_RG;
     abce->err.mb.u.d = 0;
@@ -668,6 +693,10 @@ static inline int abce_push_rg(struct abce *abce)
 }
 static inline int abce_push_bp(struct abce *abce)
 {
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
+    abce_double_stack(abce);
+  }
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
@@ -684,6 +713,10 @@ static inline int abce_push_double(struct abce *abce, double dbl)
 {
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
+    abce_double_stack(abce);
+  }
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
     abce->err.code = ABCE_E_STACK_OVERFLOW;
     abce->err.mb.typ = ABCE_T_D;
     abce->err.mb.u.d = dbl;
@@ -696,6 +729,10 @@ static inline int abce_push_double(struct abce *abce, double dbl)
 }
 static inline int abce_push_fun(struct abce *abce, double fun_addr)
 {
+  if (abce_unlikely(abce->sp >= abce->stacklimit))
+  {
+    abce_double_stack(abce);
+  }
   if (abce_unlikely(abce->sp >= abce->stacklimit))
   {
     abce->err.code = ABCE_E_STACK_OVERFLOW;

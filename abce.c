@@ -228,7 +228,7 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->ins_budget_fn = NULL;
   abce->ins_budget_baton = NULL;
   abce->userdata = NULL;
-  abce->stacklimit = 1024*1024; // FIXME this needs better strategy
+  abce->stacklimit = 8*1024;
   abce->stackbase = abce_alloc_stack(abce, abce->stacklimit);
   abce->cstacklimit = 8*1024; // this is usually small
   abce->cstackbase = abce_alloc_stack(abce, abce->cstacklimit);
@@ -1658,4 +1658,18 @@ void abce_double_bytecode(struct abce *abce)
   memcpy(newblock, abce->bytecode, abce->bytecodesz);
   abce->bytecode = newblock;
   abce->bytecodecap = bytecodenewcap;
+}
+
+void abce_double_stack(struct abce *abce)
+{
+  size_t stacknewlimit = 2*abce->stacklimit;
+  struct abce_mb *newblock;
+  newblock = abce_alloc_stack(abce, stacknewlimit);
+  if (newblock == NULL)
+  {
+    abort();
+  }
+  memcpy(newblock, abce->stackbase, abce->sp*sizeof(*newblock));
+  abce->stackbase = newblock;
+  abce->stacklimit = stacknewlimit;
 }
