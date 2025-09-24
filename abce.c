@@ -243,7 +243,7 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->csp = 0;
   abce->bp = 0;
   abce->ip = 0;
-  abce->bytecodecap = 32*1024*1024; // FIXME this needs better strategy
+  abce->bytecodecap = 32*1024; // fits medium sized projects w/o growing need
   abce->bytecode = abce_alloc_bcode(abce, abce->bytecodecap);
   abce->bytecodesz = 0;
   abce->oneblock.typ = ABCE_T_N;
@@ -1644,4 +1644,18 @@ void abce_try_grow_gcblock(struct abce *abce)
   abce->gcblockbase = newblock;
   abce->gcblockcap = gcblocknewcap;
   abce->scratchstart = scratchnewstart;
+}
+
+void abce_double_bytecode(struct abce *abce)
+{
+  size_t bytecodenewcap = 2*abce->bytecodecap;
+  char *newblock;
+  newblock = abce_alloc_bcode(abce, bytecodenewcap);
+  if (newblock == NULL)
+  {
+    abort();
+  }
+  memcpy(newblock, abce->bytecode, abce->bytecodesz);
+  abce->bytecode = newblock;
+  abce->bytecodecap = bytecodenewcap;
 }

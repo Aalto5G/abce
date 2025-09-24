@@ -93,9 +93,14 @@ abce_add_double_alt(void *bcode, size_t *bsz, size_t cap, double dbl)
   (*bsz) += 8;
   return 0;
 }
+void abce_double_bytecode(struct abce *abce);
 
 static inline int abce_add_double(struct abce *abce, double dbl)
 {
+  if (abce->bytecodesz + 8 > abce->bytecodecap)
+  {
+    abce_double_bytecode(abce);
+  }
   return abce_add_double_alt(
     abce->bytecode, &abce->bytecodesz, abce->bytecodecap, dbl);
 }
@@ -749,12 +754,20 @@ abce_add_ins_alt(void *bcode, size_t *bsz, size_t cap, uint16_t ins)
 
 static inline int abce_add_ins(struct abce *abce, uint16_t ins)
 {
+  if (abce->bytecodesz + 3 > abce->bytecodecap)
+  {
+    abce_double_bytecode(abce);
+  }
   return abce_add_ins_alt(abce->bytecode, &abce->bytecodesz, abce->bytecodecap,
                           ins);
 }
 
 static inline int abce_add_byte(struct abce *abce, unsigned char byte)
 {
+  if (abce->bytecodesz >= abce->bytecodecap)
+  {
+    abce_double_bytecode(abce);
+  }
   if (abce->bytecodesz >= abce->bytecodecap)
   {
     return -EFAULT;
