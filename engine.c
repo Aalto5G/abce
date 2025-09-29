@@ -930,6 +930,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         return -ENOMEM;
       }
+      mbbase = &abce->cstackbase[abce->csp-1];
       for (size_t i = 0; i < mbbase->u.area->u.str.size/2; i++)
       {
         uint8_t tmp = mbbase->u.area->u.str.buf[i];
