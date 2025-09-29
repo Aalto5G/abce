@@ -830,7 +830,7 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
     mb.typ = ABCE_T_N;
     return mb;
   }
-  mba->u.str.size = sz;
+  mba->u.str.size = rep*sz;
   for (i = 0; i < rep; i++)
   {
     memcpy(mba->u.str.buf + i*sz, str, sz);
