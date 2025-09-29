@@ -2629,8 +2629,15 @@ calltrailer:
             ret = -ENOENT;
             break;
           }
+          if (abce_cpush_mb(abce, &mbar->u.area->u.ar.mbs[mbar->u.area->u.ar.size-1]) != 0)
+          {
+            abce->err.code = ABCE_E_STACK_OVERFLOW;
+            ret = -EOVERFLOW;
+            break;
+          }
           abce_mb_refdn(abce, &mbar->u.area->u.ar.mbs[--mbar->u.area->u.ar.size]);
-          POP();
+          abce_npoppushc(abce, 1);
+          abce_cpop(abce);
           break;
         }
         case ABCE_OPCODE_LISTLEN:
