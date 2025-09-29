@@ -1519,6 +1519,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
        break;
     }
     case ABCE_T_A:
+      abce_caj_out_add_start_array(ctx);
       for (i = 0; i < mb->u.area->u.ar.size; i++)
       {
         switch (mb->u.area->u.ar.mbs[i].typ)
@@ -1572,6 +1573,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             return -EINVAL;
         }
       }
+      abce_caj_out_end_array(ctx);
       break;
     case ABCE_T_S:
       abce_caj_out_add2_string(ctx, mb->u.area->u.str.buf, mb->u.area->u.str.size);
