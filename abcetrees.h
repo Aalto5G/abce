@@ -120,8 +120,8 @@ abce_rbtree_get_prev(const struct abce_mb **mbreskey,
     {
       if (node->left == NULL)
       {
-        goto out;
-        //break;
+        //goto out;
+        break;
       }
       node = node->left;
     }
@@ -129,7 +129,8 @@ abce_rbtree_get_prev(const struct abce_mb **mbreskey,
     {
       if (node->right == NULL)
       {
-        break;
+        //break;
+        goto out;
       }
       node = node->right;
     }
