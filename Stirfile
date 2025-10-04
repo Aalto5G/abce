@@ -103,11 +103,12 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @endfunction
 @call $ADD_LEXX_YACC_DEPS($(LEX_LIB))
 
-# FIXME test breaking long command line to many shorter lines
 @patrule: $(LEXGEN_LIB): '%.lex.c' '%.lex.h': '%.l'
-@	[@$(FLEX), "--outfile=".$@, "--header-file=".@sufsubone($@,".c",".h"), $<]
+@	[@$(FLEX), "--outfile=".$@, "--header-file=".@sufsubone($@,".c",".h"), \
+	$<]
 
 @patrule: $(YACCGEN_LIB): '%.tab.c' '%.tab.h': '%.y'
-@	[@$(BYACC), "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", @sufsubone($@, ".tab.c", ""), "-o", $@, $<]
+@	[@$(BYACC), "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", \
+	@sufsubone($@, ".tab.c", ""), "-o", $@, $<]
 
 @cdepincludes @autophony @autotarget @ignore [@$(DEP), @$(DEPGEN_LIB)]
