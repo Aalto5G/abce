@@ -714,7 +714,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = ch;
         return -EINVAL;
       }
-      GETMBSTRPTR(&mbbase, -1);
+      GETMBSTRPTR(&mbbase, -3);
       if ((int64_t)loc < 0 || (uint64_t)loc >= mbbase->u.area->u.str.size)
       {
         abce->err.code = ABCE_E_INDEX_OOB;
