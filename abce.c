@@ -1445,7 +1445,7 @@ static int abce_json_datasink(struct abce_caj_out_ctx *ctx, const char *data, si
   je->sz += sz;
   return 0;
 }
-int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, struct abce_caj_out_ctx *ctx, size_t recdepth)
+int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, struct abce_caj_out_ctx *ctx, size_t recdepth, int rec)
 {
   size_t i;
   if (recdepth == 0)
@@ -1459,7 +1459,10 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
        struct abce_mb nil = {.typ = ABCE_T_N};
        const struct abce_mb *mbkey = &nil;
        const struct abce_mb *mbval = NULL;
-       abce_caj_out_add_start_dict(ctx);
+       if (!rec)
+       {
+         abce_caj_out_add_start_dict(ctx);
+       }
        while (abce_tree_get_next(abce, &mbkey, &mbval, mb, mbkey) == 0)
        {
          const char *buf = mbkey->u.area->u.str.buf;
@@ -1489,7 +1492,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
           {
             int ret;
             abce_caj_out_put2_start_array(ctx, buf, sz);
-            ret = abce_json_encode_rec_cpush(abce, mbval, ctx, recdepth-1);
+            ret = abce_json_encode_rec_cpush(abce, mbval, ctx, recdepth-1, 1);
             if (ret)
             {
               return ret;
@@ -1501,7 +1504,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
           {
             int ret;
             abce_caj_out_put2_start_dict(ctx, buf, sz);
-            ret = abce_json_encode_rec_cpush(abce, mbval, ctx, recdepth-1);
+            ret = abce_json_encode_rec_cpush(abce, mbval, ctx, recdepth-1, 1);
             if (ret)
             {
               return ret;
@@ -1515,11 +1518,17 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             return -EINVAL;
          }
        }
-       abce_caj_out_end_dict(ctx);
+       if (!rec)
+       {
+         abce_caj_out_end_dict(ctx);
+       }
        break;
     }
     case ABCE_T_A:
-      abce_caj_out_add_start_array(ctx);
+      if (!rec)
+      {
+        abce_caj_out_add_start_array(ctx);
+      }
       for (i = 0; i < mb->u.area->u.ar.size; i++)
       {
         switch (mb->u.area->u.ar.mbs[i].typ)
@@ -1547,7 +1556,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
           {
             int ret;
             abce_caj_out_add_start_array(ctx);
-            ret = abce_json_encode_rec_cpush(abce, &mb->u.area->u.ar.mbs[i], ctx, recdepth-1);
+            ret = abce_json_encode_rec_cpush(abce, &mb->u.area->u.ar.mbs[i], ctx, recdepth-1, 1);
             if (ret)
             {
               return ret;
@@ -1559,7 +1568,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
           {
             int ret;
             abce_caj_out_add_start_dict(ctx);
-            ret = abce_json_encode_rec_cpush(abce, &mb->u.area->u.ar.mbs[i], ctx, recdepth-1);
+            ret = abce_json_encode_rec_cpush(abce, &mb->u.area->u.ar.mbs[i], ctx, recdepth-1, 1);
             if (ret)
             {
               return ret;
@@ -1573,7 +1582,10 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             return -EINVAL;
         }
       }
-      abce_caj_out_end_array(ctx);
+      if (!rec)
+      {
+        abce_caj_out_end_array(ctx);
+      }
       break;
     case ABCE_T_S:
       abce_caj_out_add2_string(ctx, mb->u.area->u.str.buf, mb->u.area->u.str.size);
@@ -1612,7 +1624,7 @@ int abce_json_encode_cpush(struct abce *abce, struct abce_mb *mb)
   };
   int ret;
   abce_caj_out_init(&ctx, 0, 2, abce_json_datasink, &je);
-  ret = abce_json_encode_rec_cpush(abce, mb, &ctx, 2048);
+  ret = abce_json_encode_rec_cpush(abce, mb, &ctx, 2048, 0);
   if (ret != 0)
   {
     free(je.buf);
