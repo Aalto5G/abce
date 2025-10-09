@@ -1950,6 +1950,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
                 return -ENOMEM;
               }
               pushedc++;
+              if (abce_cpush_mb(abce, mbtop) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              pushed = 1;
             }
             else if (ev.key)
             {
@@ -1997,6 +2004,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
                 return -ENOMEM;
               }
               pushedc++;
+              if (abce_cpush_mb(abce, mbtop) != 0)
+              {
+                abce_ncpop(abce, pushedc);
+                return -ENOMEM;
+              }
+              pushedc++;
+              pushed = 1;
             }
             else if (ev.key)
             {
