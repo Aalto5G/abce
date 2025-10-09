@@ -1730,7 +1730,7 @@ expr0_without_string:
 | JSONENC OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JSON_ENCODE); }
 | JSONDEC OPEN_PAREN expr CLOSE_PAREN
-{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JSON_ENCODE); }
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_JSON_DECODE); }
 | FP_CLASSIFY OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FP_CLASSIFY); }
 | STRREP OPEN_PAREN expr COMMA expr CLOSE_PAREN
