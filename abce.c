@@ -1486,7 +1486,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             }
             break;
           case ABCE_T_S:
-            abce_caj_out_put22_string(ctx, buf, sz, mbval->u.area->u.str.buf, mb->u.area->u.str.size);
+            abce_caj_out_put22_string(ctx, buf, sz, mbval->u.area->u.str.buf, mbval->u.area->u.str.size);
             break;
           case ABCE_T_A:
           {
