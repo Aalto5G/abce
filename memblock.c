@@ -1056,7 +1056,7 @@ void abce_dump_str(const char *str, size_t sz)
     }
     else if (uch == '"')
     {
-      printf("\"");
+      printf("\\\"");
     }
     else if (uch < 0x20)
     {
