@@ -74,6 +74,36 @@ int abce_sc_replace_val_mb(
   return 0;
 }
 
+int abce_sc_remove_val_mb(
+  struct abce *abce,
+  const struct abce_mb *mb, const struct abce_mb *pkey)
+{
+  struct abce_mb_area *mba = mb->u.area;
+  uint32_t hashval;
+  struct abce_mb_rb_entry *e;
+  size_t hashloc;
+  struct abce_rb_tree_node *n;
+
+  if (mb->typ != ABCE_T_SC || pkey->typ != ABCE_T_S)
+  {
+    abort();
+  }
+  hashval = abce_mb_str_hash(pkey);
+  hashloc = hashval & (mba->u.sc.size - 1);
+
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
+  if (n == NULL)
+  {
+    return -ENOENT;
+  }
+  e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
+  abce_rb_tree_nocmp_delete(&mba->u.sc.heads[hashloc], n);
+  abce_mb_refdn(abce, &e->key);
+  abce_mb_refdn(abce, &e->val);
+  abce->alloc(e, sizeof(*e), 0, &abce->alloc_baton);
+  return 0;
+}
+
 int abce_sc_put_val_str(
   struct abce *abce,
   const struct abce_mb *mb, const char *str, const struct abce_mb *pval)

@@ -16,6 +16,9 @@ const struct abce_mb *abce_sc_get_rec_str_area(
 int abce_sc_replace_val_mb(
   struct abce *abce,
   const struct abce_mb *mb, const struct abce_mb *pkey, const struct abce_mb *pval);
+int abce_sc_remove_val_mb(
+  struct abce *abce,
+  const struct abce_mb *mb, const struct abce_mb *pkey);
 
 int abce_sc_put_val_str(
   struct abce *abce,
