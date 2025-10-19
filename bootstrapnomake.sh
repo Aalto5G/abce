@@ -1,7 +1,8 @@
 #!/bin/sh
 
-CC=cc
-CFLAGS="-O3 -Wall -g"
+export CC="${CC:-cc}"
+export CFLAGS="${CFLAGS:--O3 -Wall -g}"
+export LDFLAGS="${LDFLAGS:-}"
 
 die()
 {
