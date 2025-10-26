@@ -132,13 +132,10 @@ libabce.a: $(OBJ_LIB) $(OBJGEN_LIB) $(OBJ_CPP_LIB) Makefile
 
 $(OBJ): %.o: %.c %.d Makefile
 	$(CC) $(CFLAGS) -c -o $*.o $*.c
-	$(CC) $(CFLAGS) -c -S -o $*.s $*.c
 $(OBJ_CPP): %.o: %.cc %.d Makefile
 	$(CPP) $(CPPFLAGS) -c -o $*.o $*.cc
-	$(CPP) $(CPPFLAGS) -c -S -o $*.s $*.cc
 $(OBJGEN): %.o: %.c %.h %.d Makefile
 	$(CC) $(CFLAGS) -c -o $*.o $*.c -Wno-sign-compare -Wno-missing-prototypes
-	$(CC) $(CFLAGS) -c -S -o $*.s $*.c -Wno-sign-compare -Wno-missing-prototypes
 
 $(DEP): %.d: %.c Makefile
 	$(CC) $(CFLAGS) -MM -MP -MT "$*.d $*.o" -o $*.d $*.c
