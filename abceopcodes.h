@@ -144,6 +144,7 @@ enum abce_opcode {
   ABCE_OPCODE_PB2STR = 194,
   ABCE_OPCODE_STR2PB = 195,
   ABCE_OPCODE_FILE_GETDELIM = 196, // GET(delim, maxcnt), GET(@nil, maxcnt), GET(delim, @nil), GET(@nil, @nil)
+  ABCE_OPCODE_GETTIME = 197,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

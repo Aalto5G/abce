@@ -159,6 +159,7 @@ struct amyplan_csnippet luaSnippet = {
 @appendlist   return APPEND_LIST;
 @dynluacall  return DYNLUACALL;
 @lexluacall  return LEXLUACALL;
+@gettime  return GETTIME;
 [+]=      return PLUSEQUALS;
 [?]=      return QMEQUALS;
 :         return COLON;

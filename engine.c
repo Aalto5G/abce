@@ -1673,6 +1673,26 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_npoppushdbl(abce, 5, bytes_read);
       break;
     }
+    case ABCE_OPCODE_GETTIME:
+    {
+      ssize_t maxbytes;
+      double off;
+      size_t bytes_read = 0;
+      char delim = '\0';
+      int hasdelim = 0;
+      int64_t time64;
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      time64 = ((int64_t)tv.tv_sec)*1000LL*1000LL + tv.tv_usec;
+      if (abce_push_double(abce, time64) != 0)
+      {
+        abce->err.code = ABCE_E_STACK_OVERFLOW;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = time64;
+        return -EOVERFLOW;
+      }
+      break;
+    }
     case ABCE_OPCODE_FILE_GET:
     {
       struct abce_mb *mbios;
