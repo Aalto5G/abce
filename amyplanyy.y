@@ -71,7 +71,7 @@ static void amyplanyy_add_corresponding_set(struct amyplanyy *amyplanyy, double 
 %token LT GT LE GE
 %token FUNCTION ENDFUNCTION LOCVAR
 
-%token GETTIME LOCALTIME GMTIME
+%token GETTIME LOCALTIME GMTIME MKTIME
 
 %token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
 %token FORDICT FORDICTPREV FOR ENDFOR
@@ -1795,6 +1795,8 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LOCALTIME); }
 | GMTIME OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GMTIME); }
+| MKTIME OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_MKTIME); }
 | FSEEK OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_SEEK_TELL); }
 | FWRITE OPEN_PAREN expr COMMA expr COMMA expr COMMA expr CLOSE_PAREN

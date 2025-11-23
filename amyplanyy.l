@@ -162,6 +162,7 @@ struct amyplan_csnippet luaSnippet = {
 @gettime  return GETTIME;
 @localtime  return LOCALTIME;
 @gmtime  return GMTIME;
+@mktime  return MKTIME;
 [+]=      return PLUSEQUALS;
 [?]=      return QMEQUALS;
 :         return COLON;

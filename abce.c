@@ -1365,6 +1365,7 @@ const char *abce_err_to_str(enum abce_errcode code)
   case ABCE_E_INVALID_ARG_CNT: return "Invalid argument count";
   case ABCE_E_STACK_UNDERFLOW: return "Stack underflow";
   case ABCE_E_STACK_OVERFLOW: return "Stack overflow";
+  case ABCE_E_NUMBER_OVERFLOW: return "Number overflow";
   case ABCE_E_ARRAY_UNDERFLOW: return "Array underflow";
   case ABCE_E_PB_NEW_LEN_NOT_UINT:
     return "Protocol buffer new length not unsigned integer";

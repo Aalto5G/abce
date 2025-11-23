@@ -203,6 +203,41 @@ void abce_ncpop(struct abce *abce, size_t n)
   }
 }
 
+static int set_int_cfield(struct abce *abce, struct abce_mb *mbt, const char *fname, int *cfield, int off)
+{
+  struct abce_mb *mbkey;
+  struct abce_mb *mbres;
+  if (mbt->typ != ABCE_T_T)
+  {
+    abce->err.code = ABCE_E_EXPECT_TREE;
+    abce_mb_errreplace_noinline(abce, mbt);
+    return -EINVAL;
+  }
+  mbkey = abce_mb_cpush_create_string_nul(abce, fname);
+  if (mbkey == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb.typ = ABCE_T_N;
+    return -ENOMEM;
+  }
+  if (abce_tree_get_str(abce, &mbres, mbt, mbkey) != 0)
+  {
+    abce->err.code = ABCE_E_TREE_ENTRY_NOT_FOUND;
+    abce_mb_errreplace_noinline(abce, mbkey);
+    abce_cpop(abce);
+    return -ENOENT;
+  }
+  if (mbres->typ != ABCE_T_D)
+  {
+    abce->err.code = ABCE_E_EXPECT_DBL;
+    abce_mb_errreplace_noinline(abce, mbres);
+    abce_cpop(abce);
+    return -EINVAL;
+  }
+  *cfield = ((int)mbres->u.d) - off;
+  abce_cpop(abce);
+  return 0;
+}
 
 static int set_field(struct abce *abce, struct abce_mb *mbt, const char *fname, double val)
 {
@@ -213,7 +248,7 @@ static int set_field(struct abce *abce, struct abce_mb *mbt, const char *fname, 
   {
     abce->err.code = ABCE_E_NO_MEM;
     abce->err.mb.typ = ABCE_T_N;
-    return -EOVERFLOW;
+    return -ENOMEM;
   }
   mbval.typ = ABCE_T_D;
   mbval.u.d = val;
@@ -1715,6 +1750,87 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       break;
     }
+    case ABCE_OPCODE_MKTIME:
+    {
+      struct abce_mb *mbt;
+      struct tm result = {};
+      time_t res;
+      int usec = 0;
+      int ret;
+      VERIFYMB(-1, ABCE_T_T);
+      GETMBPTR(&mbt, -1);
+      ret = set_int_cfield(abce, mbt, "tm_usec", &usec, 0);
+      if (ret != 0 && ret != -ENOENT)
+      {
+        return ret;
+      }
+      ret = set_int_cfield(abce, mbt, "tm_sec", &result.tm_sec, 0);
+      if (ret != 0 && ret != -ENOENT)
+      {
+        return ret;
+      }
+      ret = set_int_cfield(abce, mbt, "tm_min", &result.tm_min, 0);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      ret = set_int_cfield(abce, mbt, "tm_hour", &result.tm_hour, 0);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      ret = set_int_cfield(abce, mbt, "tm_mday", &result.tm_mday, 0);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      ret = set_int_cfield(abce, mbt, "tm_mon", &result.tm_mon, 1);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      ret = set_int_cfield(abce, mbt, "tm_year", &result.tm_year, 1900);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //ret = set_int_cfield(abce, mbt, "tm_wday", &result.tm_wday, 0);
+      //ret = set_int_cfield(abce, mbt, "tm_yday", &result.tm_yday, 1);
+      ret = set_int_cfield(abce, mbt, "tm_isdst", &result.tm_isdst, 0);
+      if (ret == -ENOENT)
+      {
+        result.tm_isdst = -1;
+      }
+      else if (ret != 0)
+      {
+        return ret;
+      }
+      res = mktime(&result);
+      if (res == (time_t)-1)
+      {
+        abce_npoppushdbl(abce, 1, 0.0/0.0);
+      }
+      else
+      {
+        ret = set_field(abce, mbt, "tm_wday", result.tm_wday);
+        if (ret)
+        {
+          return ret;
+        }
+        ret = set_field(abce, mbt, "tm_yday", result.tm_yday + 1);
+        if (ret)
+        {
+          return ret;
+        }
+        ret = set_field(abce, mbt, "tm_isdst", result.tm_isdst);
+        if (ret)
+        {
+          return ret;
+        }
+        abce_npoppushdbl(abce, 1, res*1000LL*1000LL + usec);
+      }
+      break;
+    }
     case ABCE_OPCODE_GMTIME: // FALLTHROUGH
     case ABCE_OPCODE_LOCALTIME:
     {
@@ -1728,7 +1844,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       time64 = (int64_t)timed;
       tv.tv_sec = time64/(1000*1000);
       tv.tv_usec = time64%(1000*1000);
-      if (isfinite(timed))
+      if (!isfinite(timed))
       {
         abce->err.code = ABCE_E_NUMBER_OVERFLOW;
         abce->err.mb.typ = ABCE_T_D;
