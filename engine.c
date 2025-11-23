@@ -1758,9 +1758,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       mbt = abce_mb_cpush_create_tree(abce);
       if (mbt == NULL)
       {
-        abce->err.code = ABCE_E_STACK_OVERFLOW;
+        abce->err.code = ABCE_E_NO_MEM;
         abce->err.mb.typ = ABCE_T_N;
-        return -EOVERFLOW;
+        return -ENOMEM;
       }
       //
       ret = set_field(abce, mbt, "tm_usec", tv.tv_usec);
