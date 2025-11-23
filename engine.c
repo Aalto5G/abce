@@ -5,6 +5,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <time.h>
+#include <sys/time.h>
 #include "abcerbtree.h"
 #include "abcemurmur.h"
 #include "abcecontainerof.h"
@@ -199,6 +201,31 @@ void abce_ncpop(struct abce *abce, size_t n)
   {
     abce_cpop(abce);
   }
+}
+
+
+static int set_field(struct abce *abce, struct abce_mb *mbt, const char *fname, double val)
+{
+  struct abce_mb *mbkey;
+  struct abce_mb mbval;
+  mbkey = abce_mb_cpush_create_string_nul(abce, fname);
+  if (mbkey == NULL)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb.typ = ABCE_T_N;
+    return -EOVERFLOW;
+  }
+  mbval.typ = ABCE_T_D;
+  mbval.u.d = val;
+  if (abce_tree_set_str(abce, mbt, mbkey, &mbval) != 0)
+  {
+    abce->err.code = ABCE_E_NO_MEM;
+    abce->err.mb.typ = ABCE_T_N;
+    abce_cpop(abce);
+    return -ENOMEM;
+  }
+  abce_cpop(abce);
+  return 0;
 }
 
 int
@@ -1675,11 +1702,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     }
     case ABCE_OPCODE_GETTIME:
     {
-      ssize_t maxbytes;
-      double off;
-      size_t bytes_read = 0;
-      char delim = '\0';
-      int hasdelim = 0;
       int64_t time64;
       struct timeval tv;
       gettimeofday(&tv, NULL);
@@ -1691,6 +1713,117 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = time64;
         return -EOVERFLOW;
       }
+      break;
+    }
+    case ABCE_OPCODE_GMTIME: // FALLTHROUGH
+    case ABCE_OPCODE_LOCALTIME:
+    {
+      int ret;
+      double timed;
+      int64_t time64;
+      struct timeval tv;
+      struct tm result;
+      struct abce_mb *mbt;
+      GETDBL(&timed, -1);
+      time64 = (int64_t)timed;
+      tv.tv_sec = time64/(1000*1000);
+      tv.tv_usec = time64%(1000*1000);
+      if (isfinite(timed))
+      {
+        abce->err.code = ABCE_E_NUMBER_OVERFLOW;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = timed;
+        return -EOVERFLOW;
+      }
+      if (ins == ABCE_OPCODE_GMTIME)
+      {
+        if (gmtime_r(&tv.tv_sec, &result) == NULL)
+        {
+          abce->err.code = ABCE_E_NUMBER_OVERFLOW;
+          abce->err.mb.typ = ABCE_T_D;
+          abce->err.mb.u.d = time64;
+          return -EOVERFLOW;
+        }
+      }
+      else
+      {
+        if (localtime_r(&tv.tv_sec, &result) == NULL)
+        {
+          abce->err.code = ABCE_E_NUMBER_OVERFLOW;
+          abce->err.mb.typ = ABCE_T_D;
+          abce->err.mb.u.d = time64;
+          return -EOVERFLOW;
+        }
+      }
+      mbt = abce_mb_cpush_create_tree(abce);
+      if (mbt == NULL)
+      {
+        abce->err.code = ABCE_E_STACK_OVERFLOW;
+        abce->err.mb.typ = ABCE_T_N;
+        return -EOVERFLOW;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_usec", tv.tv_usec);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_sec", result.tm_sec);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_min", result.tm_min);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_hour", result.tm_hour);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_mday", result.tm_mday);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_mon", result.tm_mon+1);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_year", result.tm_year+1900);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_wday", result.tm_wday);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_yday", result.tm_yday+1);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      //
+      ret = set_field(abce, mbt, "tm_isdst", result.tm_isdst);
+      if (ret != 0)
+      {
+        return ret;
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
       break;
     }
     case ABCE_OPCODE_FILE_GET:

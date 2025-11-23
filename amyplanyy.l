@@ -160,6 +160,8 @@ struct amyplan_csnippet luaSnippet = {
 @dynluacall  return DYNLUACALL;
 @lexluacall  return LEXLUACALL;
 @gettime  return GETTIME;
+@localtime  return LOCALTIME;
+@gmtime  return GMTIME;
 [+]=      return PLUSEQUALS;
 [?]=      return QMEQUALS;
 :         return COLON;
