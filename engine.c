@@ -1292,6 +1292,55 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       POP();
       break;
     }
+    case ABCE_OPCODE_LISTINS:
+    {
+      struct abce_mb *mbar;
+      double loc;
+      int64_t locint;
+      struct abce_mb *mb;
+      GETMBPTR(&mb, -1);
+      GETDBL(&loc, -2);
+      GETMBARPTR(&mbar, -3);
+      if (loc != (double)(uint64_t)loc)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = loc;
+        ret = -EINVAL;
+        break;
+      }
+      locint = loc;
+      if (locint < 0 || locint > mbar->u.area->u.ar.size)
+      {
+        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = loc;
+        ret = -ERANGE;
+        break;
+      }
+      if (mbar->u.area->u.ar.size >= mbar->u.area->u.ar.capacity)
+      {
+        if (abce_mb_array_append_grow(abce, mb) != 0)
+        {
+          abce->err.code = ABCE_E_NO_MEM;
+          ret = -ENOMEM;
+	  break;
+        }
+      }
+      if (mbar->u.area->u.ar.size >= mbar->u.area->u.ar.capacity)
+      {
+        abort();
+      }
+      memmove(&mbar->u.area->u.ar.mbs[locint+1],
+              &mbar->u.area->u.ar.mbs[locint],
+	      (mbar->u.area->u.ar.size-locint)*sizeof(*mbar->u.area->u.ar.mbs));
+      mbar->u.area->u.ar.mbs[locint] = abce_mb_refup(abce, mb);
+      mbar->u.area->u.ar.size++;
+      POP();
+      POP();
+      POP();
+      break;
+    }
     case ABCE_OPCODE_PUSH_NEW_ARRAY:
     {
       struct abce_mb *mb;

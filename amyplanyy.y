@@ -83,6 +83,7 @@ static void amyplanyy_add_corresponding_set(struct amyplanyy *amyplanyy, double 
 %token D L I DO LO IO DP LP IP DPO LPO IPO LOC
 %token SC SCO
 %token APPEND APPEND_LIST
+%token INSERT
 %token RETURN PRINT PERIOD
 
 %token DICTNEXT DICTPREV
@@ -884,6 +885,13 @@ statement:
   {
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_APPEND_MAINTAIN);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_POP);
+  }
+}
+| INSERT OPEN_PAREN expr COMMA expr COMMA expr CLOSE_PAREN
+{
+  if (amyplanyy_do_emit(amyplanyy))
+  {
+    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTINS);
   }
 }
 | APPEND_LIST OPEN_PAREN expr COMMA expr CLOSE_PAREN
