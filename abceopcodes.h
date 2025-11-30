@@ -148,6 +148,7 @@ enum abce_opcode {
   ABCE_OPCODE_LOCALTIME = 198,
   ABCE_OPCODE_GMTIME = 199,
   ABCE_OPCODE_MKTIME = 200,
+  ABCE_OPCODE_LISTDEL = 201,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

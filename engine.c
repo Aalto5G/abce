@@ -1260,6 +1260,38 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_cpop(abce);
       break;
     }
+    case ABCE_OPCODE_LISTDEL:
+    {
+      struct abce_mb *mbar;
+      double loc;
+      int64_t locint;
+      GETDBL(&loc, -1);
+      GETMBARPTR(&mbar, -2);
+      if (loc != (double)(uint64_t)loc)
+      {
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = loc;
+        ret = -EINVAL;
+        break;
+      }
+      locint = loc;
+      if (locint < 0 || locint >= mbar->u.area->u.ar.size)
+      {
+        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.mb.typ = ABCE_T_D;
+        abce->err.mb.u.d = loc;
+        ret = -ERANGE;
+        break;
+      }
+      memmove(&mbar->u.area->u.ar.mbs[locint],
+              &mbar->u.area->u.ar.mbs[locint+1],
+	      (mbar->u.area->u.ar.size-locint)*sizeof(*mbar->u.area->u.ar.mbs));
+      mbar->u.area->u.ar.size--;
+      POP();
+      POP();
+      break;
+    }
     case ABCE_OPCODE_PUSH_NEW_ARRAY:
     {
       struct abce_mb *mb;

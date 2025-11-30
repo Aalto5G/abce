@@ -488,12 +488,19 @@ statement:
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    if ($1 != ABCE_OPCODE_DICTGET)
+    if ($1 == ABCE_OPCODE_DICTGET)
     {
-      printf("Can remove only from dict\n");
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTDEL);
+    }
+    else if ($1 == ABCE_OPCODE_LISTGET)
+    {
+      amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_LISTDEL);
+    }
+    else
+    {
+      printf("Can remove only from dict or list\n");
       YYABORT;
     }
-    amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_DICTDEL);
   }
 }
 | lvalue EQUALS expr
