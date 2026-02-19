@@ -84,8 +84,9 @@ static inline uint32_t abce_str_hash(const char *str)
   return abce_murmur_buf(0x12345678U, str, len);
 }
 
-static inline int amyplan_locvar_str_cmp_asym(const char *str, struct abce_rb_tree_node *n2, void *ud)
+static inline int amyplan_locvar_str_cmp_asym(const void *strv, struct abce_rb_tree_node *n2, void *ud)
 {
+  const char *str = strv;
   struct amyplan_locvar *e = ABCE_CONTAINER_OF(n2, struct amyplan_locvar, node);
   size_t len1 = strlen(str);
   size_t len2, lenmin;
