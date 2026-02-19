@@ -74,6 +74,7 @@ static inline void abce_npoppushnil(struct abce *abce, size_t n)
 {
 	int ret;
 	struct abce_mb nn;
+	size_t i;
 	nn.typ = ABCE_T_N;
 	nn.u.d = 0;
 	ret = abce_mb_stackreplace(abce, -(int64_t)n, &nn);
@@ -83,7 +84,7 @@ static inline void abce_npoppushnil(struct abce *abce, size_t n)
 		abort();
 	}
 #endif
-	for (size_t i = 1; i < n; i++)
+	for (i = 1; i < n; i++)
 	{
 		ret = abce_pop(abce);
 #if POPABORTS
@@ -98,6 +99,7 @@ static inline void abce_npoppushdbl(struct abce *abce, size_t n, double d)
 {
 	int ret;
 	struct abce_mb dd;
+	size_t i;
 	dd.typ = ABCE_T_D;
 	dd.u.d = d;
 	ret = abce_mb_stackreplace(abce, -(int64_t)n, &dd);
@@ -107,7 +109,7 @@ static inline void abce_npoppushdbl(struct abce *abce, size_t n, double d)
 		abort();
 	}
 #endif
-	for (size_t i = 1; i < n; i++)
+	for (i = 1; i < n; i++)
 	{
 		ret = abce_pop(abce);
 #if POPABORTS
@@ -122,6 +124,7 @@ static inline void abce_npoppushbool(struct abce *abce, size_t n, int b)
 {
 	int ret;
 	struct abce_mb bb;
+	size_t i;
 	bb.typ = ABCE_T_B;
 	bb.u.d = !!b;
 	ret = abce_mb_stackreplace(abce, -(int64_t)n, &bb);
@@ -131,7 +134,7 @@ static inline void abce_npoppushbool(struct abce *abce, size_t n, int b)
 		abort();
 	}
 #endif
-	for (size_t i = 1; i < n; i++)
+	for (i = 1; i < n; i++)
 	{
 		ret = abce_pop(abce);
 #if POPABORTS
@@ -145,6 +148,7 @@ static inline void abce_npoppushbool(struct abce *abce, size_t n, int b)
 static inline void abce_npoppush(struct abce *abce, size_t n, const struct abce_mb *mb)
 {
 	int ret;
+	size_t i;
 	ret = abce_mb_stackreplace(abce, -(int64_t)n, mb);
 #if POPABORTS
 	if (ret != 0)
@@ -152,7 +156,7 @@ static inline void abce_npoppush(struct abce *abce, size_t n, const struct abce_
 		abort();
 	}
 #endif
-	for (size_t i = 1; i < n; i++)
+	for (i = 1; i < n; i++)
 	{
 		ret = abce_pop(abce);
 #if POPABORTS
@@ -984,6 +988,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     case ABCE_OPCODE_STR_REVERSE:
     {
       struct abce_mb *mbbase;
+      size_t i;
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTRPTR(&mbbase, -1);
       if (abce_mb_cpush_create_string(abce,
@@ -993,7 +998,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -ENOMEM;
       }
       mbbase = &abce->cstackbase[abce->csp-1];
-      for (size_t i = 0; i < mbbase->u.area->u.str.size/2; i++)
+      for (i = 0; i < mbbase->u.area->u.str.size/2; i++)
       {
         uint8_t tmp = mbbase->u.area->u.str.buf[i];
         mbbase->u.area->u.str.buf[i] =
