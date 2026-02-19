@@ -110,6 +110,12 @@ static inline void abce_rb_tree_delete(struct abce_rb_tree *tree, struct abce_rb
     __abce_rb_tree_find_node; \
   })
 
+#if 1
+#undef ABCE_RB_TREE_NOCMP_FIND
+#define ABCE_RB_TREE_NOCMP_FIND(tree, cmp, cmp_userdata, tofind) \
+  abce_rb_tree_nocmp_find_asym((tree),(cmp),(cmp_userdata),(tofind))
+#endif
+
 /*
  * NB: this is slower than the macro version
  */
