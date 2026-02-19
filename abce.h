@@ -12,6 +12,8 @@ void mb_to_lua(lua_State *lua, const struct abce_mb *mb);
 void mb_from_lua(lua_State *lua, struct abce *abce, int idx);
 #endif
 
+void *abce_do_mmap_madvise(size_t bytes, int shared);
+
 int abce_json_encode_cpush(struct abce *abce, struct abce_mb *mb);
 
 void *abce_std_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton);

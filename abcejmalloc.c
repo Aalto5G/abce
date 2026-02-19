@@ -1,4 +1,5 @@
 #include "abcejmalloc.h"
+#include "abce.h"
 #include "abcelinkedlist.h"
 #include <sys/mman.h>
 #include <stdlib.h>
@@ -71,8 +72,9 @@ void *abce_jmalloc(size_t sz)
   {
     if (unlikely(sz > 1048576))
     {
-      ret = mmap(NULL, abce_jm_topages(sz), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-      if (ret == MAP_FAILED)
+      ret = abce_do_mmap_madvise(abce_jm_topages(sz), 1);
+      //ret = mmap(NULL, abce_jm_topages(sz), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+      if (ret == MAP_FAILED || ret == NULL)
       {
         return NULL;
       }
@@ -125,7 +127,8 @@ void *abce_jmalloc(size_t sz)
     if (unlikely(abce_arenaremain < sz))
     {
       abce_arenaremain = 32*1024*1024;
-      abce_arena = mmap(NULL, abce_arenaremain, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+      abce_arena = abce_do_mmap_madvise(abce_arenaremain, 1);
+      //abce_arena = mmap(NULL, abce_arenaremain, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
       if (unlikely(abce_arena == MAP_FAILED || abce_arena == NULL))
       {
         abort();
