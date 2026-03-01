@@ -167,7 +167,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 		{
 			ctx->mode = STREAMING_ATOF_MODE_MANTISSA_FIRST;
 		}
-		if (ctx->mode == STREAMING_ATOF_MODE_MANTISSA_SIGN && isdigit(data[i]))
+		if (ctx->mode == STREAMING_ATOF_MODE_MANTISSA_SIGN && isdigit((unsigned char)data[i]))
 		{
 			ctx->mode = STREAMING_ATOF_MODE_MANTISSA_FIRST;
 		}
@@ -185,7 +185,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 		{
 			ctx->mode = STREAMING_ATOF_MODE_MANTISSA;
 		}
-		else if (ctx->mode == STREAMING_ATOF_MODE_PERIOD_OR_EXPONENT_CHAR && !isdigit(data[i]))
+		else if (ctx->mode == STREAMING_ATOF_MODE_PERIOD_OR_EXPONENT_CHAR && !isdigit((unsigned char)data[i]))
 		{
 			ctx->mode = STREAMING_ATOF_MODE_DONE;
 			return (ssize_t)i;
@@ -207,7 +207,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 		}
 		if ((ctx->mode == STREAMING_ATOF_MODE_MANTISSA || ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FIRST))
 		{
-			if (isdigit(data[i]))
+			if (isdigit((unsigned char)data[i]))
 			{
 				abce_streaming_atof_ctx_emit_digit(ctx, data[i]);
 				ctx->mode = STREAMING_ATOF_MODE_MANTISSA;
@@ -239,7 +239,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 		}
 		if (ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FRAC || ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FRAC_FIRST)
 		{
-			if (isdigit(data[i]))
+			if (isdigit((unsigned char)data[i]))
 			{
 				abce_streaming_atof_ctx_emit_digit(ctx, data[i]);
 				ctx->mode = STREAMING_ATOF_MODE_MANTISSA_FRAC;
@@ -278,7 +278,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 				ctx->mode = STREAMING_ATOF_MODE_EXPONENT_FIRST;
 				continue;
 			}
-			if (isdigit(data[i]))
+			if (isdigit((unsigned char)data[i]))
 			{
 				if (ctx->exponent > (INT64_MAX - 9)/10)
 				{
@@ -295,7 +295,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 		}
 		if (ctx->mode == STREAMING_ATOF_MODE_EXPONENT_FIRST || ctx->mode == STREAMING_ATOF_MODE_EXPONENT)
 		{
-			if (isdigit(data[i]))
+			if (isdigit((unsigned char)data[i]))
 			{
 				if (ctx->exponent > (INT64_MAX - 9)/10)
 				{
