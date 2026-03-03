@@ -126,7 +126,7 @@ void *abce_jmalloc(size_t sz)
   {
     if (unlikely(abce_arenaremain < sz))
     {
-      abce_arenaremain = 32*1024*1024;
+      abce_arenaremain = 8*1024*1024;
       abce_arena = abce_do_mmap_madvise(abce_arenaremain, 1);
       //abce_arena = mmap(NULL, abce_arenaremain, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
       if (unlikely(abce_arena == MAP_FAILED || abce_arena == NULL))
