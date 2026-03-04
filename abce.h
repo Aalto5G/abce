@@ -257,7 +257,7 @@ static inline int abce_calc_caddr(size_t *paddr, struct abce *abce, int64_t idx)
   if (idx < 0)
   {
     addr = abce->csp + idx;
-    if (abce_unlikely(addr >= abce->csp || addr < 0))
+    if (abce_unlikely((uint64_t)addr >= abce->csp || addr < 0))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
       abce->err.mb.typ = ABCE_T_D;
@@ -268,7 +268,7 @@ static inline int abce_calc_caddr(size_t *paddr, struct abce *abce, int64_t idx)
   else
   {
     addr = idx;
-    if (abce_unlikely(addr >= abce->csp || addr < 0))
+    if (abce_unlikely((uint64_t)addr >= abce->csp || addr < 0))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
       abce->err.mb.typ = ABCE_T_D;

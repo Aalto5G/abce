@@ -105,7 +105,7 @@ int main(int argc, char **argv, char **envp)
   {
     fprintf(stderr, "error %s\n", abce_err_to_str(amyplanyy.abce.err.code));
     fprintf(stderr, "Backtrace:\n");
-    for (i = 0; i < amyplanyy.abce.btsz; i++)
+    for (i = 0; i < (int)amyplanyy.abce.btsz; i++)
     {
       if (amyplanyy.abce.btbase[i].typ == ABCE_T_S)
       {

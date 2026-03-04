@@ -674,7 +674,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       double ch;
       char chch;
       GETDBL(&ch, -1);
-      if ((uint64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
+      if ((int64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
       {
         abce->err.code = ABCE_E_INVALID_CH;
         abce->err.mb.typ = ABCE_T_D;
@@ -773,7 +773,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETDBL(&ch, -1);
       GETDBL(&loc, -2);
       VERIFYMB(-3, ABCE_T_S);
-      if ((uint64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
+      if ((int64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
       {
         abce->err.code = ABCE_E_INVALID_CH;
         abce->err.mb.typ = ABCE_T_D;
@@ -1110,7 +1110,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       char buf[64] = {0};
       double dbl;
       GETDBL(&dbl, -1);
-      if (snprintf(buf, sizeof(buf), "%g", dbl) >= sizeof(buf))
+      if (snprintf(buf, sizeof(buf), "%g", dbl) >= (int)sizeof(buf))
       {
         abort();
       }
@@ -1281,7 +1281,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         break;
       }
       locint = loc;
-      if (locint < 0 || locint >= mbar->u.area->u.ar.size)
+      if (locint < 0 || (uint64_t)locint >= mbar->u.area->u.ar.size)
       {
         abce->err.code = ABCE_E_INDEX_OOB;
         abce->err.mb.typ = ABCE_T_D;
@@ -1315,7 +1315,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         break;
       }
       locint = loc;
-      if (locint < 0 || locint > mbar->u.area->u.ar.size)
+      if (locint < 0 || (uint64_t)locint > mbar->u.area->u.ar.size)
       {
         abce->err.code = ABCE_E_INDEX_OOB;
         abce->err.mb.typ = ABCE_T_D;
@@ -1808,7 +1808,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
             }
             break;
           }
-          if (maxbytes >= 0 && curoff-(size_t)off >= maxbytes)
+          if (maxbytes >= 0 && curoff-(size_t)off >= (size_t)maxbytes)
           {
             if (resized && abce_mb_pb_resize(abce, mbpb, curoff))
             {
@@ -3234,7 +3234,7 @@ outpbset:
             break;
           }
           locint = loc;
-          if (locint < 0 || locint >= mbar->u.area->u.ar.size)
+          if (locint < 0 || (uint64_t)locint >= mbar->u.area->u.ar.size)
           {
             abce->err.code = ABCE_E_INDEX_OOB;
             abce->err.mb.typ = ABCE_T_D;
@@ -3264,7 +3264,7 @@ outpbset:
             break;
           }
           locint = loc;
-          if (locint < 0 || locint >= mbstr->u.area->u.str.size)
+          if (locint < 0 || (uint64_t)locint >= mbstr->u.area->u.str.size)
           {
             abce->err.code = ABCE_E_INDEX_OOB;
             abce->err.mb.typ = ABCE_T_D;
@@ -3291,7 +3291,7 @@ outpbset:
             break;
           }
           locint = loc;
-          if (locint < 0 || locint >= mbar->u.area->u.ar.size)
+          if (locint < 0 || (uint64_t)locint >= mbar->u.area->u.ar.size)
           {
             abce->err.code = ABCE_E_INDEX_OOB;
             abce->err.mb.typ = ABCE_T_D;
@@ -3921,7 +3921,7 @@ outpbset:
             break;
           }
           i64 = dbl;
-          if (i64 >= abce->cachesz)
+          if (i64 < 0 || (uint64_t)i64 >= abce->cachesz)
           {
             abce->err.code = ABCE_E_CACHE_IDX_OOB;
             abce->err.mb.typ = ABCE_T_D;
