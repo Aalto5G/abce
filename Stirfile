@@ -13,7 +13,7 @@ $(CFLAGS) ?= @nil
 @if(@type($(CFLAGS)) == @type(@nil))
   $(CFLAGS) ``= ["sh", "-c", "echo $CFLAGS"]
   @if($(CFLAGS)[] == 0)
-    $(CFLAGS) = ["-O3", "-Wall", "-g"]
+    $(CFLAGS) = ["-O3", "-Wall", "-Wextra", "-Wno-unused-parameter", "-g"]
   @endif
 @endif
 $(FLEX) ?= @nil
