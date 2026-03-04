@@ -65,8 +65,8 @@ LUALIB:=/usr/lib/x86_64-linux-gnu/libluajit-5.1.a
 
 CC?=cc
 CPP?=c++
-CFLAGS?=-O3 -Wall -g
-CPPFLAGS?=-O3 -Wall -g
+CFLAGS?=-O3 -Wall -Wextra -Wno-unused-parameter -g
+CPPFLAGS?=-O3 -Wall -Wextra -Wno-unused-parameter -g
 
 ifeq ($(WITH_LUA),yes)
   CFLAGS += -I$(LUAINC) -DWITH_LUA
