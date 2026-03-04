@@ -26,6 +26,7 @@ static char *abce_arena;
 // 16, 32, 64, 128, 256, 512, 1024, 2048
 static struct jmalloc_block *abce_blocks[8];
 // 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576
+//...except now 131072 is the largest that does not use mmap
 static struct jmalloc_block *abce_blocks2[9] = {};
 
 
@@ -70,7 +71,7 @@ void *abce_jmalloc(size_t sz)
   void *ret;
   if (unlikely(sz > 2048))
   {
-    if (unlikely(sz > 1048576))
+    if (unlikely(sz > 128*1024))
     {
       ret = abce_do_mmap_madvise(abce_jm_topages(sz), 1);
       //ret = mmap(NULL, abce_jm_topages(sz), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
@@ -126,7 +127,7 @@ void *abce_jmalloc(size_t sz)
   {
     if (unlikely(abce_arenaremain < sz))
     {
-      abce_arenaremain = 8*1024*1024;
+      abce_arenaremain = 1024*1024;
       abce_arena = abce_do_mmap_madvise(abce_arenaremain, 1);
       //abce_arena = mmap(NULL, abce_arenaremain, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
       if (unlikely(abce_arena == MAP_FAILED || abce_arena == NULL))
