@@ -73,7 +73,7 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @	["wc", "-l", @$(LEX_LIB), @$(YACC_LIB), @$(SRC), @@suffilterout(@suffilterout(@glob("*.h"),".lex.h"),".tab.h")]
 
 @patrule @distrule: $(PROG): '%': '%.o' 'libabce.a'
-@	[@$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm', '-ldl']
+@	[@$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm']
 
 @patrule: $(OBJ): '%.o': '%.c' '%.d'
 @	[@$(CC), @$(CFLAGS), "-c", "-o", $@, $<]
