@@ -1484,6 +1484,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       int64_t dictidx = -3;
       int rettmp;
       int prev = 0;
+      int itres = 0;
       VERIFYMB(-1, ABCE_T_B);
       GETBOOLEAN(&prev, -1);
       GETMBPTR(&mboldkey, -2);
@@ -1504,7 +1505,6 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         abce_maybeabort();
       }
-      int itres = 0;
       if (prev)
       {
         itres = abce_tree_get_prev(abce, &mbreskey, &mbresval, mbt, mboldkey);
@@ -2855,6 +2855,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           uint8_t inshi;
           //uint8_t inslo;
           int rettmp;
+          double dbl;
           GETDBL(&argcnt, -1);
           if (abce_unlikely((double)(size_t)argcnt != argcnt))
           {
@@ -2944,7 +2945,6 @@ calltrailer:
             break;
           }
 #endif
-          double dbl;
           rettmp = abce_fetch_d(&dbl, abce, addcode, addsz);
           if (abce_unlikely(rettmp != 0))
           {
