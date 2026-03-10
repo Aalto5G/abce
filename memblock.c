@@ -1151,7 +1151,7 @@ void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
       printf("ip(%lld)", (long long)mb->u.d);
       break;
     case ABCE_T_IOS:
-      printf("ios(%p)", mb->u.area);
+      printf("ios(%p)", (void*)mb->u.area);
       break;
     case ABCE_T_A:
       printf("[");
