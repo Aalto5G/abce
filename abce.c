@@ -613,7 +613,7 @@ void abce_gc(struct abce *abce)
       // All unmarked objects must be freed
       if (mba->refcnt != 0)
       {
-        printf("refcnt is not 0: %p: %d\n", mba, (int)mba->refcnt);
+        printf("refcnt is not 0: %p: %d\n", (void*)mba, (int)mba->refcnt);
         printf("type: %d\n", (int)abce->gcblockbase[i].typ);
         abort();
       }
