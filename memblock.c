@@ -365,7 +365,7 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
       {
         abort();
       }
-      abce_mb_cpop(abce);
+      abce_cpop(abce);
       return;
     case LUA_TTABLE:
 #if LUA_VERSION_NUM >= 502
@@ -394,7 +394,7 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
           {
             abort();
           }
-          if (abce_mb_array_append(abce, &mb, mb2ptr) != 0)
+          if (abce_mb_array_append(abce, mbptr, mb2ptr) != 0)
           {
             abort();
           }
@@ -458,15 +458,16 @@ void mb_from_lua(lua_State *lua, struct abce *abce, int idx)
         if (empty)
         {
           abce_pop(abce);
-          mb = abce_mb_create_array(abce);
-          if (mb.typ == ABCE_T_N)
+          mbptr = abce_mb_cpush_create_array(abce);
+          if (mbptr->typ == ABCE_T_N)
           {
             abort();
           }
-          if (abce_push_mb(abce, &mb) != 0)
+          if (abce_push_mb(abce, mbptr) != 0)
           {
             abort();
           }
+	  abce_cpop(abce);
         }
         return;
       }
@@ -483,8 +484,9 @@ int lua_makedyncall(lua_State *lua)
   const struct abce_mb *res;
   unsigned char tmpbuf[64] = {0};
   size_t tmpsiz = 0;
-  size_t i;
-  int64_t tmpip, tmpsp;
+  int i;
+  int64_t tmpip;
+  size_t tmpsp;
   if (lua_gettop(lua) == 0)
   {
     return luaL_error(lua, "Abce.makedyncall requires an argument");
@@ -538,7 +540,7 @@ int lua_makedyncall(lua_State *lua)
 
   abce->ip = tmpip;
 
-  struct abce_mb *mbresptr;
+  struct abce_mb *mbresptr = NULL;
 
   abce_getmbptr(&mbresptr, abce, -1);
 
@@ -556,8 +558,9 @@ int lua_makelexcall(lua_State *lua)
   const struct abce_mb *res;
   unsigned char tmpbuf[64] = {0};
   size_t tmpsiz = 0;
-  size_t i;
-  int64_t tmpip, tmpsp;
+  int i;
+  int64_t tmpip;
+  size_t tmpsp;
   if (lua_gettop(lua) == 0)
   {
     return luaL_error(lua, "Abce.makelexcall requires an argument");
@@ -614,7 +617,7 @@ int lua_makelexcall(lua_State *lua)
 
   abce->ip = tmpip;
 
-  struct abce_mb *mbresptr;
+  struct abce_mb *mbresptr = NULL;
 
   abce_getmbptr(&mbresptr, abce, -1);
 

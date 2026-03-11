@@ -296,17 +296,17 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETMBSCPTR(&mbsc, -3-(int)(size_t)argcnt);
       POP(); // argcnt
 
-      if (abce_ensure_lua(mbsc.u.area, abce) != 0)
+      if (abce_ensure_lua(mbsc->u.area, abce) != 0)
       {
         ret = -ENOMEM;
         break;
       }
 
-      lua_getglobal(mbsc.u.area->u.sc.lua, funname.u.area->u.str.buf);
+      lua_getglobal(mbsc->u.area->u.sc.lua, funname->u.area->u.str.buf);
       for (i = argcnt; i > 0; i--)
       {
         GETMBPTR(&mb, -(int)i);
-        mb_to_lua(mbsc.u.area->u.sc.lua, &mb);
+        mb_to_lua(mbsc->u.area->u.sc.lua, mb);
       }
       for (i = 0; i < argcnt; i++)
       {
@@ -316,13 +316,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_push_rg(abce); // to capture backtrace in stages
       abce->err.code = ABCE_E_NONE;
       abce->err.mb.typ = ABCE_T_N;
-      if (lua_pcall(mbsc.u.area->u.sc.lua, argcnt, 1, 0) != 0)
+      if (lua_pcall(mbsc->u.area->u.sc.lua, argcnt, 1, 0) != 0)
       {
         abce_pop(abce); // rg
         if (abce->err.code == ABCE_E_NONE)
         {
           struct abce_mb *mberrstr = NULL;
-          mb_from_lua(mbsc.u.area->u.sc.lua, abce, -1);
+          mb_from_lua(mbsc->u.area->u.sc.lua, abce, -1);
           GETMBPTR(&mberrstr, -1);
           abce->err.code = ABCE_E_LUA_ERR;
           abce_mb_errreplace_noinline(abce, mberrstr);
@@ -333,7 +333,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         break;
       }
       abce_pop(abce); // rg
-      mb_from_lua(mbsc.u.area->u.sc.lua, abce, -1);
+      mb_from_lua(mbsc->u.area->u.sc.lua, abce, -1);
       GETMBPTR(&mb, -1); // retval
       abce_npoppush(abce, 2, mb);
       return 0;
