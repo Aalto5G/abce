@@ -18,6 +18,7 @@ struct abce_strbuf {
   size_t cap;
   int taint;
 };
+#define ABCE_STRBUF_EMPTY {.taint = 0}
 
 static void abce_strbuf_bump(struct abce *abce, struct abce_strbuf *buf, size_t bump)
 {
@@ -91,7 +92,7 @@ int abce_strgsub(struct abce *abce,
                  const char *needle, size_t needlesz,
                  const char *sub, size_t subsz)
 {
-  struct abce_strbuf buf = {};
+  struct abce_strbuf buf = ABCE_STRBUF_EMPTY;
   size_t haystackpos = 0;
   if (needlesz == 0)
   {

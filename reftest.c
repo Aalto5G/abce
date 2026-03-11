@@ -12,7 +12,7 @@ char *str =
 int main(int argc, char **argv)
 {
   FILE *f = fmemopen(str, strlen(str), "r");
-  struct amyplanyy amyplanyy = {};
+  struct amyplanyy amyplanyy = AMYPLANYY_EMPTY;
   size_t i;
 
   amyplanyy_init(&amyplanyy);

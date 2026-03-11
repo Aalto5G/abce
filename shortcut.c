@@ -24,7 +24,7 @@ char *str =
 int main(int argc, char **argv)
 {
   FILE *f = fmemopen(str, strlen(str), "r");
-  struct amyplanyy amyplanyy = {};
+  struct amyplanyy amyplanyy = AMYPLANYY_EMPTY;
   unsigned char tmpbuf[1024] = {0};
   size_t tmpsiz = 0;
 

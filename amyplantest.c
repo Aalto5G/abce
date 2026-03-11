@@ -4,7 +4,7 @@
 int main(int argc, char **argv)
 {
   FILE *f = fopen("perf/test.amy", "r");
-  struct amyplanyy amyplanyy = {};
+  struct amyplanyy amyplanyy = AMYPLANYY_EMPTY;
 
   amyplanyy_init(&amyplanyy);
 

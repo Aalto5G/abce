@@ -782,7 +782,7 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
                                      const char *str2, size_t sz2)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz1 + sz2 + 1, &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -821,7 +821,7 @@ struct abce_mb *abce_mb_cpush_concat_string(struct abce *abce, const char *str1,
 struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz, size_t rep)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   size_t i;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz*rep + 1, &abce->alloc_baton);
   if (mba == NULL)
@@ -863,7 +863,7 @@ struct abce_mb *abce_mb_cpush_rep_string(struct abce *abce, const char *str, siz
 struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz + 1, &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -902,7 +902,7 @@ struct abce_mb *abce_mb_cpush_create_string_to_be_filled(struct abce *abce, size
 struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t sz)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba) + sz + 1, &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -941,7 +941,7 @@ struct abce_mb *abce_mb_cpush_create_string(struct abce *abce, const char *str, 
 struct abce_mb abce_mb_create_pb(struct abce *abce)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -967,7 +967,7 @@ struct abce_mb abce_mb_create_pb(struct abce *abce)
 struct abce_mb abce_mb_create_ios(struct abce *abce, FILE *f)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -1019,7 +1019,7 @@ struct abce_mb *abce_mb_cpush_create_pb(struct abce *abce)
 struct abce_mb abce_mb_create_pb_from_buf(struct abce *abce, const void *buf, size_t sz)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -1067,7 +1067,7 @@ struct abce_mb *abce_mb_cpush_create_pb_from_buf(struct abce *abce, const void *
 struct abce_mb abce_mb_create_tree(struct abce *abce)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {
@@ -1104,7 +1104,7 @@ struct abce_mb *abce_mb_cpush_create_tree(struct abce *abce)
 struct abce_mb abce_mb_create_array(struct abce *abce)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   mba = (struct abce_mb_area*)abce->alloc(NULL, 0, sizeof(*mba), &abce->alloc_baton);
   if (mba == NULL)
   {

@@ -27,7 +27,7 @@ static char *abce_arena;
 static struct jmalloc_block *abce_blocks[8];
 // 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576
 //...except now 131072 is the largest that does not use mmap
-static struct jmalloc_block *abce_blocks2[9] = {};
+static struct jmalloc_block *abce_blocks2[9];
 
 
 static const uint8_t abce_lookup[129] = {

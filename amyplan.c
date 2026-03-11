@@ -11,7 +11,7 @@ void usage(const char *argv0)
 int main(int argc, char **argv, char **envp)
 {
   FILE *f;
-  struct amyplanyy amyplanyy = {};
+  struct amyplanyy amyplanyy = AMYPLANYY_EMPTY;
   unsigned char tmpbuf[1024] = {0};
   size_t tmpsiz = 0;
   struct abce_mb *mbar = NULL;

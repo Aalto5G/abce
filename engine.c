@@ -809,7 +809,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     }
     case ABCE_OPCODE_STRWORDCNT:
     {
-      struct abce_word_iter it = {};
+      struct abce_word_iter it = ABCE_WORD_ITER_EMPTY;
       struct abce_mb *mbbase;
       struct abce_mb *mbbasemaybenil;
       struct abce_mb *mbsep;
@@ -836,7 +836,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     }
     case ABCE_OPCODE_STRWORDLIST:
     {
-      struct abce_word_iter it = {};
+      struct abce_word_iter it = ABCE_WORD_ITER_EMPTY;
       struct abce_mb *mbbase;
       struct abce_mb *mbbasemaybenil;
       struct abce_mb *mbsep;
@@ -892,7 +892,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     }
     case ABCE_OPCODE_STRWORD:
     {
-      struct abce_word_iter it = {};
+      struct abce_word_iter it = ABCE_WORD_ITER_EMPTY;
       struct abce_mb *mbbase;
       struct abce_mb *mbsep;
       struct abce_mb *mbit;
@@ -1062,7 +1062,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     case ABCE_OPCODE_STRLISTJOIN:
     {
       struct abce_mb *mbar, *mbjoiner;
-      struct abce_str_buf buf = {};
+      struct abce_str_buf buf = ABCE_STR_BUF_EMPTY;
       size_t i;
 
       VERIFYMB(-1, ABCE_T_A);
@@ -1839,7 +1839,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     case ABCE_OPCODE_MKTIME:
     {
       struct abce_mb *mbt;
-      struct tm result = {};
+      struct tm result = {.tm_sec = 0};
       time_t res;
       int usec = 0;
       int ret;

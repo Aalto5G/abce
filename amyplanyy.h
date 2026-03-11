@@ -63,6 +63,8 @@ struct amyplanyy {
   struct amyplan_locvarctx *ctx;
 };
 
+#define AMYPLANYY_EMPTY {.baton = NULL}
+
 static inline void amyplanyy_init(struct amyplanyy *yy)
 {
   abce_init(&yy->abce);

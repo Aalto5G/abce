@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 #include "abcerbtree.h"
+#include "abceflex.h"
 #include "abcemurmur.h"
 #include "abcecontainerof.h"
 #include "abcelikely.h"
@@ -102,6 +103,9 @@ struct abce_mb {
     struct abce_mb_area *area;
   } u;
 };
+
+#define ABCE_MB_EMPTY {.typ = 0}
+
 struct abce_mb_rb_entry {
   struct abce_rb_tree_node n;
   struct abce_mb key; // must be a string!
@@ -165,6 +169,8 @@ struct abce {
   size_t btsz;
   struct abce_mb *btbase;
 };
+
+#define ABCE_EMPTY {.userdata = NULL}
 
 static inline void abce_scope_set_userdata(struct abce_mb *mb, void *userdata)
 {

@@ -2,6 +2,7 @@
 #define _AMYPLAN_LOCVARCTX_H_
 
 #include <stddef.h>
+#include "abceflex.h"
 #include "abcerbtree.h"
 #include "abcemurmur.h"
 #include "abcecontainerof.h"
@@ -15,7 +16,7 @@
 struct amyplan_locvar {
   struct abce_rb_tree_node node;
   size_t idx;
-  char name[0]; // Can be '\0'-terminated since charset limited
+  char name[ABCE_FLEX]; // Can be '\0'-terminated since charset limited
 };
 
 struct amyplan_locvarctx {
@@ -26,7 +27,7 @@ struct amyplan_locvarctx {
   size_t capacity;
   size_t jmpaddr_break; // NB: remember to push false before jumping!
   size_t jmpaddr_continue;
-  struct abce_rb_tree_nocmp heads[0];
+  struct abce_rb_tree_nocmp heads[ABCE_FLEX];
 };
 
 static inline size_t amyplan_locvarctx_sz(struct amyplan_locvarctx *ctx)

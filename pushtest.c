@@ -37,7 +37,7 @@ index 1f3242f..7e8aa33 100644
 
 int main(int argc, char **argv)
 {
-  struct abce abce = {};
+  struct abce abce = ABCE_EMPTY;
 
   abce_init(&abce);
 

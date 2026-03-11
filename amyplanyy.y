@@ -272,7 +272,7 @@ expr NEWLINE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    unsigned char tmpbuf[256] = {};
+    unsigned char tmpbuf[256] = {0};
     size_t tmpsiz = 0;
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_RET);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_TRAILER);
@@ -356,7 +356,7 @@ expr NEWLINE
 {
   if (amyplanyy_do_emit(amyplanyy))
   {
-    unsigned char tmpbuf[256] = {};
+    unsigned char tmpbuf[256] = {0};
     size_t tmpsiz = 0;
     size_t symidx;
     // FIXME what if it's not a list?

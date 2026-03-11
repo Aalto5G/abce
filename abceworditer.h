@@ -18,6 +18,8 @@ struct abce_word_iter {
   size_t end;
 };
 
+#define ABCE_WORD_ITER_EMPTY {.string = NULL}
+
 static inline size_t abce_memspn_impl(const char *s, size_t ssz, uint64_t bm[4])
 {
   size_t i;
@@ -47,7 +49,7 @@ static inline size_t abce_memcspn_impl(const char *s, size_t ssz, uint64_t bm[4]
 
 static inline void abce_strip(const char *s, size_t ssz, const char *sep, size_t sepsz, size_t *pstart, size_t *pend)
 {
-  uint64_t bm[4] = {};
+  uint64_t bm[4] = {0};
   size_t i;
   size_t start;
   for (i = 0; i < sepsz; i++)
@@ -78,7 +80,7 @@ static inline void abce_strip(const char *s, size_t ssz, const char *sep, size_t
 
 static inline size_t abce_memspn(const char *s, size_t ssz, const char *accept, size_t asz)
 {
-  uint64_t bm[4] = {};
+  uint64_t bm[4] = {0};
   size_t i;
   for (i = 0; i < asz; i++)
   {
@@ -90,7 +92,7 @@ static inline size_t abce_memspn(const char *s, size_t ssz, const char *accept, 
 
 static inline size_t abce_memcspn(const char *s, size_t ssz, const char *reject, size_t rsz)
 {
-  uint64_t bm[4] = {};
+  uint64_t bm[4] = {0};
   size_t i;
   memset(bm, 0xff, sizeof(bm));
   for (i = 0; i < rsz; i++)
@@ -151,6 +153,8 @@ struct abce_str_buf {
   size_t sz;
   size_t capacity;
 };
+
+#define ABCE_STR_BUF_EMPTY {.buf = NULL}
 
 static inline int abce_str_buf_grow(struct abce *abce,
                                     struct abce_str_buf *buf,

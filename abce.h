@@ -835,7 +835,7 @@ static inline struct abce_mb
 abce_mb_refuparea(struct abce *abce, struct abce_mb_area *mba,
                   enum abce_type typ)
 {
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   if (mba == NULL)
   {
     mb.typ = ABCE_T_N;

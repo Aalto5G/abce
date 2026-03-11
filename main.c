@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv)
 {
-  struct abce abce = {};
+  struct abce abce = ABCE_EMPTY;
   int64_t a, b;
   abce_init(&abce);
 

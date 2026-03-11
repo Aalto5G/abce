@@ -742,7 +742,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
                                       const struct abce_mb *parent, int holey)
 {
   struct abce_mb_area *mba;
-  struct abce_mb mb = {};
+  struct abce_mb mb = ABCE_MB_EMPTY;
   size_t i;
 
   capacity = abce_next_highest_power_of_2(capacity);
