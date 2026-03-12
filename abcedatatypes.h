@@ -45,7 +45,7 @@ struct abce_mb_scope {
   struct abce_mb_area *parent;
   size_t size;
   size_t locidx;
-  struct abce_rb_tree_nocmp heads[0];
+  struct abce_rb_tree_nocmp heads[ABCE_FLEX_IN_UNION];
 };
 
 struct abce_mb_array {
@@ -62,7 +62,7 @@ struct abce_mb_string {
   struct abce_rb_tree_node node;
   size_t size;
   size_t locidx;
-  char buf[0];
+  char buf[ABCE_FLEX_IN_UNION];
 };
 struct abce_mb_ios {
   FILE *f;
