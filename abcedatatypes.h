@@ -62,7 +62,7 @@ struct abce_mb_string {
   struct abce_rb_tree_node node;
   size_t size;
   size_t locidx;
-  char buf[ABCE_FLEX_IN_UNION];
+  //char buf[ABCE_FLEX_IN_UNION];
 };
 struct abce_mb_ios {
   FILE *f;
@@ -88,11 +88,11 @@ struct abce_mb_area {
 };
 static inline char *abce_mba_str(struct abce_mb_area *ar)
 {
-  return (char*)ar->u.str.buf;
+  return (char*)ar->uar;
 }
 static inline const char *abce_mba_const_str(const struct abce_mb_area *ar)
 {
-  return (const char*)ar->u.str.buf;
+  return (const char*)ar->uar;
 }
 // These must match error codes ABCE_E_EXPECT_*
 enum abce_type {

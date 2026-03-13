@@ -890,12 +890,13 @@ static inline int abce_str_cache_cmp_asymlen(const void *str_lenv, struct abce_r
 {
   const struct abce_const_str_len *str_len = str_lenv;
   struct abce_mb_string *e = ABCE_CONTAINER_OF(n2, struct abce_mb_string, node);
+  struct abce_mb_area *ar = ABCE_CONTAINER_OF(e, struct abce_mb_area, u.str);
   size_t len1 = str_len->len;
   size_t len2, lenmin;
   int ret;
   char *str2;
   len2 = e->size;
-  str2 = e->buf;
+  str2 = abce_mba_str(ar);
   lenmin = (len1 < len2) ? len1 : len2;
   ret = memcmp(str_len->str, str2, lenmin);
   if (ret != 0)
@@ -958,7 +959,7 @@ static inline int abce_str_cmp_halfsym(
   len1 = key->u.area->u.str.size;
   str1 = abce_mba_str(key->u.area);
   len2 = e2->key.u.area->u.str.size;
-  str2 = e2->key.u.area->u.str.buf;
+  str2 = abce_mba_str(e2->key.u.area);
   lenmin = (len1 < len2) ? len1 : len2;
   ret = memcmp(str1, str2, lenmin);
   if (ret != 0)
@@ -980,14 +981,16 @@ static inline int abce_str_cache_cmp_sym(
   struct abce_rb_tree_node *n1, struct abce_rb_tree_node *n2, void *ud)
 {
   struct abce_mb_string *e1 = ABCE_CONTAINER_OF(n1, struct abce_mb_string, node);
+  struct abce_mb_area *ar1 = ABCE_CONTAINER_OF(e1, struct abce_mb_area, u.str);
   struct abce_mb_string *e2 = ABCE_CONTAINER_OF(n2, struct abce_mb_string, node);
+  struct abce_mb_area *ar2 = ABCE_CONTAINER_OF(e2, struct abce_mb_area, u.str);
   size_t len1, len2, lenmin;
   int ret;
   char *str1, *str2;
   len1 = e1->size;
-  str1 = e1->buf;
+  str1 = abce_mba_str(ar1);
   len2 = e2->size;
-  str2 = e2->buf;
+  str2 = abce_mba_str(ar2);
   lenmin = (len1 < len2) ? len1 : len2;
   ret = memcmp(str1, str2, lenmin);
   if (ret != 0)

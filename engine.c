@@ -302,7 +302,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         break;
       }
 
-      lua_getglobal(mbsc->u.area->u.sc.lua, funname->u.area->u.str.buf);
+      lua_getglobal(mbsc->u.area->u.sc.lua, abce_mba_str(funname->u.area));
       for (i = argcnt; i > 0; i--)
       {
         GETMBPTR(&mb, -(int)i);

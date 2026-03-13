@@ -15,7 +15,7 @@
 
 struct jmalloc_block {
   union {
-    char block[0];
+    //char block[0];
     struct jmalloc_block *next;
   } u;
 };
