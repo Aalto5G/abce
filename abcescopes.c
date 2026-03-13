@@ -49,7 +49,7 @@ int abce_sc_replace_val_mb(
   hashval = abce_mb_str_hash(pkey);
   hashloc = hashval & (mba->u.sc.size - 1);
 
-  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->uar[hashloc].sc.head, abce_str_cmp_halfsym, NULL, pkey);
   if (n == NULL)
   {
     e = abce->alloc(NULL, 0, sizeof(*e), &abce->alloc_baton);
@@ -61,7 +61,7 @@ int abce_sc_replace_val_mb(
     }
     e->key = abce_mb_refup(abce, pkey);
     e->val = abce_mb_refup(abce, pval);
-    ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+    ret = abce_rb_tree_nocmp_insert_nonexist(&mba->uar[hashloc].sc.head,
                                         abce_str_cmp_sym, NULL, &e->n);
     if (ret != 0)
     {
@@ -91,13 +91,13 @@ int abce_sc_remove_val_mb(
   hashval = abce_mb_str_hash(pkey);
   hashloc = hashval & (mba->u.sc.size - 1);
 
-  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, pkey);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->uar[hashloc].sc.head, abce_str_cmp_halfsym, NULL, pkey);
   if (n == NULL)
   {
     return -ENOENT;
   }
   e = ABCE_CONTAINER_OF(n, struct abce_mb_rb_entry, n);
-  abce_rb_tree_nocmp_delete(&mba->u.sc.heads[hashloc], n);
+  abce_rb_tree_nocmp_delete(&mba->uar[hashloc].sc.head, n);
   abce_mb_refdn(abce, &e->key);
   abce_mb_refdn(abce, &e->val);
   abce->alloc(e, sizeof(*e), 0, &abce->alloc_baton);
@@ -136,7 +136,7 @@ int abce_sc_put_val_str(
   }
   e->key = abce_mb_refup(abce, mbtmp);
   e->val = abce_mb_refup(abce, pval);
-  ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+  ret = abce_rb_tree_nocmp_insert_nonexist(&mba->uar[hashloc].sc.head,
                                       abce_str_cmp_sym, NULL, &e->n);
   if (ret == 0)
   {
@@ -185,7 +185,7 @@ int abce_sc_put_val_str_maybe_old(
     return -ENOMEM;
   }
 
-  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, mbkey);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->uar[hashloc].sc.head, abce_str_cmp_halfsym, NULL, mbkey);
   if (n != NULL)
   {
     struct abce_mb_rb_entry *e;
@@ -225,7 +225,7 @@ int abce_sc_put_val_str_maybe_old(
   }
   e->key = abce_mb_refup(abce, mbkey);
   e->val = abce_mb_refup(abce, pval);
-  ret = abce_rb_tree_nocmp_insert_nonexist(&mba->u.sc.heads[hashloc],
+  ret = abce_rb_tree_nocmp_insert_nonexist(&mba->uar[hashloc].sc.head,
                                       abce_str_cmp_sym, NULL, &e->n);
   if (ret == 0)
   {

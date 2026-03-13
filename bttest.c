@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   {
     if (amyplanyy.abce.btbase[i].typ == ABCE_T_S)
     {
-      printf("%s\n", amyplanyy.abce.btbase[i].u.area->u.str.buf);
+      printf("%s\n", abce_mba_str(amyplanyy.abce.btbase[i].u.area));
     }
     else
     {

@@ -370,9 +370,9 @@ void abce_mark(struct abce *abce, struct abce_mb_area *mba, enum abce_type typ,
         }
         for (i = 0; i < mba->u.sc.size; i++)
         {
-          if (abce_unlikely(mba->u.sc.heads[i].root != NULL))
+          if (abce_unlikely(mba->uar[i].sc.head.root != NULL))
           {
-            abce_mark_tree(abce, mba->u.sc.heads[i].root, stackbase, stackidx, stackcap);
+            abce_mark_tree(abce, mba->uar[i].sc.head.root, stackbase, stackidx, stackcap);
           }
         }
         break;
@@ -458,7 +458,7 @@ void abce_deep_check_heap_object(struct abce *abce, size_t *stackbase, struct ab
       for (i = 0; i < mb->u.area->u.sc.size; i++)
       {
         key = &nil;
-        while (abce_rbtree_get_next(&key, &val, &mb->u.area->u.sc.heads[i], key) == 0)
+        while (abce_rbtree_get_next(&key, &val, &mb->u.area->uar[i].sc.head, key) == 0)
         {
           if (!abce_is_dynamic_type(key->typ))
           {
@@ -665,13 +665,13 @@ void abce_gc(struct abce *abce)
           for (i = 0; i < mba->u.sc.size; i++)
           {
             // Ok, this might be better (faster)
-            while (mba->u.sc.heads[i].root != NULL)
+            while (mba->uar[i].sc.head.root != NULL)
             {
               struct abce_mb_rb_entry *mbe =
-                ABCE_CONTAINER_OF(mba->u.sc.heads[i].root,
+                ABCE_CONTAINER_OF(mba->uar[i].sc.head.root,
                              struct abce_mb_rb_entry, n);
-              abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
-                                   mba->u.sc.heads[i].root);
+              abce_rb_tree_nocmp_delete(&mba->uar[i].sc.head,
+                                   mba->uar[i].sc.head.root);
               abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
             }
           }
@@ -682,7 +682,7 @@ void abce_gc(struct abce *abce)
             mba->u.sc.lua = NULL;
           }
 #endif
-          abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
+          abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->uar), 0, &abce->alloc_baton);
           break;
         default:
           abort();
@@ -792,9 +792,9 @@ struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t
     return mb;
   }
   mba->u.str.size = sz1 + sz2;
-  memcpy(mba->u.str.buf, str1, sz1);
-  memcpy(mba->u.str.buf + sz1, str2, sz2);
-  mba->u.str.buf[sz1 + sz2] = '\0';
+  memcpy(abce_mba_str(mba), str1, sz1);
+  memcpy(abce_mba_str(mba) + sz1, str2, sz2);
+  abce_mba_str(mba)[sz1 + sz2] = '\0';
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
@@ -834,9 +834,9 @@ struct abce_mb abce_mb_rep_string(struct abce *abce, const char *str, size_t sz,
   mba->u.str.size = rep*sz;
   for (i = 0; i < rep; i++)
   {
-    memcpy(mba->u.str.buf + i*sz, str, sz);
+    memcpy(abce_mba_str(mba) + i*sz, str, sz);
   }
-  mba->u.str.buf[rep*sz] = '\0';
+  abce_mba_str(mba)[rep*sz] = '\0';
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
@@ -874,8 +874,8 @@ struct abce_mb abce_mb_create_string_to_be_filled(struct abce *abce, size_t sz)
     return mb;
   }
   mba->u.str.size = sz;
-  memset(mba->u.str.buf, 0, sz);
-  mba->u.str.buf[sz] = '\0';
+  memset(abce_mba_str(mba), 0, sz);
+  abce_mba_str(mba)[sz] = '\0';
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
@@ -913,8 +913,8 @@ struct abce_mb abce_mb_create_string(struct abce *abce, const char *str, size_t 
     return mb;
   }
   mba->u.str.size = sz;
-  memcpy(mba->u.str.buf, str, sz);
-  mba->u.str.buf[sz] = '\0';
+  memcpy(abce_mba_str(mba), str, sz);
+  abce_mba_str(mba)[sz] = '\0';
   mba->refcnt = 1;
   mb.typ = ABCE_T_S;
   mb.u.area = mba;
@@ -1467,7 +1467,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
        }
        while (abce_tree_get_next(abce, &mbkey, &mbval, mb, mbkey) == 0)
        {
-         const char *buf = mbkey->u.area->u.str.buf;
+         const char *buf = abce_mba_str(mbkey->u.area);
          size_t sz = mbkey->u.area->u.str.size;
          switch (mbval->typ)
          {
@@ -1488,7 +1488,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             }
             break;
           case ABCE_T_S:
-            abce_caj_out_put22_string(ctx, buf, sz, mbval->u.area->u.str.buf, mbval->u.area->u.str.size);
+            abce_caj_out_put22_string(ctx, buf, sz, abce_mba_str(mbval->u.area), mbval->u.area->u.str.size);
             break;
           case ABCE_T_A:
           {
@@ -1552,7 +1552,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
             }
             break;
           case ABCE_T_S:
-            abce_caj_out_add2_string(ctx, mb->u.area->u.ar.mbs[i].u.area->u.str.buf, mb->u.area->u.ar.mbs[i].u.area->u.str.size);
+            abce_caj_out_add2_string(ctx, abce_mba_str(mb->u.area->u.ar.mbs[i].u.area), mb->u.area->u.ar.mbs[i].u.area->u.str.size);
             break;
           case ABCE_T_A:
           {
@@ -1590,7 +1590,7 @@ int abce_json_encode_rec_cpush(struct abce *abce, const struct abce_mb *mb, stru
       }
       break;
     case ABCE_T_S:
-      abce_caj_out_add2_string(ctx, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      abce_caj_out_add2_string(ctx, abce_mba_str(mb->u.area), mb->u.area->u.str.size);
       break;
     case ABCE_T_D:
       abce_caj_out_add_number(ctx, mb->u.d);

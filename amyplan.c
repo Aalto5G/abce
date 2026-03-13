@@ -109,7 +109,7 @@ int main(int argc, char **argv, char **envp)
     {
       if (amyplanyy.abce.btbase[i].typ == ABCE_T_S)
       {
-        fprintf(stderr, "%s\n", amyplanyy.abce.btbase[i].u.area->u.str.buf);
+        fprintf(stderr, "%s\n", abce_mba_str(amyplanyy.abce.btbase[i].u.area));
       }
       else
       {

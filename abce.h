@@ -884,7 +884,7 @@ static inline uint32_t abce_mb_str_hash(const struct abce_mb *mb)
   {
     abort();
   }
-  return abce_murmur_buf(0x12345678U, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+  return abce_murmur_buf(0x12345678U, abce_mba_str(mb->u.area), mb->u.area->u.str.size);
 }
 static inline int abce_str_cache_cmp_asymlen(const void *str_lenv, struct abce_rb_tree_node *n2, void *ud)
 {
@@ -925,7 +925,7 @@ static inline int abce_str_cmp_asym(const void *strv, struct abce_rb_tree_node *
     abort();
   }
   len2 = e->key.u.area->u.str.size;
-  str2 = e->key.u.area->u.str.buf;
+  str2 = abce_mba_str(e->key.u.area);
   lenmin = (len1 < len2) ? len1 : len2;
   ret = memcmp(str, str2, lenmin);
   if (ret != 0)
@@ -956,7 +956,7 @@ static inline int abce_str_cmp_halfsym(
     abort();
   }
   len1 = key->u.area->u.str.size;
-  str1 = key->u.area->u.str.buf;
+  str1 = abce_mba_str(key->u.area);
   len2 = e2->key.u.area->u.str.size;
   str2 = e2->key.u.area->u.str.buf;
   lenmin = (len1 < len2) ? len1 : len2;
@@ -1016,9 +1016,9 @@ static inline int abce_str_cmp_sym_mb(
     abort();
   }
   len1 = mb1->u.area->u.str.size;
-  str1 = mb1->u.area->u.str.buf;
+  str1 = abce_mba_str(mb1->u.area);
   len2 = mb2->u.area->u.str.size;
-  str2 = mb2->u.area->u.str.buf;
+  str2 = abce_mba_str(mb2->u.area);
   lenmin = (len1 < len2) ? len1 : len2;
   ret = memcmp(str1, str2, lenmin);
   if (ret != 0)
@@ -1068,7 +1068,7 @@ static inline const struct abce_mb *abce_sc_get_myval_mb_area(
   }
   hashval = abce_mb_str_hash(key);
   hashloc = hashval & (mba->u.sc.size - 1);
-  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_halfsym, NULL, key);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->uar[hashloc].sc.head, abce_str_cmp_halfsym, NULL, key);
   if (n == NULL)
   {
     return NULL;
@@ -1095,7 +1095,7 @@ static inline const struct abce_mb *abce_sc_get_myval_str_area(
   struct abce_rb_tree_node *n;
   hashval = abce_str_hash(str);
   hashloc = hashval & (mba->u.sc.size - 1);
-  n = ABCE_RB_TREE_NOCMP_FIND(&mba->u.sc.heads[hashloc], abce_str_cmp_asym, NULL, str);
+  n = ABCE_RB_TREE_NOCMP_FIND(&mba->uar[hashloc].sc.head, abce_str_cmp_asym, NULL, str);
   if (n == NULL)
   {
     return NULL;

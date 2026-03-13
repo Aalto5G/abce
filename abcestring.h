@@ -28,9 +28,9 @@ int abce_cpush_strgsub_mb(struct abce *abce,
     return -EINVAL;
   }
   retval = abce_strgsub(abce, &resstr, &ressz, &rescap,
-                        haystack->u.area->u.str.buf, haystack->u.area->u.str.size,
-                        needle->u.area->u.str.buf, needle->u.area->u.str.size,
-                        sub->u.area->u.str.buf, sub->u.area->u.str.size);
+                        abce_mba_str(haystack->u.area), haystack->u.area->u.str.size,
+                        abce_mba_str(needle->u.area), needle->u.area->u.str.size,
+                        abce_mba_str(sub->u.area), sub->u.area->u.str.size);
   if (retval != 0)
   {
     return retval;

@@ -45,7 +45,7 @@ struct abce_mb_scope {
   struct abce_mb_area *parent;
   size_t size;
   size_t locidx;
-  struct abce_rb_tree_nocmp heads[ABCE_FLEX_IN_UNION];
+  //struct abce_rb_tree_nocmp heads[ABCE_FLEX_IN_UNION];
 };
 
 struct abce_mb_array {
@@ -67,6 +67,12 @@ struct abce_mb_string {
 struct abce_mb_ios {
   FILE *f;
 };
+struct abce_mb_area_flex_scope {
+  struct abce_rb_tree_nocmp head;
+};
+union abce_mb_area_flex {
+  struct abce_mb_area_flex_scope sc;
+};
 struct abce_mb_area {
   size_t refcnt;
   size_t locidx;
@@ -78,7 +84,16 @@ struct abce_mb_area {
     struct abce_mb_string str;
     struct abce_mb_pb pb;
   } u;
+  union abce_mb_area_flex uar[ABCE_FLEX];
 };
+static inline char *abce_mba_str(struct abce_mb_area *ar)
+{
+  return (char*)ar->u.str.buf;
+}
+static inline const char *abce_mba_const_str(const struct abce_mb_area *ar)
+{
+  return (const char*)ar->u.str.buf;
+}
 // These must match error codes ABCE_E_EXPECT_*
 enum abce_type {
   ABCE_T_T = 45,

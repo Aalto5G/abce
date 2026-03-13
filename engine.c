@@ -436,7 +436,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mbbase;
       char *myenv;
       GETMBSTRPTR(&mbbase, -1);
-      myenv = getenv(mbbase->u.area->u.str.buf);
+      myenv = getenv(abce_mba_str(mbbase->u.area));
       if (myenv == NULL)
       {
         if (abce_cpush_nil(abce) != 0)
@@ -660,7 +660,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -ERANGE;
       }
       if (abce_mb_cpush_create_string(abce,
-                                      mbbase->u.area->u.str.buf + (size_t)start,
+                                      abce_mba_str(mbbase->u.area) + (size_t)start,
                                       end - start) == NULL)
       {
         return -ENOMEM;
@@ -699,9 +699,9 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETMBSTRPTR(&mbextend, -1);
       GETMBSTRPTR(&mbbase, -2);
       res = abce_mb_cpush_concat_string(abce,
-                                        mbbase->u.area->u.str.buf,
+                                        abce_mba_str(mbbase->u.area),
                                         mbbase->u.area->u.str.size,
-                                        mbextend->u.area->u.str.buf,
+                                        abce_mba_str(mbextend->u.area),
                                         mbextend->u.area->u.str.size);
       if (res == NULL)
       {
@@ -730,7 +730,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTRPTR(&mbbase, -1);
       res = abce_mb_cpush_create_string(abce,
-                                        mbbase->u.area->u.str.buf,
+                                        abce_mba_str(mbbase->u.area),
                                         mbbase->u.area->u.str.size);
       if (res == NULL)
       {
@@ -738,7 +738,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       for (i = 0; i < res->u.area->u.str.size; i++)
       {
-        res->u.area->u.str.buf[i] = tolower((unsigned char)res->u.area->u.str.buf[i]);
+        abce_mba_str(res->u.area)[i] = tolower((unsigned char)abce_mba_str(res->u.area)[i]);
       }
       abce_npoppushc(abce, 1);
       abce_cpop(abce);
@@ -752,7 +752,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTRPTR(&mbbase, -1);
       res = abce_mb_cpush_create_string(abce,
-                                        mbbase->u.area->u.str.buf,
+                                        abce_mba_str(mbbase->u.area),
                                         mbbase->u.area->u.str.size);
       if (res == NULL)
       {
@@ -760,7 +760,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       for (i = 0; i < res->u.area->u.str.size; i++)
       {
-        res->u.area->u.str.buf[i] = toupper((unsigned char)res->u.area->u.str.buf[i]);
+        abce_mba_str(res->u.area)[i] = toupper((unsigned char)abce_mba_str(res->u.area)[i]);
       }
       abce_npoppushc(abce, 1);
       abce_cpop(abce);
@@ -796,13 +796,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -EINVAL;
       }
       res = abce_mb_cpush_create_string(abce,
-                                        mbbase->u.area->u.str.buf,
+                                        abce_mba_str(mbbase->u.area),
                                         mbbase->u.area->u.str.size);
       if (res == NULL)
       {
         return -ENOMEM;
       }
-      res->u.area->u.str.buf[(uint64_t)loc] = (char)(unsigned char)ch;
+      abce_mba_str(res->u.area)[(uint64_t)loc] = (char)(unsigned char)ch;
       abce_npoppushc(abce, 3);
       abce_cpop(abce);
       return 0;
@@ -824,8 +824,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTRPTR(&mbsep, -1);
       GETMBSTRPTR(&mbbase, -2);
-      abce_word_iter_init(&it, mbbase->u.area->u.str.buf, mbbase->u.area->u.str.size,
-                          mbsep->u.area->u.str.buf, mbsep->u.area->u.str.size);
+      abce_word_iter_init(&it, abce_mba_str(mbbase->u.area), mbbase->u.area->u.str.size,
+                          abce_mba_str(mbsep->u.area), mbsep->u.area->u.str.size);
       while (!abce_word_iter_at_end(&it))
       {
         i++;
@@ -863,14 +863,14 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         return -ENOMEM;
       }
-      abce_word_iter_init(&it, mbbase->u.area->u.str.buf, mbbase->u.area->u.str.size,
-                          mbsep->u.area->u.str.buf, mbsep->u.area->u.str.size);
+      abce_word_iter_init(&it, abce_mba_str(mbbase->u.area), mbbase->u.area->u.str.size,
+                          abce_mba_str(mbsep->u.area), mbsep->u.area->u.str.size);
       while (!abce_word_iter_at_end(&it))
       {
         // Here we have to be careful. We allocate memblocks, but we add them immediately
         // to the array, so if GC can see the array, GC can see our memblocks.
         mbit = abce_mb_cpush_create_string(abce, 
-                                           mbbase->u.area->u.str.buf + it.start,
+                                           abce_mba_str(mbbase->u.area) + it.start,
                                            it.end - it.start);
         if (mbit == NULL)
         {
@@ -917,14 +917,14 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       GETMBSTRPTR(&mbsep, -2);
       GETMBSTRPTR(&mbbase, -3);
-      abce_word_iter_init(&it, mbbase->u.area->u.str.buf, mbbase->u.area->u.str.size,
-                          mbsep->u.area->u.str.buf, mbsep->u.area->u.str.size);
+      abce_word_iter_init(&it, abce_mba_str(mbbase->u.area), mbbase->u.area->u.str.size,
+                          abce_mba_str(mbsep->u.area), mbsep->u.area->u.str.size);
       while (!abce_word_iter_at_end(&it))
       {
         if (i == (size_t)wordidx)
         {
           mbit = abce_mb_cpush_create_string(abce, 
-                                             mbbase->u.area->u.str.buf + it.start,
+                                             abce_mba_str(mbbase->u.area) + it.start,
                                              it.end - it.start);
           if (mbit == NULL)
           {
@@ -956,7 +956,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -EINVAL;
       }
       GETMBSTRPTR(&mbstr, -2);
-      if (fwrite(mbstr->u.area->u.str.buf, 1, mbstr->u.area->u.str.size,
+      if (fwrite(abce_mba_str(mbstr->u.area), 1, mbstr->u.area->u.str.size,
                  (streamidx == 0) ? stdout : stderr) 
           != mbstr->u.area->u.str.size)
       {
@@ -974,7 +974,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mbstr;
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTRPTR(&mbstr, -1);
-      if (fwrite(mbstr->u.area->u.str.buf, 1, mbstr->u.area->u.str.size, stderr)
+      if (fwrite(abce_mba_str(mbstr->u.area), 1, mbstr->u.area->u.str.size, stderr)
           != mbstr->u.area->u.str.size)
       {
         abce->err.code = ABCE_E_IO_ERROR;
@@ -992,7 +992,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-1, ABCE_T_S);
       GETMBSTRPTR(&mbbase, -1);
       if (abce_mb_cpush_create_string(abce,
-                                      mbbase->u.area->u.str.buf,
+                                      abce_mba_str(mbbase->u.area),
                                       mbbase->u.area->u.str.size) == NULL)
       {
         return -ENOMEM;
@@ -1000,10 +1000,10 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       mbbase = &abce->cstackbase[abce->csp-1];
       for (i = 0; i < mbbase->u.area->u.str.size/2; i++)
       {
-        uint8_t tmp = mbbase->u.area->u.str.buf[i];
-        mbbase->u.area->u.str.buf[i] =
-          mbbase->u.area->u.str.buf[mbbase->u.area->u.str.size-i-1];
-        mbbase->u.area->u.str.buf[mbbase->u.area->u.str.size-i-1] = tmp;
+        uint8_t tmp = abce_mba_str(mbbase->u.area)[i];
+        abce_mba_str(mbbase->u.area)[i] =
+          abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1];
+        abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1] = tmp;
       }
       abce_npoppushc(abce, 1);
       abce_cpop(abce);
@@ -1026,7 +1026,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       GETMBSTRPTR(&mbbase, -2);
       res = abce_mb_cpush_rep_string(abce,
-                                     mbbase->u.area->u.str.buf,
+                                     abce_mba_str(mbbase->u.area),
                                      mbbase->u.area->u.str.size,
                                      (size_t)cnt);
       if (res == NULL)
@@ -1046,8 +1046,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTRPTR(&mbneedle, -1);
       GETMBSTRPTR(&mbhaystack, -2);
-      pos = abce_strstr(mbhaystack->u.area->u.str.buf, mbhaystack->u.area->u.str.size,
-                        mbneedle->u.area->u.str.buf, mbneedle->u.area->u.str.size);
+      pos = abce_strstr(abce_mba_str(mbhaystack->u.area), mbhaystack->u.area->u.str.size,
+                        abce_mba_str(mbneedle->u.area), mbneedle->u.area->u.str.size);
 
       if (pos == NULL)
       {
@@ -1055,7 +1055,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       else
       {
-        abce_npoppushdbl(abce, 2, pos - mbhaystack->u.area->u.str.buf);
+        abce_npoppushdbl(abce, 2, pos - abce_mba_str(mbhaystack->u.area));
       }
       return 0;
     }
@@ -1081,14 +1081,14 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         }
         if (i != 0)
         {
-          if (abce_str_buf_add(abce, &buf, mbjoiner->u.area->u.str.buf, mbjoiner->u.area->u.str.size)
+          if (abce_str_buf_add(abce, &buf, abce_mba_str(mbjoiner->u.area), mbjoiner->u.area->u.str.size)
               != 0)
           {
             abce_str_buf_free(abce, &buf);
             return -ENOMEM;
           }
         }
-        if (abce_str_buf_add(abce, &buf, mbar->u.area->u.ar.mbs[i].u.area->u.str.buf, mbar->u.area->u.ar.mbs[i].u.area->u.str.size)
+        if (abce_str_buf_add(abce, &buf, abce_mba_str(mbar->u.area->u.ar.mbs[i].u.area), mbar->u.area->u.ar.mbs[i].u.area->u.str.size)
             != 0)
         {
           abce_str_buf_free(abce, &buf);
@@ -1130,13 +1130,13 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       double dbl;
       GETMBSTRPTR(&str, -1);
       if (   str->u.area->u.str.size == 0
-          || str->u.area->u.str.size != strlen(str->u.area->u.str.buf))
+          || str->u.area->u.str.size != strlen(abce_mba_str(str->u.area)))
       {
         abce->err.code = ABCE_E_NOT_A_NUMBER_STRING;
         abce_mb_errreplace_noinline(abce, str);
         return -EINVAL;
       }
-      dbl = strtod(str->u.area->u.str.buf, &endptr);
+      dbl = strtod(abce_mba_str(str->u.area), &endptr);
       if (*endptr != '\0')
       {
         abce->err.code = ABCE_E_NOT_A_NUMBER_STRING;
@@ -1154,15 +1154,15 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-2, ABCE_T_S);
       GETMBSTRPTR(&mbsep, -1);
       GETMBSTRPTR(&mbbase, -2);
-      abce_strip(mbbase->u.area->u.str.buf, mbbase->u.area->u.str.size,
-                 mbsep->u.area->u.str.buf, mbsep->u.area->u.str.size,
+      abce_strip(abce_mba_str(mbbase->u.area), mbbase->u.area->u.str.size,
+                 abce_mba_str(mbsep->u.area), mbsep->u.area->u.str.size,
                  &start, &end);
       if (end < start)
       {
         abort();
       }
       res = abce_mb_cpush_create_string(abce,
-                                        mbbase->u.area->u.str.buf + start,
+                                        abce_mba_str(mbbase->u.area) + start,
                                         end - start);
       if (res == NULL)
       {
@@ -1533,7 +1533,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mb;
       GETMBSTRPTR(&mbstr, -1);
       sz = mbstr->u.area->u.str.size;
-      mb = abce_mb_cpush_create_pb_from_buf(abce, mbstr->u.area->u.str.buf, sz);
+      mb = abce_mb_cpush_create_pb_from_buf(abce, abce_mba_str(mbstr->u.area), sz);
       if (mb == NULL)
       {
         return -ENOMEM;
@@ -1601,10 +1601,10 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       size_t sz;
       GETMBSTRPTR(&mbstr, -1);
       sz = mbstr->u.area->u.str.size;
-      if (sz > 0 && mbstr->u.area->u.str.buf[sz-1] == '\n')
+      if (sz > 0 && abce_mba_str(mbstr->u.area)[sz-1] == '\n')
       {
         if (abce_mb_cpush_create_string(abce,
-                                        mbstr->u.area->u.str.buf,
+                                        abce_mba_str(mbstr->u.area),
                                         sz-1) == NULL)
         {
           return -ENOMEM;
@@ -1621,24 +1621,24 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       FILE *f;
       GETMBSTRPTR(&mbmode, -1);
       GETMBSTRPTR(&mbpath, -2);
-      if (strcmp(mbmode->u.area->u.str.buf, "r") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "r+") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "w") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "w+") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "a") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "a+") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "rb") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "r+b") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "wb") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "w+b") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "ab") != 0 &&
-          strcmp(mbmode->u.area->u.str.buf, "a+b") != 0)
+      if (strcmp(abce_mba_str(mbmode->u.area), "r") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "r+") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "w") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "w+") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "a") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "a+") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "rb") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "r+b") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "wb") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "w+b") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "ab") != 0 &&
+          strcmp(abce_mba_str(mbmode->u.area), "a+b") != 0)
       {
         abce->err.code = ABCE_E_INVALID_MODE;
         abce_mb_errreplace_noinline(abce, mbmode);
         return -EINVAL;
       }
-      f = fopen(mbpath->u.area->u.str.buf, mbmode->u.area->u.str.buf);
+      f = fopen(abce_mba_str(mbpath->u.area), abce_mba_str(mbmode->u.area));
       if (f == NULL)
       {
         abce->err.code = ABCE_E_FILE_OPEN;
@@ -1688,7 +1688,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce_mb_errreplace_noinline(abce, mbdelim);
           return -EINVAL;
         }
-        delim = mbdelim->u.area->u.str.buf[0];
+        delim = abce_mba_str(mbdelim->u.area)[0];
         hasdelim = 1;
       }
       else if (mbdelim->typ == ABCE_T_N)
@@ -2291,7 +2291,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mbkey;
       GETMBSTRPTR(&mbstr, -1);
       abce_pullcaj_init(&ctx);
-      abce_pullcaj_set_buf(&ctx, mbstr->u.area->u.str.buf, mbstr->u.area->u.str.size, 1);
+      abce_pullcaj_set_buf(&ctx, abce_mba_str(mbstr->u.area), mbstr->u.area->u.str.size, 1);
       while ((ret = abce_pullcaj_get_event(&ctx, &ev)) > 0)
       {
         switch (ev.ev) { // ev.key, ev.keysz
@@ -3272,7 +3272,7 @@ outpbset:
             ret = -ERANGE;
             break;
           }
-          abce_npoppushdbl(abce, 2, (unsigned char)mbstr->u.area->u.str.buf[locint]);
+          abce_npoppushdbl(abce, 2, (unsigned char)abce_mba_str(mbstr->u.area)[locint]);
           break;
         }
         case ABCE_OPCODE_LISTGET:

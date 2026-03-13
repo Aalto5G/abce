@@ -304,7 +304,7 @@ void mb_to_lua(lua_State *lua, const struct abce_mb *mb)
       lua_pushnumber(lua, mb->u.d);
       return;
     case ABCE_T_S:
-      lua_pushlstring(lua, mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      lua_pushlstring(lua, abce_mba_str(mb->u.area), mb->u.area->u.str.size);
       return;
     case ABCE_T_A:
       lua_newtable(lua);
@@ -750,12 +750,12 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
 
   capacity = abce_next_highest_power_of_2(capacity);
 
-  mba = abce->alloc(NULL, 0, sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads),
+  mba = abce->alloc(NULL, 0, sizeof(*mba) + capacity * sizeof(*mba->uar),
                     &abce->alloc_baton);
   if (mba == NULL)
   {
     abce->err.code = ABCE_E_NO_MEM;
-    abce->err.val2 = sizeof(*mba) + capacity * sizeof(*mba->u.sc.heads);
+    abce->err.val2 = sizeof(*mba) + capacity * sizeof(*mba->uar);
     mb.typ = ABCE_T_N;
     return mb;
   }
@@ -783,7 +783,7 @@ struct abce_mb abce_mb_create_scope(struct abce *abce, size_t capacity,
   }
   for (i = 0; i < capacity; i++)
   {
-    abce_rb_tree_nocmp_init(&mba->u.sc.heads[i]);
+    abce_rb_tree_nocmp_init(&mba->uar[i].sc.head);
   }
   mba->refcnt = 1;
   mb.typ = ABCE_T_SC;
@@ -857,7 +857,7 @@ void abce_mb_gc_refdn(struct abce *abce, struct abce_mb_area *mba, enum abce_typ
       for (i = 0; i < mba->u.sc.size; i++)
       {
         key = &nil;
-        while (abce_rbtree_get_next(&key, &val, &mba->u.sc.heads[i], key) == 0)
+        while (abce_rbtree_get_next(&key, &val, &mba->uar[i].sc.head, key) == 0)
         {
           abce_mb_gc_refdn2(abce, key->u.area, key->typ);
           if (abce_is_dynamic_type(val->typ))
@@ -956,15 +956,15 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
           for (i = 0; i < mba->u.sc.size; i++)
           {
             // Ok, this might be better (faster)
-            while (mba->u.sc.heads[i].root != NULL)
+            while (mba->uar[i].sc.head.root != NULL)
             {
               struct abce_mb_rb_entry *mbe =
-                ABCE_CONTAINER_OF(mba->u.sc.heads[i].root,
+                ABCE_CONTAINER_OF(mba->uar[i].sc.head.root,
                              struct abce_mb_rb_entry, n);
               abce_maybe_mv_obj_to_scratch(abce, &mbe->key);
               abce_maybe_mv_obj_to_scratch(abce, &mbe->val);
-              abce_rb_tree_nocmp_delete(&mba->u.sc.heads[i],
-                                   mba->u.sc.heads[i].root);
+              abce_rb_tree_nocmp_delete(&mba->uar[i].sc.head,
+                                   mba->uar[i].sc.head.root);
               abce->alloc(mbe, sizeof(*mbe), 0, &abce->alloc_baton);
             }
           }
@@ -975,7 +975,7 @@ void abce_mb_gc_free(struct abce *abce, struct abce_mb_area *mba, enum abce_type
             mba->u.sc.lua = NULL;
           }
 #endif
-          abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->u.sc.heads), 0, &abce->alloc_baton);
+          abce->alloc(mba, sizeof(*mba) + mba->u.sc.size * sizeof(*mba->uar), 0, &abce->alloc_baton);
         }
         break;
       default:
@@ -1172,7 +1172,7 @@ void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
       printf("sc(%zu){", mb->u.area->u.sc.size);
       for (i = 0; i < mb->u.area->u.sc.size; i++)
       {
-        abce_mb_treedump(mb->u.area->u.sc.heads[i].root, &first, &ll3);
+        abce_mb_treedump(mb->u.area->uar[i].sc.head.root, &first, &ll3);
       }
       printf("}");
       break;
@@ -1182,7 +1182,7 @@ void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
       printf("}");
       break;
     case ABCE_T_S:
-      abce_dump_str(mb->u.area->u.str.buf, mb->u.area->u.str.size);
+      abce_dump_str(abce_mba_str(mb->u.area), mb->u.area->u.str.size);
       break;
   }
 }

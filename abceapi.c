@@ -176,7 +176,7 @@ const char *abceapi_getstr(struct abce *abce, int stackidx, size_t *len)
     return NULL;
   }
   *len = mb->u.area->u.str.size;
-  resbuf = mb->u.area->u.str.buf;
+  resbuf = abce_mba_str(mb->u.area);
   abce->err = err_old;
   return resbuf;
 }

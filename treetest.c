@@ -12,7 +12,7 @@ void mydump_tre(int indent, const struct abce_rb_tree_node *node)
   {
     printf(" ");
   }
-  printf("key: %s\n", ABCE_CONTAINER_OF(node, struct abce_mb_rb_entry, n)->key.u.area->u.str.buf);
+  printf("key: %s\n", abce_mba_str(ABCE_CONTAINER_OF(node, struct abce_mb_rb_entry, n)->key.u.area));
   for (i = 0; i < indent; i++)
   {
     printf(" ");
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
   mbkey = &nil;
   while (abce_tree_get_next(abce, &mbkey, &mbval, mbt, mbkey) == 0)
   {
-    printf("%s\n", mbkey->u.area->u.str.buf);
+    printf("%s\n", abce_mba_str(mbkey->u.area));
   }
 
   printf("----------\n");
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
     else
     {
-      printf("%d %s\n", i, mbkey->u.area->u.str.buf);
+      printf("%d %s\n", i, abce_mba_str(mbkey->u.area));
     }
   }
 
