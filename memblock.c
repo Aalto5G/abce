@@ -12,6 +12,7 @@
 #include "abce.h"
 #include "abcetrees.h"
 #include "abcejmalloc.h"
+#include "abcescopes.h"
 
 void *abce_jm_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton)
 {
@@ -628,6 +629,96 @@ int lua_makelexcall(lua_State *lua)
   return 1;
 }
 
+int lua_setdynval(lua_State *lua)
+{
+  struct abce *abce;
+  int i;
+  int res;
+  if (lua_gettop(lua) == 0)
+  {
+    return luaL_error(lua, "Abce.setdynval requires an argument");
+  }
+  const char *str = luaL_checkstring(lua, 1);
+  int args = lua_gettop(lua) - 1;
+  if (args != 1)
+  {
+    return luaL_error(lua, "Abce.setdynval requires two arguments");
+  }
+  lua_getglobal(lua, "__abcelua_abce");
+  abce = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  for (i = 1; i <= args; i++)
+  {
+    mb_from_lua(lua, abce, i + 1); // abce_push
+  }
+  if (abce_mb_cpush_create_string(abce, str, strlen(str)) == NULL)
+  {
+    abce_pop(abce);
+    return luaL_error(lua, "Abce.setdynval not enough memory");
+  }
+  res = abce_sc_replace_val_mb(abce, &abce->dynscope, &abce->cstackbase[abce->csp-1], &abce->stackbase[abce->sp-1]);
+  abce_cpop(abce);
+  abce_pop(abce);
+  if (res != 0)
+  {
+    return luaL_error(lua, "Abce.setdynval not enough memory");
+  }
+  if (abce_cpush_nil(abce) != 0)
+  {
+    return luaL_error(lua, "Abce.setdynval not enough memory");
+  }
+  mb_to_lua(lua, &abce->cstackbase[abce->csp-1]);
+  abce_cpop(abce);
+  return 1;
+}
+
+int lua_setlexval(lua_State *lua)
+{
+  struct abce_mb scop = {.typ = ABCE_T_SC};
+  struct abce *abce;
+  int i;
+  int res;
+  if (lua_gettop(lua) == 0)
+  {
+    return luaL_error(lua, "Abce.setlexval requires an argument");
+  }
+  const char *str = luaL_checkstring(lua, 1);
+  int args = lua_gettop(lua) - 1;
+  if (args != 1)
+  {
+    return luaL_error(lua, "Abce.setlexval requires two arguments");
+  }
+  lua_getglobal(lua, "__abcelua_abce");
+  abce = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  for (i = 1; i <= args; i++)
+  {
+    mb_from_lua(lua, abce, i + 1); // abce_push
+  }
+  lua_getglobal(lua, "__abcelua_scope");
+  scop.u.area = lua_touserdata(lua, -1);
+  lua_pop(lua, 1);
+  if (abce_mb_cpush_create_string(abce, str, strlen(str)) == NULL)
+  {
+    abce_pop(abce);
+    return luaL_error(lua, "Abce.setlexval not enough memory");
+  }
+  res = abce_sc_replace_val_mb(abce, &scop, &abce->cstackbase[abce->csp-1], &abce->stackbase[abce->sp-1]);
+  abce_cpop(abce);
+  abce_pop(abce);
+  if (res != 0)
+  {
+    return luaL_error(lua, "Abce.setlexval not enough memory");
+  }
+  if (abce_cpush_nil(abce) != 0)
+  {
+    return luaL_error(lua, "Abce.setlexval not enough memory");
+  }
+  mb_to_lua(lua, &abce->cstackbase[abce->csp-1]);
+  abce_cpop(abce);
+  return 1;
+}
+
 int lua_getdynval(lua_State *lua)
 {
   struct abce *abce;
@@ -690,8 +781,10 @@ int luaopen_abce(lua_State *lua)
         static const luaL_Reg abce_lib[] = {
                 {"makelexcall", lua_makelexcall},
                 {"getlexval", lua_getlexval},
+                {"setlexval", lua_setlexval},
                 {"makedyncall", lua_makedyncall},
                 {"getdynval", lua_getdynval},
+                {"setdynval", lua_setdynval},
                 {NULL, NULL}
         };
 
