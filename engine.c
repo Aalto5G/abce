@@ -4247,6 +4247,7 @@ outpbset:
   }
   if (ret != 0)
   {
+    abce->err.opcode = ins;
     abce_bt_gather(abce, addcode, addsz); // RFE re-entrancy
   }
   abce->in_engine = was_in_engine;

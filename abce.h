@@ -1210,6 +1210,7 @@ struct abce_dump_list {
 };
 
 void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll);
+void abce_opcode_dump(uint16_t opcode);
 
 static inline void
 abce_mb_array_pop_back(struct abce *abce,

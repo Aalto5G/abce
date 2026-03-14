@@ -1690,6 +1690,331 @@ void abce_double_stack(struct abce *abce)
   abce->stacklimit = stacknewlimit;
 }
 
+void abce_opcode_dump(uint16_t opcode)
+{
+  switch (opcode)
+  {
+    case ABCE_OPCODE_EQ:
+      printf("== operator\n");
+      break;
+    case ABCE_OPCODE_NE:
+      printf("== operator\n");
+      break;
+    case ABCE_OPCODE_LOGICAL_NOT:
+      printf("! operator\n");
+      break;
+    case ABCE_OPCODE_BITWISE_AND:
+      printf("& operator\n");
+      break;
+    case ABCE_OPCODE_BITWISE_OR:
+      printf("| operator\n");
+      break;
+    case ABCE_OPCODE_BITWISE_NOT:
+      printf("~ operator\n");
+      break;
+    case ABCE_OPCODE_LT:
+      printf("< operator\n");
+      break;
+    case ABCE_OPCODE_GT:
+      printf("> operator\n");
+      break;
+    case ABCE_OPCODE_LE:
+      printf("<= operator\n");
+      break;
+    case ABCE_OPCODE_GE:
+      printf(">= operator\n");
+      break;
+    case ABCE_OPCODE_SHL:
+      printf("<< operator\n");
+      break;
+    case ABCE_OPCODE_SHR:
+      printf(">> operator\n");
+      break;
+    case ABCE_OPCODE_ADD:
+      printf("+ operator\n");
+      break;
+    case ABCE_OPCODE_SUB:
+      printf("binary - operator\n");
+      break;
+    case ABCE_OPCODE_MUL:
+      printf("* operator\n");
+      break;
+    case ABCE_OPCODE_DIV:
+      printf("/ operator\n");
+      break;
+    case ABCE_OPCODE_UNARY_MINUS:
+      printf("unary - operator\n");
+      break;
+    case ABCE_OPCODE_CALL:
+      printf("function call\n");
+      break;
+    case ABCE_OPCODE_STRGET:
+      printf("string character get, $str[@5]\n");
+      break;
+    case ABCE_OPCODE_STRLEN:
+      printf("string length get, $str[@]\n");
+      break;
+    case ABCE_OPCODE_PBSETLEN:
+      printf("packet buffer length set, $str{@} = 5\n");
+      break;
+    case ABCE_OPCODE_DICTSET_MAINTAIN:
+      printf("dictionary set, $str{\"a\"} = @true\n");
+      break;
+    case ABCE_OPCODE_LISTGET:
+      printf("array get, $ar[5]\n");
+      break;
+    case ABCE_OPCODE_LISTSET:
+      printf("array get, $ar[5] = @true\n");
+      break;
+    case ABCE_OPCODE_LISTLEN:
+      printf("array length get, $ar[]\n");
+      break;
+    case ABCE_OPCODE_DICTDEL:
+      printf("dictionary delete, $str{\"a\"} = -\n");
+      break;
+    case ABCE_OPCODE_DICTGET:
+      printf("dictionary get, $str{\"a\"}\n");
+      break;
+    case ABCE_OPCODE_SCOPEVAR:
+      printf("getting global variable\n");
+      break;
+    case ABCE_OPCODE_SCOPEVAR_SET:
+      printf("setting global variable\n");
+      break;
+    case ABCE_OPCODE_TYPE:
+      printf("@type\n");
+      break;
+    case ABCE_OPCODE_DICTHAS:
+      printf("dictionary has query, $str{@?\"a\"}\n");
+      break;
+    case ABCE_OPCODE_SCOPE_HAS:
+      printf("scope has query, @scope[$SC, @?\"foo\"]\n");
+      break;
+    case ABCE_OPCODE_CALL_IF_FUN:
+      printf("<> operator to call something that could be a function\n");
+      break;
+    case ABCE_OPCODE_DICTLEN:
+      printf("dictionary length get, $str{}\n");
+      break;
+    case ABCE_OPCODE_PBGET:
+      printf("protocol buffer get, $pb{@2,@be16}\n");
+      break;
+    case ABCE_OPCODE_PBLEN:
+      printf("protocol buffer length, $pb{@}\n");
+      break;
+    case ABCE_OPCODE_PBSET:
+      printf("protocol buffer set, $pb{@2,@be16} = 5\n");
+      break;
+    case ABCE_OPCODE_STRSUB:
+      printf("@strsub\n");
+      break;
+    case ABCE_OPCODE_STR_FROMCHR:
+      printf("@strfromchr\n");
+      break;
+    case ABCE_OPCODE_STRAPPEND:
+      printf("@strappend\n");
+      break;
+    case ABCE_OPCODE_STR_CMP:
+      printf("@strcmp\n");
+      break;
+    case ABCE_OPCODE_STRLISTJOIN:
+      printf("@strlistjoin\n");
+      break;
+    case ABCE_OPCODE_STR_LOWER:
+      printf("@strlower\n");
+      break;
+    case ABCE_OPCODE_STR_UPPER:
+      printf("@strupper\n");
+      break;
+    case ABCE_OPCODE_STR_REVERSE:
+      printf("@strreverse\n");
+      break;
+    case ABCE_OPCODE_STRSTR:
+      printf("@strstr\n");
+      break;
+    case ABCE_OPCODE_STRGSUB:
+      printf("@strgsub\n");
+      break;
+    case ABCE_OPCODE_STRREP:
+      printf("@strrep\n");
+      break;
+    case ABCE_OPCODE_STRFMT:
+      printf("@strfmt\n");
+      break;
+    case ABCE_OPCODE_STRSET:
+      printf("@strset\n");
+      break;
+    case ABCE_OPCODE_STRSTRIP:
+      printf("@strstrip\n");
+      break;
+    case ABCE_OPCODE_STRWORD:
+      printf("@strword\n");
+      break;
+    case ABCE_OPCODE_STRWORDLIST:
+      printf("@strwordlist\n");
+      break;
+    case ABCE_OPCODE_STRWORDCNT:
+      printf("@strwordcnt\n");
+      break;
+    case ABCE_OPCODE_TOSTRING:
+      printf("@tostring\n");
+      break;
+    case ABCE_OPCODE_TONUMBER:
+      printf("@tonumber\n");
+      break;
+    case ABCE_OPCODE_ABS:
+      printf("@abs\n");
+      break;
+    case ABCE_OPCODE_ACOS:
+      printf("@acos\n");
+      break;
+    case ABCE_OPCODE_ASIN:
+      printf("@asin\n");
+      break;
+    case ABCE_OPCODE_ATAN:
+      printf("@atan\n");
+      break;
+    case ABCE_OPCODE_CEIL:
+      printf("@ceil\n");
+      break;
+    case ABCE_OPCODE_FLOOR:
+      printf("@floor\n");
+      break;
+    case ABCE_OPCODE_COS:
+      printf("@cos\n");
+      break;
+    case ABCE_OPCODE_SIN:
+      printf("@sin\n");
+      break;
+    case ABCE_OPCODE_TAN:
+      printf("@tan\n");
+      break;
+    case ABCE_OPCODE_EXP:
+      printf("@exp\n");
+      break;
+    case ABCE_OPCODE_LOG:
+      printf("@log\n");
+      break;
+    case ABCE_OPCODE_SQRT:
+      printf("@sqrt\n");
+      break;
+    case ABCE_OPCODE_EXIT:
+      printf("@exit\n");
+      break;
+    case ABCE_OPCODE_DUMP:
+      printf("@dump\n");
+      break;
+    case ABCE_OPCODE_DUP_NONRECURSIVE:
+      printf("@dupnonrec\n");
+      break;
+    case ABCE_OPCODE_ERROR:
+      printf("@error\n");
+      break;
+    case ABCE_OPCODE_OUT:
+      printf("@out\n");
+      break;
+    case ABCE_OPCODE_DICTNEXT_SAFE:
+      printf("dictionary iteration\n");
+      break;
+    case ABCE_OPCODE_LISTSPLICE:
+      printf("@splice\n");
+      break;
+    case ABCE_OPCODE_SCOPE_NEW:
+      printf("@scopenew\n");
+      break;
+    case ABCE_OPCODE_FILE_OPEN:
+      printf("@fopen\n");
+      break;
+    case ABCE_OPCODE_FILE_CLOSE:
+      printf("@fclose\n");
+      break;
+    case ABCE_OPCODE_FILE_GET:
+      printf("@fread\n");
+      break;
+    case ABCE_OPCODE_FILE_SEEK_TELL:
+      printf("@fseek\n");
+      break;
+    case ABCE_OPCODE_FILE_FLUSH:
+      printf("@fflush\n");
+      break;
+    case ABCE_OPCODE_FILE_WRITE:
+      printf("@fwrite\n");
+      break;
+    case ABCE_OPCODE_FP_CLASSIFY:
+      printf("@fpclassify\n");
+      break;
+    case ABCE_OPCODE_JSON_ENCODE:
+      printf("@jsonenc\n");
+      break;
+    case ABCE_OPCODE_JSON_DECODE:
+      printf("@jsondec\n");
+      break;
+    case ABCE_OPCODE_PUSH_NEW_ARRAY:
+      printf("creating new array\n");
+      break;
+    case ABCE_OPCODE_PUSH_NEW_DICT:
+      printf("creating new tree/dictionary\n");
+      break;
+    case ABCE_OPCODE_APPENDALL_MAINTAIN:
+      printf("embedding contents of a list into another list\n");
+      break;
+    case ABCE_OPCODE_PUSH_NEW_PB:
+      printf("@pbnew\n");
+      break;
+    case ABCE_OPCODE_SCOPE_PARENT:
+      printf("@scopeparent\n");
+      break;
+    case ABCE_OPCODE_SCOPEVAR_NONRECURSIVE:
+      printf("accessing scope variable nonrecursively, @LPO/@LO/@DO/@DPO/@SCO($SCOPE)\n");
+      break;
+    case ABCE_OPCODE_SCOPE_HAS_NONRECURSIVE:
+      printf("checking existence of a  scope variable nonrecursively\n");
+      break;
+    case ABCE_OPCODE_LUACALL:
+      printf("@dynluacall/@lexluacall\n");
+      break;
+    case ABCE_OPCODE_ROUND:
+      printf("@round\n");
+      break;
+    case ABCE_OPCODE_TRUNC:
+      printf("@trunc\n");
+      break;
+    case ABCE_OPCODE_GETENV:
+      printf("@getenv\n");
+      break;
+    case ABCE_OPCODE_CHOMP:
+      printf("@chomp\n");
+      break;
+    case ABCE_OPCODE_PB2STR:
+      printf("@pb2str\n");
+      break;
+    case ABCE_OPCODE_STR2PB:
+      printf("@str2pb\n");
+      break;
+    case ABCE_OPCODE_FILE_GETDELIM:
+      printf("@fgetdelim\n");
+      break;
+    case ABCE_OPCODE_LOCALTIME:
+      printf("@localtime\n");
+      break;
+    case ABCE_OPCODE_MKTIME:
+      printf("@mktime\n");
+      break;
+    case ABCE_OPCODE_GMTIME:
+      printf("@gmtime\n");
+      break;
+    case ABCE_OPCODE_LISTINS:
+      printf("@insert\n");
+      break;
+    case ABCE_OPCODE_LISTDEL:
+      printf("array deletion, $array[5] = -\n");
+      break;
+    default:
+      printf("Unknown opcode\n");
+      break;
+  }
+}
+
 void abce_double_cache(struct abce *abce)
 {
   size_t cachenewcap = 2*abce->cachecap;
