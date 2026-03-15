@@ -16,20 +16,34 @@ $(CFLAGS) ?= @nil
     $(CFLAGS) = ["-O3", "-Wall", "-Wextra", "-Wno-unused-parameter", "-g"]
   @endif
 @endif
+
 $(FLEX) ?= @nil
 @if(@type($(FLEX)) == @type(@nil))
   $(FLEX) ``= ["sh", "-c", "echo $FLEX"]
   @if($(FLEX)[] == 0)
+    $(WHICHFLEX) `= ["sh", "-c", "which flex || true"]
+    @if(@strcmp($(WHICHFLEX), "") == 0)
+      $(FLEX_AVAILABLE) ?= @false
+    @endif
     $(FLEX) = ["flex"]
   @endif
 @endif
+$(FLEX_AVAILABLE) ?= @true
+
 $(BYACC) ?= @nil
 @if(@type($(BYACC)) == @type(@nil))
   $(BYACC) ``= ["sh", "-c", "echo $BYACC"]
   @if($(BYACC)[] == 0)
+    $(WHICHBYACC) `= ["sh", "-c", "which byacc || true"]
+    @if(@strcmp($(WHICHBYACC), "") == 0)
+      $(BYACC_AVAILABLE) ?= @false
+    @endif
     $(BYACC) = ["byacc"]
   @endif
 @endif
+$(BYACC_AVAILABLE) ?= @true
+
+
 $(WITH_LUA) ?= @false
 $(LUAINCS) ?= ["-I/usr/include/luajit-2.1"]
 $(LUALIBS) ?= ["/usr/lib/x86_64-linux-gnu/libluajit-5.1.a"]
@@ -103,12 +117,20 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @endfunction
 @call $ADD_LEXX_YACC_DEPS($(LEX_LIB))
 
+@if($FLEX_AVAILABLE)
+
 @patrule: $(LEXGEN_LIB): '%.lex.c' '%.lex.h': '%.l'
 @	[@$(FLEX), "--outfile=".$@, "--header-file=".@sufsubone($@,".c",".h"), \
 	$<]
 
+@endif
+
+@if($BYACC_AVAILABLE)
+
 @patrule: $(YACCGEN_LIB): '%.tab.c' '%.tab.h': '%.y'
 @	[@$(BYACC), "-d", "-p", @sufsubone($@, ".tab.c", ""), "-b", \
 	@sufsubone($@, ".tab.c", ""), "-o", $@, $<]
+
+@endif
 
 @cdepincludes @autophony @autotarget @ignore [@$(DEP), @$(DEPGEN_LIB)]
