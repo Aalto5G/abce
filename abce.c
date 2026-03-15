@@ -20,6 +20,10 @@ static inline size_t abce_topages(size_t limit)
 
 void *abce_do_mmap_madvise(size_t bytes, int shared)
 {
+#if ABCE_NO_MMAP
+  bytes = abce_topages(bytes);
+  return malloc(bytes);
+#else
   void *ptr;
   bytes = abce_topages(bytes);
   // Ugh. I wish all systems had simple and compatible interface.
@@ -76,16 +80,24 @@ void *abce_do_mmap_madvise(size_t bytes, int shared)
     return NULL;
   }
   return ptr;
+#endif
 }
 
 void abce_do_munmap(void *ptr, size_t bytes)
 {
+#if ABCE_NO_MMAP
+  free(ptr);
+#else
   bytes = abce_topages(bytes);
   munmap(ptr, bytes);
+#endif
 }
 
 void abce_do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
 {
+#if ABCE_NO_MMAP
+  // can't compact since realloc can modify the pointer
+#else
   char *ptr2;
   int errno_save;
   bytes_total = abce_topages(bytes_total);
@@ -96,6 +108,7 @@ void abce_do_mmap_compact(void *ptr, size_t bytes_in_use, size_t bytes_total)
   munmap(ptr2, bytes_total - bytes_in_use);
   errno = errno_save;
   // don't report errors
+#endif
 }
 
 void *abce_std_map(void *ptr, size_t new_bytes, size_t old_bytes, void **pbaton)

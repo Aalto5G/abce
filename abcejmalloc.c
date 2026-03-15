@@ -158,7 +158,7 @@ void abce_jmfree(void *ptr, size_t sz)
   {
     if (unlikely(sz > 1048576))
     {
-      munmap(ptr, abce_jm_topages(sz));
+      abce_do_munmap(ptr, abce_jm_topages(sz));
       return;
     }
     lookupval = abce_lookup2[(sz-1)/4096];
