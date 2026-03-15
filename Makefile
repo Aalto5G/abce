@@ -60,8 +60,8 @@ wcparser:
 
 #LUAINC:=/usr/include/lua5.3
 #LUALIB:=/usr/lib/x86_64-linux-gnu/liblua5.3.a
-LUAINC:=/usr/include/luajit-2.1
-LUALIB:=/usr/lib/x86_64-linux-gnu/libluajit-5.1.a
+LUAINCS?=
+LUALIBS?=
 
 CC?=cc
 CPP?=c++
@@ -69,62 +69,62 @@ CFLAGS?=-O3 -Wall -Wextra -Wno-unused-parameter -g
 CPPFLAGS?=-O3 -Wall -Wextra -Wno-unused-parameter -g
 
 ifeq ($(WITH_LUA),yes)
-  CFLAGS += -I$(LUAINC) -DWITH_LUA
-  CPPFLAGS += -I$(LUAINC) -DWITH_LUA
+  CFLAGS += $(LUAINCS) -DWITH_LUA
+  CPPFLAGS += $(LUAINCS) -DWITH_LUA
 else
-  LUALIB :=
+  LUALIBS :=
 endif
 
-gctest: gctest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+gctest: gctest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-reftest: reftest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+reftest: reftest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-ret: ret.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+ret: ret.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-breaktest: breaktest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+breaktest: breaktest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-main: main.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+main: main.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-locvartest: locvartest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+locvartest: locvartest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-treetest: treetest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+treetest: treetest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-amyplantest: amyplantest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+amyplantest: amyplantest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-fiboefftest: fiboefftest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+fiboefftest: fiboefftest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-fortest: fortest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+fortest: fortest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-amyplan: amyplan.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+amyplan: amyplan.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-iftest: iftest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+iftest: iftest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-dumptest: dumptest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+dumptest: dumptest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-shortcut: shortcut.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+shortcut: shortcut.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-dictnext: dictnext.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+dictnext: dictnext.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-fibonaccitest: fibonaccitest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+fibonaccitest: fibonaccitest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
-bttest: bttest.o libabce.a Makefile $(LUALIB)
-	$(CC) $(CPPFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) -lm
+bttest: bttest.o libabce.a Makefile
+	$(CC) $(CFLAGS) -o $@ $(filter %.o,$^) $(filter %.a,$^) $(LUALIBS) -lm
 
 libabce.a: $(OBJ_LIB) $(OBJGEN_LIB) $(OBJ_CPP_LIB) Makefile
 	rm -f $@
