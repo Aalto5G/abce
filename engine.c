@@ -1641,11 +1641,20 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       f = fopen(abce_mba_str(mbpath->u.area), abce_mba_str(mbmode->u.area));
       if (f == NULL)
       {
-        abce->err.code = ABCE_E_FILE_OPEN;
-        return -ENOENT;
+        if (abce_cpush_nil(abce) != 0)
+        {
+          abce->err.code = ABCE_E_STACK_OVERFLOW;
+          abce->err.mb.typ = ABCE_T_N;
+          return -EOVERFLOW;
+        }
+        abce_npoppushc(abce, 2);
+        abce_cpop(abce);
+        break;
       }
       if (abce_mb_cpush_create_ios(abce, f) == NULL)
       {
+        abce->err.code = ABCE_E_NO_MEM;
+        abce->err.mb.typ = ABCE_T_N;
         return -ENOMEM;
       }
       abce_npoppushc(abce, 2);
