@@ -2,9 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <libgen.h>
 #include "amyplanyy.h"
 #include "amyplanyyutils.h"
+#ifdef DIRPARSE
+#include <libgen.h>
+#endif
 
 typedef void *yyscan_t;
 extern int amyplanyyparse(yyscan_t scanner, struct amyplanyy *amyplanyy);
@@ -209,6 +211,7 @@ void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int requ
   fclose(amyplanyyfile);
 }
 
+#ifdef DIRPARSE
 void amyplanyydirparse(
   const char *argv0, const char *fname, struct amyplanyy *amyplanyy, int require)
 {
@@ -220,3 +223,4 @@ void amyplanyydirparse(
   free(copy);
   amyplanyynameparse(pathbuf, amyplanyy, require);
 }
+#endif

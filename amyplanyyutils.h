@@ -1,6 +1,7 @@
 #ifndef _AMYPLAN_YYUTILS_H_
 #define _AMYPLAN_YYUTILS_H_
 
+#undef DIRPARSE
 #include <stdio.h>
 #include <stdint.h>
 #include "amyplanyy.h"
@@ -16,8 +17,10 @@ void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyp
 
 void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int require);
 
+#ifdef DIRPARSE
 void amyplanyydirparse(
   const char *argv0, const char *fname, struct amyplanyy *amyplanyy, int require);
+#endif
 
 struct amyplan_escaped_string amyplanyy_escape_string(char *orig, char quote);
 
