@@ -1414,6 +1414,13 @@ const char *abce_err_to_str(enum abce_errcode code)
   case ABCE_E_LUA_ERR: return "Lua interface error";
   case ABCE_E_TREE_ITER_NOT_STR_OR_NUL:
     return "Tree iterator not string or nil";
+  case ABCE_E_INVALID_MODE: return "Invalid mode";
+  case ABCE_E_FILE_OPEN: return "File open error";
+  case ABCE_E_NEGATIVE: return "Negative";
+  case ABCE_E_FILE_IS_CLOSED: return "File is closed";
+  case ABCE_E_INVALID_WHENCE: return "Invalid whence";
+  case ABCE_E_EXPECT_CHAR: return "Expect character";
+  case ABCE_E_NONJSON_TYPE: return "Non-JSON type";
   case ABCE_E_LAST: abort();
   default: return "Unknown error";
   }
