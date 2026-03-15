@@ -70,6 +70,7 @@ enum abce_errcode {
   ABCE_E_EXPECT_CHAR = 65, // value: mb
   ABCE_E_NONJSON_TYPE = 66,
   ABCE_E_NUMBER_OVERFLOW = 67,
+  ABCE_E_JSON_PARSE_ERROR = 68,
   ABCE_E_LAST = 0x7FFFFFFF, // unused
 };
 

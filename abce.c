@@ -1421,6 +1421,7 @@ const char *abce_err_to_str(enum abce_errcode code)
   case ABCE_E_INVALID_WHENCE: return "Invalid whence";
   case ABCE_E_EXPECT_CHAR: return "Expect character";
   case ABCE_E_NONJSON_TYPE: return "Non-JSON type";
+  case ABCE_E_JSON_PARSE_ERROR: return "JSON parse error";
   case ABCE_E_LAST: abort();
   default: return "Unknown error";
   }
@@ -1955,6 +1956,9 @@ void abce_opcode_dump(uint16_t opcode)
       break;
     case ABCE_OPCODE_JSON_DECODE:
       printf("@jsondec\n");
+      break;
+    case ABCE_OPCODE_JSON_DECODE_TEST:
+      printf("@jsontest\n");
       break;
     case ABCE_OPCODE_PUSH_NEW_ARRAY:
       printf("creating new array\n");

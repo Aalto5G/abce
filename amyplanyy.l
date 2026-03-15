@@ -93,6 +93,7 @@ struct amyplan_csnippet luaSnippet = {
 @fwrite   return FWRITE;
 @jsonenc  return JSONENC;
 @jsondec  return JSONDEC;
+@jsontest return JSONTEST;
 
 @         return AT;
 @type     return TYPE;

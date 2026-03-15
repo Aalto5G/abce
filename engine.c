@@ -2288,6 +2288,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       break;
     }
     case ABCE_OPCODE_JSON_DECODE:
+    case ABCE_OPCODE_JSON_DECODE_TEST:
     {
       int ret;
       struct abce_mb *mbstr;
@@ -2301,6 +2302,37 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETMBSTRPTR(&mbstr, -1);
       abce_pullcaj_init(&ctx);
       abce_pullcaj_set_buf(&ctx, abce_mba_str(mbstr->u.area), mbstr->u.area->u.str.size, 1);
+      if (ins == ABCE_OPCODE_JSON_DECODE_TEST)
+      {
+        while ((ret = abce_pullcaj_get_event(&ctx, &ev)) > 0)
+        {
+          switch (ev.ev) { // ev.key, ev.keysz
+            case ABCE_CAJ_EV_START_DICT:
+            case ABCE_CAJ_EV_START_ARRAY:
+              if (!pushed)
+              {
+                pushed = 1;
+              }
+              pushedc++;
+              break;
+            case ABCE_CAJ_EV_END_DICT:
+            case ABCE_CAJ_EV_END_ARRAY:
+              pushedc--;
+              break;
+            case ABCE_CAJ_EV_NULL:
+            case ABCE_CAJ_EV_STR:
+            case ABCE_CAJ_EV_NUM:
+            case ABCE_CAJ_EV_BOOL:
+              if (!pushed)
+              {
+                pushed = 1;
+              }
+              break;
+          }
+        }
+        abce_npoppushbool(abce, 1, ret == 0 && pushed && pushedc == 0);
+        break;
+      }
       while ((ret = abce_pullcaj_get_event(&ctx, &ev)) > 0)
       {
         switch (ev.ev) { // ev.key, ev.keysz
@@ -2607,6 +2639,15 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       if (pushedc != 1)
       {
+        abce->err.code = ABCE_E_JSON_PARSE_ERROR;
+        abce_mb_errreplace_noinline(abce, mbstr);
+        return -EINVAL;
+      }
+      if (ret != 0)
+      {
+        abce->err.code = ABCE_E_JSON_PARSE_ERROR;
+        abce_mb_errreplace_noinline(abce, mbstr);
+        abce_cpop(abce);
         return -EINVAL;
       }
       abce_npoppushc(abce, 1);
