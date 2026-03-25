@@ -1,7 +1,7 @@
 #ifndef _ABCE_RBTREE_H_
 #define _ABCE_RBTREE_H_
 
-#include <errno.h>
+#include "abce_errno.h"
 
 #ifdef __cplusplus
 extern "C" {

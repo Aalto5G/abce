@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include "abce_errno.h"
 #include <ctype.h>
 #include "abce.h"
 #include "amyplanlocvarctx.h"

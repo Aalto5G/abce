@@ -2,7 +2,7 @@
 #include "safemode.h"
 #include "abcedatatypes.h"
 #include "abce_err.h"
-#include <errno.h>
+#include "abce_errno.h"
 
 int noio_restrict_fn(void **pbaton, uint16_t ins)
 {

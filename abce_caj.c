@@ -1,7 +1,7 @@
 #include "abce_caj.h"
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
+#include "abce_errno.h"
 #include <ctype.h>
 #include <math.h>
 #include <string.h>

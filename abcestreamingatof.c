@@ -1,5 +1,5 @@
 #include <limits.h>
-#include <errno.h>
+#include "abce_errno.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
