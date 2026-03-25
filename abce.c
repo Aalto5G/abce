@@ -5,6 +5,8 @@
 #include <sys/mman.h>
 #include "abce_caj_out.h"
 
+#if ABCE_NO_MMAP
+#else
 static inline size_t abce_topages(size_t limit)
 {
   long pagesz = sysconf(_SC_PAGE_SIZE);
@@ -17,11 +19,12 @@ static inline size_t abce_topages(size_t limit)
   actlimit = pages * pagesz;
   return actlimit;
 }
+#endif
 
 void *abce_do_mmap_madvise(size_t bytes, int shared)
 {
 #if ABCE_NO_MMAP
-  bytes = abce_topages(bytes);
+  //bytes = abce_topages(bytes);
   return malloc(bytes);
 #else
   void *ptr;

@@ -38,6 +38,7 @@ static const uint8_t abce_lookup2[256] = {
 0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
 };
 
+#if 0 // abce_do_mmap_madvise does this already
 static inline size_t abce_jm_topages(size_t limit)
 {
   long pagesz = sysconf(_SC_PAGE_SIZE);
@@ -50,6 +51,7 @@ static inline size_t abce_jm_topages(size_t limit)
   actlimit = pages * pagesz;
   return actlimit;
 }
+#endif
 
 void *abce_jmrealloc(void *oldptr, size_t oldsz, size_t newsz)
 {
@@ -73,7 +75,7 @@ void *abce_jmalloc(size_t sz)
   {
     if (unlikely(sz > 128*1024))
     {
-      ret = abce_do_mmap_madvise(abce_jm_topages(sz), 1);
+      ret = abce_do_mmap_madvise(sz, 1);
       //ret = mmap(NULL, abce_jm_topages(sz), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
       if (ret == MAP_FAILED || ret == NULL)
       {
@@ -158,7 +160,7 @@ void abce_jmfree(void *ptr, size_t sz)
   {
     if (unlikely(sz > 1048576))
     {
-      abce_do_munmap(ptr, abce_jm_topages(sz));
+      abce_do_munmap(ptr, sz);
       return;
     }
     lookupval = abce_lookup2[(sz-1)/4096];
