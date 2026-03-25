@@ -3,6 +3,9 @@
 
 #undef DIRPARSE
 #include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #include "amyplanyy.h"
 
@@ -10,6 +13,17 @@
 extern "C" {
 #endif
 
+static inline char *abce_strdup(const char *x)
+{
+  size_t len = strlen(x);
+  char *res = malloc(len+1);
+  if (res == NULL)
+  {
+    return NULL;
+  }
+  memcpy(res, x, len+1);
+  return res;
+}
 
 void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy);
 

@@ -216,7 +216,7 @@ void amyplanyydirparse(
   const char *argv0, const char *fname, struct amyplanyy *amyplanyy, int require)
 {
   const char *dir;
-  char *copy = strdup(argv0);
+  char *copy = abce_strdup(argv0);
   char pathbuf[PATH_MAX];
   dir = dirname(copy); // NB: not for multi-threaded operation!
   snprintf(pathbuf, sizeof(pathbuf), "%s/%s", dir, fname);

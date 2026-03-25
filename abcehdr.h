@@ -4,13 +4,13 @@
 #include <stdint.h>
 #include <string.h>
 
-#if NO_NETINET
+#if ABCE_NO_NETINET
 #else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #endif
 
-#if NO_NETINET
+#if ABCE_NO_NETINET
 static inline uint32_t abce_htonl(uint32_t h)
 {
   char buf[4];

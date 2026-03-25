@@ -200,16 +200,16 @@ struct amyplan_csnippet luaSnippet = {
 
 
 [$][A-Za-z0-9_]+ {
-  yylval->s = strdup(yytext+1);
+  yylval->s = abce_strdup(yytext+1);
   return VARREF_LITERAL;
 }
 [$][(][A-Za-z0-9_]+[)] {
-  yylval->s = strdup(yytext+2);
+  yylval->s = abce_strdup(yytext+2);
   yylval->s[strlen(yylval->s)-1] = '\0';
   return VARREF_LITERAL;
 }
 [$][{][A-Za-z0-9_]+[}] {
-  yylval->s = strdup(yytext+2);
+  yylval->s = abce_strdup(yytext+2);
   yylval->s[strlen(yylval->s)-1] = '\0';
   return VARREF_LITERAL;
 }

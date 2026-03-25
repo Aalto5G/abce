@@ -1,11 +1,10 @@
 The following UNIX headers are required:
 
-netinet/in.h: ntohl, htonl, ntohs, htons
-libgen.h: dirname for amyplanyydirparse
+netinet/in.h: ntohl, htonl, ntohs, htons (unless ABCE_NO_NETINET)
+libgen.h: dirname for amyplanyydirparse (if DIRPARSE defined)
 errno.h: standard errno constants in POSIX
-string.h: strdup
-sys/mman.h: mmap, munmap, potentially madvise
-unistd.h: sysconf of _SC_PAGE_SIZE
+sys/mman.h: mmap, munmap, potentially madvise (unless ABCE_NO_MMAP)
+unistd.h: sysconf of _SC_PAGE_SIZE (unless ABCE_NO_MMAP)
 
 Also, GCC's __builtin_expect is required.
 
