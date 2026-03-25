@@ -32,6 +32,7 @@ void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy)
   }
 }
 
+#ifdef MEMPARSE
 void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyplanyy)
 {
   FILE *myfile;
@@ -48,6 +49,7 @@ void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyp
     exit(1);
   }
 }
+#endif
 
 static void *memdup(const void *mem, size_t sz)
 {

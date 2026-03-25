@@ -27,7 +27,9 @@ static inline char *abce_strdup(const char *x)
 
 void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy);
 
+#ifdef MEMPARSE
 void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyplanyy);
+#endif
 
 void amyplanyynameparse(const char *fname, struct amyplanyy *amyplanyy, int require);
 
