@@ -36,7 +36,7 @@ void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy)
 void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyplanyy)
 {
   FILE *myfile;
-  myfile = fmemopen(filedata, filesize, "r");
+  myfile = fmemopenwrap(filedata, filesize, "r");
   if (myfile == NULL)
   {
     fprintf(stderr, "can't open memory file\n");

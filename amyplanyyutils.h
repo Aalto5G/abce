@@ -29,11 +29,21 @@ void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy);
 
 #ifdef _POSIX_C_SOURCE
 #if _POSIX_C_SOURCE < 200809L
-static inline FILE *fmemopen(void *buf, size_t size, const char *mode)
+static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
 {
   return NULL;
 }
+#else
+static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
+{
+  return fmemopen(buf, size, mode);
+}
 #endif
+#else
+static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
+{
+  return fmemopen(buf, size, mode);
+}
 #endif
 
 #ifdef MEMPARSE
