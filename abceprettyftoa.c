@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include <string.h>
+#include <stddef.h>
 
 void abce_pretty_ftoa_fix_exponent(char *buf)
 {
@@ -58,7 +59,7 @@ static void abce_ftoa_iter(char *buf, size_t bufsiz, int digits, double d,
 		"%.1g", "%.2g", "%.3g", "%.4g", "%.5g", "%.6g", "%.7g",
 		"%.8g", "%.9g", "%.10g", "%.11g", "%.12g", "%.13g",
 		"%.14g", "%.15g", "%.16g", "%.17g"};
-	ssize_t sbufsiz;
+	ptrdiff_t sbufsiz;
 	const char *fmt;
 	size_t len;
 	int is_expo;
@@ -74,7 +75,7 @@ static void abce_ftoa_iter(char *buf, size_t bufsiz, int digits, double d,
 	{
 		abort();
 	}
-	sbufsiz = (ssize_t)bufsiz;
+	sbufsiz = (ptrdiff_t)bufsiz;
 	if (sbufsiz < 25)
 	{
 		abort();
@@ -124,7 +125,7 @@ void abce_pretty_ftoa(char *buf, size_t bufsiz, double d)
 	char hibound[25];
 	size_t hilen;
 	int hi_is_expo;
-	ssize_t sbufsiz;
+	ptrdiff_t sbufsiz;
 	char hinoexpo[25];
 	char noexpo[25];
 	char curbuf[25];
@@ -139,7 +140,7 @@ void abce_pretty_ftoa(char *buf, size_t bufsiz, double d)
 	{
 		abort();
 	}
-	sbufsiz = (ssize_t)bufsiz;
+	sbufsiz = (ptrdiff_t)bufsiz;
 	if (sbufsiz < 25)
 	{
 		abort();

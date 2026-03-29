@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stddef.h>
 
 enum abce_streaming_atof_mode {
 	STREAMING_ATOF_MODE_PERIOD_OR_EXPONENT_CHAR,
@@ -58,6 +59,6 @@ static inline int abce_streaming_atof_is_error(struct abce_streaming_atof_ctx *c
 
 double abce_streaming_atof_end(struct abce_streaming_atof_ctx *ctx);
 
-ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char *data, size_t len);
+ptrdiff_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char *data, size_t len);
 
 #endif

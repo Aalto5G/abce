@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include <stddef.h>
 
 void abce_caj_init(struct abce_caj_ctx *caj, struct abce_caj_handler *handler)
 {
@@ -354,8 +355,8 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 {
 	const unsigned char *data = (const unsigned char*)vdata;
 	const char *cdata = (const char*)vdata;
-	ssize_t sz = (ssize_t)usz;
-	ssize_t i;
+	ptrdiff_t sz = (ptrdiff_t)usz;
+	ptrdiff_t i;
 	int ret;
 	if (sz < 0 || (size_t)sz != usz)
 	{
@@ -1036,8 +1037,8 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 		if (caj->mode == ABCE_CAJ_MODE_NUMBER)
 		{
 			size_t tofeed;
-			ssize_t szret;
-			ssize_t j;
+			ptrdiff_t szret;
+			ptrdiff_t j;
 			tofeed = (size_t)(sz - i);
 			szret = abce_streaming_atof_feed(&caj->streamingatof, &cdata[i], tofeed);
 			if (szret < 0)
@@ -1150,7 +1151,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 
 int abce_pullcaj_set_buf(struct abce_pullcaj_ctx *pc, const void *vdata, size_t usz, int eof)
 {
-	ssize_t sz = (ssize_t)usz;
+	ptrdiff_t sz = (ptrdiff_t)usz;
 	if (vdata == NULL && usz > 0)
 	{
 		return -EFAULT;
@@ -1748,26 +1749,26 @@ state8:
 		if (caj->mode == ABCE_CAJ_MODE_NUMBER)
 		{
 			size_t tofeed;
-			ssize_t szret;
-			ssize_t j;
+			ptrdiff_t szret;
+			ptrdiff_t j;
 			tofeed = (size_t)(caj->usz - caj->i);
 			szret = abce_streaming_atof_feed(&caj->streamingatof, &cdata[caj->i], tofeed);
 			if (szret < 0)
 			{
 				return -EINVAL;
 			}
-			if (szret > (ssize_t)(caj->usz - caj->i))
+			if (szret > (ptrdiff_t)(caj->usz - caj->i))
 			{
 				abort();
 			}
-			for (j = (ssize_t)caj->i; j < (ssize_t)caj->i + szret; j++)
+			for (j = (ptrdiff_t)caj->i; j < (ptrdiff_t)caj->i + szret; j++)
 			{
 				if (cdata[j] == '.' || cdata[j] == 'e')
 				{
 					caj->is_integer = 0;
 				}
 			}
-			if (szret < (ssize_t)(caj->usz - caj->i))
+			if (szret < (ptrdiff_t)(caj->usz - caj->i))
 			{
 				caj->mode = ABCE_CAJ_MODE_COMMA;
 				if (abce_streaming_atof_is_error(&caj->streamingatof))

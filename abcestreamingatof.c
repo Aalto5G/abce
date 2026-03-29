@@ -136,7 +136,7 @@ double abce_streaming_atof_end(struct abce_streaming_atof_ctx *ctx)
 	return abce_streaming_atof_ctx_get_number(ctx);
 }
 
-ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char *data, size_t len)
+ptrdiff_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char *data, size_t len)
 {
 	size_t i;
 	if (len > SSIZE_MAX)
@@ -188,7 +188,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 		else if (ctx->mode == STREAMING_ATOF_MODE_PERIOD_OR_EXPONENT_CHAR && !isdigit((unsigned char)data[i]))
 		{
 			ctx->mode = STREAMING_ATOF_MODE_DONE;
-			return (ssize_t)i;
+			return (ptrdiff_t)i;
 		}
 		if (ctx->mode == STREAMING_ATOF_MODE_EXPONENT_CHAR)
 		{
@@ -203,7 +203,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 				continue;
 			}
 			ctx->mode = STREAMING_ATOF_MODE_ERROR;
-			return (ssize_t)i;
+			return (ptrdiff_t)i;
 		}
 		if ((ctx->mode == STREAMING_ATOF_MODE_MANTISSA || ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FIRST))
 		{
@@ -222,7 +222,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 			if (ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FIRST)
 			{
 				ctx->mode = STREAMING_ATOF_MODE_ERROR;
-				return (ssize_t)i;
+				return (ptrdiff_t)i;
 			}
 			if (data[i] == 'e' || data[i] == 'E')
 			{
@@ -235,7 +235,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 				continue;
 			}
 			ctx->mode = STREAMING_ATOF_MODE_DONE;
-			return (ssize_t)i;
+			return (ptrdiff_t)i;
 		}
 		if (ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FRAC || ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FRAC_FIRST)
 		{
@@ -249,7 +249,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 			if (ctx->mode == STREAMING_ATOF_MODE_MANTISSA_FRAC_FIRST && ctx->strict_json)
 			{
 				ctx->mode = STREAMING_ATOF_MODE_ERROR;
-				return (ssize_t)i;
+				return (ptrdiff_t)i;
 			}
 			if (data[i] == 'e' || data[i] == 'E')
 			{
@@ -262,7 +262,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 				continue;
 			}
 			ctx->mode = STREAMING_ATOF_MODE_DONE;
-			return (ssize_t)i;
+			return (ptrdiff_t)i;
 		}
 		if (ctx->mode == STREAMING_ATOF_MODE_EXPONENT_SIGN)
 		{
@@ -291,7 +291,7 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 				continue;
 			}
 			ctx->mode = STREAMING_ATOF_MODE_ERROR;
-			return (ssize_t)i;
+			return (ptrdiff_t)i;
 		}
 		if (ctx->mode == STREAMING_ATOF_MODE_EXPONENT_FIRST || ctx->mode == STREAMING_ATOF_MODE_EXPONENT)
 		{
@@ -310,13 +310,13 @@ ssize_t abce_streaming_atof_feed(struct abce_streaming_atof_ctx *ctx, const char
 			if (ctx->mode == STREAMING_ATOF_MODE_EXPONENT_FIRST)
 			{
 				ctx->mode = STREAMING_ATOF_MODE_ERROR;
-				return (ssize_t)i;
+				return (ptrdiff_t)i;
 			}
 			ctx->mode = STREAMING_ATOF_MODE_DONE;
-			return (ssize_t)i;
+			return (ptrdiff_t)i;
 		}
 		ctx->mode = STREAMING_ATOF_MODE_ERROR;
-		return (ssize_t)i;
+		return (ptrdiff_t)i;
 	}
-	return (ssize_t)len;
+	return (ptrdiff_t)len;
 }

@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stddef.h>
 #include <time.h>
 #include <sys/time.h>
 #include "abcerbtree.h"
@@ -1679,7 +1680,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mbpb;
       struct abce_mb *mbdelim;
       struct abce_mb *mbmaxbytes;
-      ssize_t maxbytes;
+      ptrdiff_t maxbytes;
       double off;
       size_t bytes_read = 0;
       char delim = '\0';
@@ -1762,7 +1763,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       if (hasdelim && maxbytes == -1)
       {
         size_t n = 0;
-        ssize_t bytes_read;
+        ptrdiff_t bytes_read;
         char *lineptr = NULL;
         bytes_read = getdelim(&lineptr, &n, delim, mbios->u.area->u.ios.f);
         if (bytes_read > 0 && bytes_read + (size_t)off > mbpb->u.area->u.pb.size)
