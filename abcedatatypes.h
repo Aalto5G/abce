@@ -73,17 +73,18 @@ struct abce_mb_area_flex_scope {
 union abce_mb_area_flex {
   struct abce_mb_area_flex_scope sc;
 };
+union abce_mb_area_union {
+  struct abce_mb_array ar;
+  struct abce_mb_ios ios;
+  struct abce_mb_scope sc;
+  struct abce_mb_tree tree;
+  struct abce_mb_string str;
+  struct abce_mb_pb pb;
+};
 struct abce_mb_area {
   size_t refcnt;
   size_t locidx;
-  union {
-    struct abce_mb_array ar;
-    struct abce_mb_ios ios;
-    struct abce_mb_scope sc;
-    struct abce_mb_tree tree;
-    struct abce_mb_string str;
-    struct abce_mb_pb pb;
-  } u;
+  union abce_mb_area_union u;
   union abce_mb_area_flex uar[ABCE_FLEX];
 };
 static inline char *abce_mba_str(struct abce_mb_area *ar)
@@ -111,12 +112,13 @@ enum abce_type {
   ABCE_T_IP = 43,
   ABCE_T_N = 44,
 };
+union abce_mb_union {
+  double d;
+  struct abce_mb_area *area;
+};
 struct abce_mb {
   enum abce_type typ;
-  union {
-    double d;
-    struct abce_mb_area *area;
-  } u;
+  union abce_mb_union u;
 };
 
 #define ABCE_MB_EMPTY {.typ = 0}

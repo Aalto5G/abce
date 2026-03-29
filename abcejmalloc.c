@@ -13,11 +13,13 @@
 #define CONTAINER_OF(ptr, type, member) \
   ((type*)(((char*)ptr) - (((char*)&(((type*)0)->member)) - ((char*)0))))
 
+union jmalloc_union {
+  //char block[0];
+  struct jmalloc_block *next;
+};
+
 struct jmalloc_block {
-  union {
-    //char block[0];
-    struct jmalloc_block *next;
-  } u;
+  union jmalloc_union u;
 };
 
 static size_t abce_arenaremain;

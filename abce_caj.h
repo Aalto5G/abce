@@ -107,23 +107,29 @@ enum abce_pullcaj_event {
 	ABCE_CAJ_EV_BOOL, // union field b
 };
 
+struct abce_pullcaj_b {
+	int b;
+};
+struct abce_pullcaj_num {
+	double d;
+	int is_integer;
+};
+struct abce_pullcaj_str {
+	const char *val;
+	size_t valsz;
+};
+
+union abce_pullcaj_union {
+	struct abce_pullcaj_b b;
+	struct abce_pullcaj_num num;
+	struct abce_pullcaj_str str;
+};
+
 struct abce_pullcaj_event_info {
 	enum abce_pullcaj_event ev;
 	const char *key;
 	size_t keysz;
-	union {
-		struct {
-			int b;
-		} b;
-		struct {
-			double d;
-			int is_integer;
-		} num;
-		struct {
-			const char *val;
-			size_t valsz;
-		} str;
-	} u;
+	union abce_pullcaj_union u;
 };
 
 void abce_pullcaj_init(struct abce_pullcaj_ctx *pc);
