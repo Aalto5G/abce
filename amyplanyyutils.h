@@ -27,6 +27,15 @@ static inline char *abce_strdup(const char *x)
 
 void amyplanyydoparse(FILE *filein, struct amyplanyy *amyplanyy);
 
+#ifdef _POSIX_C_SOURCE
+#if _POSIX_C_SOURCE < 200809L
+static inline FILE *fmemopen(void *buf, size_t size, const char *mode)
+{
+  return NULL;
+}
+#endif
+#endif
+
 #ifdef MEMPARSE
 void amyplanyydomemparse(char *filedata, size_t filesize, struct amyplanyy *amyplanyy);
 #endif
