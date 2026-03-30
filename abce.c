@@ -1,9 +1,9 @@
 #include "abce.h"
 #include "abcetrees.h"
-#include <unistd.h>
-#include <fcntl.h>
 #if ABCE_NO_MMAP
 #else
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/mman.h>
 #endif
 #include "abce_caj_out.h"

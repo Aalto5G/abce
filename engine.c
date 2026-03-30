@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <time.h>
