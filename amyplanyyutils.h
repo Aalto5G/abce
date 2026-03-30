@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#include <unistd.h>
+#endif
 #include "amyplanyy.h"
 
 #ifdef __cplusplus
@@ -40,10 +43,24 @@ static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
 }
 #endif
 #else
+#ifdef _POSIX_VERSION
+#if _POSIX_VERSION < 200809L
+static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
+{
+  return NULL;
+}
+#else
 static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
 {
   return fmemopen(buf, size, mode);
 }
+#endif
+#else
+static inline FILE *fmemopenwrap(void *buf, size_t size, const char *mode)
+{
+  return NULL;
+}
+#endif
 #endif
 
 #ifdef MEMPARSE
