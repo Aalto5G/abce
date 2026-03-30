@@ -7,7 +7,9 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <time.h>
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
 #include <sys/time.h>
+#endif
 #include "abcerbtree.h"
 #include "abcemurmur.h"
 #include "abcecontainerof.h"
@@ -1835,7 +1837,12 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
     {
       int64_t time64;
       struct timeval tv;
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
       gettimeofday(&tv, NULL);
+#else
+      tv.tv_sec = time(NULL);
+      tv.tv_usec = 0;
+#endif
       time64 = ((int64_t)tv.tv_sec)*1000LL*1000LL + tv.tv_usec;
       if (abce_push_double(abce, time64) != 0)
       {
@@ -1949,6 +1956,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       if (ins == ABCE_OPCODE_GMTIME)
       {
+#if _POSIX_THREAD_SAFE_FUNCTIONS
         if (gmtime_r(&tv.tv_sec, &result) == NULL)
         {
           abce->err.code = ABCE_E_NUMBER_OVERFLOW;
@@ -1956,9 +1964,22 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce->err.mb.u.d = time64;
           return -EOVERFLOW;
         }
+#else
+        struct tm *tmptr;
+        tmptr = gmtime(&tv.tv_sec);
+        if (tmptr == NULL)
+        {
+          abce->err.code = ABCE_E_NUMBER_OVERFLOW;
+          abce->err.mb.typ = ABCE_T_D;
+          abce->err.mb.u.d = time64;
+          return -EOVERFLOW;
+        }
+        result = *tmptr;
+#endif
       }
       else
       {
+#if _POSIX_THREAD_SAFE_FUNCTIONS
         if (localtime_r(&tv.tv_sec, &result) == NULL)
         {
           abce->err.code = ABCE_E_NUMBER_OVERFLOW;
@@ -1966,6 +1987,18 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
           abce->err.mb.u.d = time64;
           return -EOVERFLOW;
         }
+#else
+        struct tm *tmptr;
+        tmptr = localtime(&tv.tv_sec);
+        if (tmptr == NULL)
+        {
+          abce->err.code = ABCE_E_NUMBER_OVERFLOW;
+          abce->err.mb.typ = ABCE_T_D;
+          abce->err.mb.u.d = time64;
+          return -EOVERFLOW;
+        }
+        result = *tmptr;
+#endif
       }
       mbt = abce_mb_cpush_create_tree(abce);
       if (mbt == NULL)
