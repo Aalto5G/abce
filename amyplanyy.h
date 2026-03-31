@@ -75,7 +75,13 @@ static inline void amyplanyy_init(struct amyplanyy *yy)
 
 static inline size_t amyplan_symbol_add(struct amyplanyy *amyplanyy, const char *symbol, size_t symlen)
 {
-  return abce_cache_add_str(&amyplanyy->abce, symbol, symlen);
+  int64_t res;
+  res = abce_cache_add_str(&amyplanyy->abce, symbol, symlen);
+  if (res < 0)
+  {
+    return (size_t)-1;
+  }
+  return (size_t)res;
 }
 static inline size_t amyplanyy_add_fun_sym(struct amyplanyy *amyplanyy, const char *symbol, int maybe, size_t loc)
 {

@@ -221,7 +221,7 @@ static inline int64_t abce_cache_add(struct abce *abce, const struct abce_mb *mb
   {
     return -EOVERFLOW;
   }
-  res = abce->cachesz;
+  res = (int64_t)abce->cachesz;
   abce->cachebase[abce->cachesz++] = abce_mb_refup(abce, mb);
   return res;
 }
@@ -257,7 +257,7 @@ static inline int abce_calc_caddr(size_t *paddr, struct abce *abce, int64_t idx)
   int64_t addr;
   if (idx < 0)
   {
-    addr = abce->csp + idx;
+    addr = ((int64_t)abce->csp) + idx;
     if (abce_unlikely((uint64_t)addr >= abce->csp || addr < 0))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
@@ -277,17 +277,17 @@ static inline int abce_calc_caddr(size_t *paddr, struct abce *abce, int64_t idx)
       return -EOVERFLOW;
     }
   }
-  *paddr = addr;
+  *paddr = (size_t)addr;
   return 0;
 }
 
 static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
 {
-  size_t addr;
+  int64_t addr;
   if (idx < 0)
   {
-    addr = abce->sp + idx;
-    if (abce_unlikely(addr >= abce->sp || addr < abce->bp))
+    addr = ((int64_t)abce->sp) + idx;
+    if (abce_unlikely(addr >= (int64_t)abce->sp || addr < (int64_t)abce->bp))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
       abce->err.mb.typ = ABCE_T_D;
@@ -297,8 +297,8 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
   }
   else
   {
-    addr = abce->bp + idx;
-    if (abce_unlikely(addr >= abce->sp || addr < abce->bp))
+    addr = ((int64_t)abce->bp) + idx;
+    if (abce_unlikely(addr >= (int64_t)abce->sp || addr < (int64_t)abce->bp))
     {
       abce->err.code = ABCE_E_STACK_IDX_OOB;
       abce->err.mb.typ = ABCE_T_D;
@@ -306,7 +306,7 @@ static inline int abce_calc_addr(size_t *paddr, struct abce *abce, int64_t idx)
       return -EOVERFLOW;
     }
   }
-  *paddr = addr;
+  *paddr = (size_t)addr;
   return 0;
 }
 
@@ -1286,7 +1286,7 @@ enum {
 static inline int
 abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
-  const size_t guard = ABCE_GUARD;
+  const int64_t guard = ABCE_GUARD;
   if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip < abce->bytecodesz) ||
         (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip < -(int64_t)guard))))
   {
@@ -1300,7 +1300,7 @@ abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz
     *b = abce->bytecode[abce->ip++];
     return 0;
   }
-  *b = addcode[abce->ip+guard+addsz];
+  *b = addcode[abce->ip+guard+(int64_t)addsz];
   abce->ip++;
   return 0;
 }

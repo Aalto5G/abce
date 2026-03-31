@@ -85,7 +85,7 @@ void *abce_jmalloc(size_t sz)
     }
     lookupval = abce_lookup2[(sz-1)/4096];
     ls = &abce_blocks2[lookupval];
-    sz = 1<<(12+lookupval);
+    sz = 1U<<(12+lookupval);
   }
   else
   {
@@ -123,7 +123,7 @@ void *abce_jmalloc(size_t sz)
       abort();
     }
     ls = &abce_blocks[lookupval];
-    sz = 1<<(4+lookupval);
+    sz = 1U<<(4+lookupval);
   }
   if (unlikely(!*ls))
   {

@@ -80,7 +80,7 @@ int main(int argc, char **argv, char **envp)
     char *res;
     res = strchr(env, '=');
     if (res != NULL) {
-      mbkey = abce_mb_cpush_create_string(&amyplanyy.abce, env, res - env);
+      mbkey = abce_mb_cpush_create_string(&amyplanyy.abce, env, (size_t)(res - env));
       mbval = abce_mb_cpush_create_string(&amyplanyy.abce, res+1, strlen(res+1));
       if (abce_tree_set_str(&amyplanyy.abce, mbt, mbkey, mbval) != 0)
       {

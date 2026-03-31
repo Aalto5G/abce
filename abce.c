@@ -18,8 +18,8 @@ static inline size_t abce_topages(size_t limit)
   {
     abort();
   }
-  pages = (limit + (pagesz-1)) / pagesz;
-  actlimit = pages * pagesz;
+  pages = (limit + (size_t)(pagesz-1)) / (size_t)pagesz;
+  actlimit = pages * (size_t)pagesz;
   return actlimit;
 }
 #endif

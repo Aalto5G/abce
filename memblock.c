@@ -247,7 +247,7 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   n = ABCE_RB_TREE_NOCMP_FIND(&abce->strcache[hashloc], abce_str_cache_cmp_asymlen, NULL, &key);
   if (n != NULL)
   {
-    return ABCE_CONTAINER_OF(n, struct abce_mb_string, node)->locidx;
+    return (int64_t)ABCE_CONTAINER_OF(n, struct abce_mb_string, node)->locidx;
   }
   if (abce->cachesz >= abce->cachecap)
   {
@@ -268,7 +268,7 @@ int64_t abce_cache_add_str(struct abce *abce, const char *str, size_t len)
   {
     abort();
   }
-  ret = mb->u.area->u.str.locidx;
+  ret = (int64_t)mb->u.area->u.str.locidx;
   abce_cpop(abce);
   return ret;
 }
@@ -310,7 +310,7 @@ void mb_to_lua(lua_State *lua, const struct abce_mb *mb)
       for (i = 0; i < mb->u.area->u.ar.size; i++)
       {
         mb_to_lua(lua, &mb->u.area->u.ar.mbs[i]);
-        lua_rawseti(lua, -2, i+1); // this pops item from stack
+        lua_rawseti(lua, -2, (int)(i+1)); // this pops item from stack
       }
       return;
     case ABCE_T_T:

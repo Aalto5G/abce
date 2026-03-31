@@ -70,7 +70,7 @@ static inline int64_t amyplan_locvarctx_break(struct amyplan_locvarctx *ctx, siz
   {
     return -ENOENT;
   }
-  return ctx->jmpaddr_break;
+  return (int64_t)ctx->jmpaddr_break;
 }
 
 static inline int64_t amyplan_locvarctx_continue(struct amyplan_locvarctx *ctx, size_t levels)
@@ -80,7 +80,7 @@ static inline int64_t amyplan_locvarctx_continue(struct amyplan_locvarctx *ctx, 
   {
     return -ENOENT;
   }
-  return ctx->jmpaddr_continue;
+  return (int64_t)ctx->jmpaddr_continue;
 }
 
 struct amyplan_locvarctx *amyplan_locvarctx_alloc(struct amyplan_locvarctx *parent,

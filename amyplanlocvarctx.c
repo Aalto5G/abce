@@ -150,7 +150,7 @@ int64_t amyplan_locvarctx_search_rec(struct amyplan_locvarctx *ctx, const char *
   n = ABCE_RB_TREE_NOCMP_FIND(&ctx->heads[hashloc], amyplan_locvar_str_cmp_asym, NULL, name);
   if (n != NULL)
   {
-    return ABCE_CONTAINER_OF(n, struct amyplan_locvar, node)->idx;
+    return (int64_t)ABCE_CONTAINER_OF(n, struct amyplan_locvar, node)->idx;
   }
   if (ctx->parent == NULL)
   {

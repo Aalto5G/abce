@@ -1001,10 +1001,10 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       mbbase = &abce->cstackbase[abce->csp-1];
       for (i = 0; i < mbbase->u.area->u.str.size/2; i++)
       {
-        uint8_t tmp = abce_mba_str(mbbase->u.area)[i];
+        uint8_t tmp = (uint8_t)abce_mba_str(mbbase->u.area)[i];
         abce_mba_str(mbbase->u.area)[i] =
           abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1];
-        abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1] = tmp;
+        abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1] = (char)tmp;
       }
       abce_npoppushc(abce, 1);
       abce_cpop(abce);
@@ -1292,7 +1292,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       memmove(&mbar->u.area->u.ar.mbs[locint],
               &mbar->u.area->u.ar.mbs[locint+1],
-	      (mbar->u.area->u.ar.size-locint)*sizeof(*mbar->u.area->u.ar.mbs));
+	      (mbar->u.area->u.ar.size-(size_t)locint)*sizeof(*mbar->u.area->u.ar.mbs));
       mbar->u.area->u.ar.size--;
       POP();
       POP();
@@ -1339,7 +1339,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       memmove(&mbar->u.area->u.ar.mbs[locint+1],
               &mbar->u.area->u.ar.mbs[locint],
-	      (mbar->u.area->u.ar.size-locint)*sizeof(*mbar->u.area->u.ar.mbs));
+	      (mbar->u.area->u.ar.size-(size_t)locint)*sizeof(*mbar->u.area->u.ar.mbs));
       mbar->u.area->u.ar.mbs[locint] = abce_mb_refup(abce, mb);
       mbar->u.area->u.ar.size++;
       POP();
@@ -2935,6 +2935,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           const size_t guard = ABCE_GUARD;
           //uint16_t ins2;
           uint8_t inshi;
+          int64_t newbp;
           //uint8_t inslo;
           int rettmp;
           double dbl;
@@ -2974,7 +2975,13 @@ calltrailer:
             break;
           }
           abce->ip = new_ip;
-          abce->bp = abce->sp - 2 - (int)(uint64_t)argcnt;
+          newbp = (int64_t)abce->sp - 2 - (int)(uint64_t)argcnt;
+          if (newbp < 0)
+          {
+            ret = -EOVERFLOW;
+            break;
+          }
+          abce->bp = (size_t)newbp;
 #if 1
           rettmp = abce_fetch_b(&inshi, abce, addcode, addsz);
           if (abce_unlikely(rettmp != 0))
