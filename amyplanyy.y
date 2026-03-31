@@ -309,7 +309,7 @@ expr NEWLINE
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL_IF_FUN);
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
-      get_abce(amyplanyy)->ip = -tmpsiz-ABCE_GUARD;
+      get_abce(amyplanyy)->ip = -(int64_t)tmpsiz-ABCE_GUARD;
       if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
       {
         size_t i;
@@ -398,7 +398,7 @@ expr NEWLINE
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_CALL_IF_FUN);
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
-      get_abce(amyplanyy)->ip = -tmpsiz-ABCE_GUARD;
+      get_abce(amyplanyy)->ip = -(int64_t)tmpsiz-ABCE_GUARD;
       if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
       {
         size_t i;
