@@ -56,11 +56,11 @@ int main(int argc, char **argv)
 #if 0
   for (i = 0; i < 30000; i++)
   {
-    amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
+    amyplanyy.abce.ip = -(int64_t)tmpsiz-ABCE_GUARD;
     abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz);
   }
 #endif
-  amyplanyy.abce.ip = -tmpsiz-ABCE_GUARD;
+  amyplanyy.abce.ip = -(int64_t)tmpsiz-ABCE_GUARD;
 
   printf("ret %d\n", abce_engine(&amyplanyy.abce, tmpbuf, tmpsiz));
   printf("actual err %d\n", (int)amyplanyy.abce.err.code);
