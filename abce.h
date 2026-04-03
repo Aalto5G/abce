@@ -2,6 +2,7 @@
 #define _ABCE_H_
 
 #include "abcedatatypes.h"
+#include "abcelikely.h"
 
 #ifdef __cplusplus
 extern "C" {
