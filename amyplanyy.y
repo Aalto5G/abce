@@ -9,6 +9,11 @@
 #include "amyplanlocvarctx.h"
 #include "amyplan.h"
 
+void amyplanyy_store_lineno(struct amyplanyy *amyplanyy, yyscan_t scanner)
+{
+        // nop
+}
+
 void amyplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct amyplanyy *amyplanyy, const char *str)
 {
         //fprintf(stderr, "error: %s at line %d col %d\n",str, yylloc->first_line, yylloc->first_column);
@@ -332,6 +337,7 @@ expr NEWLINE
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
       get_abce(amyplanyy)->ip = -(int64_t)tmpsiz-ABCE_GUARD;
+      amyplanyy_store_lineno(amyplanyy, scanner);
       if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
       {
         size_t i;
@@ -422,6 +428,7 @@ expr NEWLINE
       abce_add_ins_alt(tmpbuf, &tmpsiz, sizeof(tmpbuf), ABCE_OPCODE_EXIT);
 
       get_abce(amyplanyy)->ip = -(int64_t)tmpsiz-ABCE_GUARD;
+      amyplanyy_store_lineno(amyplanyy, scanner);
       if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
       {
         size_t i;
