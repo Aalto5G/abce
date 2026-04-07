@@ -351,6 +351,7 @@ expr NEWLINE
         }
         fprintf(stderr, "Additional information:\n");
         abce_mb_dump(&get_abce(amyplanyy)->err.mb);
+        abce_opcode_dump(get_abce(amyplanyy)->err.opcode);
         amyplanyyerror(scanner, amyplanyy, "error in assignment");
         YYABORT;
       }
@@ -1238,6 +1239,11 @@ varref:
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_GETSCOPE_DYN);
 
       int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $1, strlen($1));
+      if (idx < 0)
+      {
+        amyplanyyerror(scanner, amyplanyy, "out of memory");
+        YYABORT;
+      }
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
       amyplanyy_add_double(amyplanyy, idx);
       amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -1348,6 +1354,11 @@ varref:
   if (amyplanyy_do_emit(amyplanyy))
   {
     int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $2, strlen($2));
+    if (idx < 0)
+    {
+      amyplanyyerror(scanner, amyplanyy, "out of memory");
+      YYABORT;
+    }
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     amyplanyy_add_double(amyplanyy, idx);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
@@ -1692,6 +1703,11 @@ expr0_or_string:
   if (amyplanyy_do_emit(amyplanyy))
   {
     int64_t idx = abce_cache_add_str(get_abce(amyplanyy), $1.str, $1.sz);
+    if (idx < 0)
+    {
+      amyplanyyerror(scanner, amyplanyy, "out of memory");
+      YYABORT;
+    }
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     amyplanyy_add_double(amyplanyy, idx);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_FROM_CACHE);
