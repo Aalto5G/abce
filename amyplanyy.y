@@ -15,6 +15,28 @@ void amyplanyyerror(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct amyplanyy *amy
         // FIXME we need better location info!
         fprintf(stderr, "amyplan error: %s at line %d col %d\n", str, amyplanyyget_lineno(scanner), amyplanyyget_column(scanner));
 }
+void amyplanyyerrorfmt(/*YYLTYPE *yylloc,*/ yyscan_t scanner, struct amyplanyy *amyplanyy, const char *str, ...)
+{
+        va_list ap;
+        int ret;
+        char *buf;
+        va_start(ap, str);
+        ret = vsnprintf(NULL, 0, str, ap);
+        va_end(ap);
+        if (ret < 0)
+        {
+          fprintf(stderr, "amyplan error: %s at line %d col %d\n", str, amyplanyyget_lineno(scanner), amyplanyyget_column(scanner));
+          return;
+        }
+        buf = malloc((size_t)ret+1);
+        va_start(ap, str);
+        vsnprintf(buf, (size_t)ret+1, str, ap);
+        va_end(ap);
+        //fprintf(stderr, "error: %s at line %d col %d\n",str, yylloc->first_line, yylloc->first_column);
+        // FIXME we need better location info!
+        fprintf(stderr, "amyplan error: %s at line %d col %d\n", buf, amyplanyyget_lineno(scanner), amyplanyyget_column(scanner));
+        free(buf);
+}
 
 int amyplanyywrap(yyscan_t scanner)
 {
@@ -199,7 +221,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
       key = abce_mb_cpush_create_string(get_abce(amyplanyy), $3, strlen($3));
       if (key == NULL)
       {
-        fprintf(stderr, "out of memory\n");
+        amyplanyyerror(scanner, amyplanyy, "out of memory");
         YYABORT;
       }
     }
@@ -207,7 +229,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     {
       if (abce_cpush_nil(get_abce(amyplanyy)) != 0)
       {
-        fprintf(stderr, "out of memory\n");
+        amyplanyyerror(scanner, amyplanyy, "out of memory");
         YYABORT;
       }
       key = &get_abce(amyplanyy)->cstackbase[get_abce(amyplanyy)->csp-1];
@@ -217,7 +239,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     oldscope = get_abce(amyplanyy)->dynscope;
     if (abce_cpush_mb(get_abce(amyplanyy), &oldscope) != 0)
     {
-      fprintf(stderr, "out of memory\n");
+      amyplanyyerror(scanner, amyplanyy, "out of memory");
       YYABORT;
     }
     abce_mb_refdn(get_abce(amyplanyy), &get_abce(amyplanyy)->dynscope);
@@ -225,7 +247,7 @@ OPEN_PAREN maybe_parlist CLOSE_PAREN NEWLINE
     newscope = abce_mb_cpush_create_scope(get_abce(amyplanyy), ABCE_DEFAULT_SCOPE_SIZE, &oldscope, (int)$2);
     if (newscope == NULL)
     {
-      fprintf(stderr, "out of memory\n");
+      amyplanyyerror(scanner, amyplanyy, "out of memory");
       YYABORT;
     }
     get_abce(amyplanyy)->dynscope = abce_mb_refup(get_abce(amyplanyy), newscope);
@@ -313,21 +335,21 @@ expr NEWLINE
       if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
       {
         size_t i;
-        printf("Error executing bytecode for var %s\n", $1);
-        printf("error %s\n", abce_err_to_str(get_abce(amyplanyy)->err.code));
-        printf("Backtrace:\n");
+        fprintf(stderr, "Error executing bytecode for var %s\n", $1);
+        fprintf(stderr, "error %s\n", abce_err_to_str(get_abce(amyplanyy)->err.code));
+        fprintf(stderr, "Backtrace:\n");
         for (i = 0; i < get_abce(amyplanyy)->btsz; i++)
         {
           if (get_abce(amyplanyy)->btbase[i].typ == ABCE_T_S)
           {
-            printf("%s\n", abce_mba_str(get_abce(amyplanyy)->btbase[i].u.area));
+            fprintf(stderr, "%s\n", abce_mba_str(get_abce(amyplanyy)->btbase[i].u.area));
           }
           else
           {
-            printf("(-)\n");
+            fprintf(stderr, "(-)\n");
           }
         }
-        printf("Additional information:\n");
+        fprintf(stderr, "Additional information:\n");
         abce_mb_dump(&get_abce(amyplanyy)->err.mb);
         amyplanyyerror(scanner, amyplanyy, "error in assignment");
         YYABORT;
@@ -353,7 +375,7 @@ expr NEWLINE
     size_t oldloc = amyplanyy_add_fun_sym(amyplanyy, $1, 0, funloc); // FIXME move later
     if (oldloc == (size_t)-1)
     {
-      printf("Can't find old symbol function for %s\n", $1);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Can't find old symbol function for %s", $1);
       YYABORT;
     }
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FUN_HEADER);
@@ -402,21 +424,21 @@ expr NEWLINE
       if (abce_engine(get_abce(amyplanyy), tmpbuf, tmpsiz) != 0)
       {
         size_t i;
-        printf("Error executing bytecode for var %s\n", $1);
-        printf("error %s\n", abce_err_to_str(get_abce(amyplanyy)->err.code));
-        printf("Backtrace:\n");
+        fprintf(stderr, "Error executing bytecode for var %s\n", $1);
+        fprintf(stderr, "error %s\n", abce_err_to_str(get_abce(amyplanyy)->err.code));
+        fprintf(stderr, "Backtrace:\n");
         for (i = 0; i < get_abce(amyplanyy)->btsz; i++)
         {
           if (get_abce(amyplanyy)->btbase[i].typ == ABCE_T_S)
           {
-            printf("%s\n", abce_mba_str(get_abce(amyplanyy)->btbase[i].u.area));
+            fprintf(stderr, "%s\n", abce_mba_str(get_abce(amyplanyy)->btbase[i].u.area));
           }
           else
           {
-            printf("(-)\n");
+            fprintf(stderr, "(-)\n");
           }
         }
-        printf("Additional information:\n");
+        fprintf(stderr, "Additional information:\n");
         abce_mb_dump(&get_abce(amyplanyy)->err.mb);
         amyplanyyerror(scanner, amyplanyy, "error in += assignment");
         YYABORT;
@@ -472,19 +494,19 @@ locvarlines:
     int ret = amyplan_locvarctx_add(amyplanyy->ctx, $3);
     if (ret == -EEXIST)
     {
-      printf("Local variable %s exists already\n", $3);
+      fprintf(stderr ,"Local variable %s exists already\n", $3);
       amyplanyyerror(scanner, amyplanyy, "can't have two same names");
       YYABORT;
     }
     else if (ret == -ENOMEM)
     {
-      printf("Not enough memory for local variable %s\n", $3);
+      fprintf(stderr, "Not enough memory for local variable %s\n", $3);
       amyplanyyerror(scanner, amyplanyy, "not enough memory");
       YYABORT;
     }
     else if (ret != 0)
     {
-      printf("Can't create local variable %s\n", $3);
+      fprintf(stderr, "Can't create local variable %s\n", $3);
       amyplanyyerror(scanner, amyplanyy, "unknown error");
       YYABORT;
     }
@@ -518,7 +540,7 @@ statement:
     }
     else
     {
-      printf("Can remove only from dict or list\n");
+      amyplanyyerror(scanner, amyplanyy, "Can remove only from dict or list");
       YYABORT;
     }
   }
@@ -529,33 +551,33 @@ statement:
   {
     if ($1 == ABCE_OPCODE_STRGET)
     {
-      printf("Can't assign to string\n");
+      amyplanyyerror(scanner, amyplanyy, "Can't assign to string");
       YYABORT;
     }
     if ($1 == ABCE_OPCODE_LISTPOP)
     {
-      printf("Can't assign to pop query\n");
+      amyplanyyerror(scanner, amyplanyy, "Can't assign to pop query");
       YYABORT;
     }
     if ($1 == ABCE_OPCODE_DICTHAS)
     {
-      printf("Can't assign to dictionary query\n");
+      amyplanyyerror(scanner, amyplanyy, "Can't assign to dictionary query");
       YYABORT;
     }
     if ($1 == ABCE_OPCODE_SCOPE_HAS)
     {
-      printf("Can't assign to scope query\n");
+      amyplanyyerror(scanner, amyplanyy, "Can't assign to scope query");
       YYABORT;
     }
     if ($1 == ABCE_OPCODE_PUSH_FROM_CACHE)
     {
-      printf("Can't assign to immediate varref\n");
+      amyplanyyerror(scanner, amyplanyy, "Can't assign to immediate varref");
       YYABORT;
     }
     if (   $1 == ABCE_OPCODE_STRLEN || $1 == ABCE_OPCODE_LISTLEN
         || $1 == ABCE_OPCODE_DICTLEN)
     {
-      printf("Can't assign to length query (except for PB)\n");
+      amyplanyyerror(scanner, amyplanyy, "Can't assign to length query (except for PB)");
       YYABORT;
     }
     amyplanyy_add_corresponding_set(amyplanyy, $1);
@@ -605,7 +627,7 @@ statement:
     int64_t loc;
     if ((double)sz != $2 || sz == 0)
     {
-      printf("Break count not positive integer\n");
+      amyplanyyerror(scanner, amyplanyy, "Break count not positive integer");
       YYABORT;
     }
     loc = amyplan_locvarctx_break(amyplanyy->ctx, sz);
@@ -623,7 +645,7 @@ statement:
     int64_t loc;
     if ((double)sz != $2 || sz == 0)
     {
-      printf("Continue count not positive integer\n");
+      amyplanyyerror(scanner, amyplanyy, "Continue count not positive integer");
       YYABORT;
     }
     loc = amyplan_locvarctx_continue(amyplanyy->ctx, sz);
@@ -670,13 +692,13 @@ statement:
     locvarkey = amyplan_locvarctx_search_rec(amyplanyy->ctx, $2);
     if (locvarkey < 0)
     {
-      printf("var %s not found\n", $2);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $2);
       YYABORT;
     }
     locvarval = amyplan_locvarctx_search_rec(amyplanyy->ctx, $4);
     if (locvarval < 0)
     {
-      printf("var %s not found\n", $4);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $4);
       YYABORT;
     }
 
@@ -732,7 +754,7 @@ statement:
     ctx->sz = 3;
     if (ctx == NULL)
     {
-      printf("Out of memory\n");
+      amyplanyyerror(scanner, amyplanyy, "Out of memory");
       YYABORT;
     }
     amyplanyy->ctx = ctx;
@@ -790,7 +812,7 @@ statement:
       amyplan_locvarctx_alloc(amyplanyy->ctx, 0, get_abce(amyplanyy)->bytecodesz, $<d>8);
     if (ctx == NULL)
     {
-      printf("Out of memory\n");
+      amyplanyyerror(scanner, amyplanyy, "Out of memory");
       YYABORT;
     }
     amyplanyy->ctx = ctx;
@@ -837,7 +859,7 @@ statement:
       amyplan_locvarctx_alloc(amyplanyy->ctx, 0, get_abce(amyplanyy)->bytecodesz, $<d>2);
     if (ctx == NULL)
     {
-      printf("Out of memory\n");
+      amyplanyyerror(scanner, amyplanyy, "Out of memory");
       YYABORT;
     }
     amyplanyy->ctx = ctx;
@@ -877,7 +899,7 @@ statement:
       amyplan_locvarctx_alloc(amyplanyy->ctx, 0, get_abce(amyplanyy)->bytecodesz, $<d>2);
     if (ctx == NULL)
     {
-      printf("Out of memory\n");
+      amyplanyyerror(scanner, amyplanyy, "Out of memory");
       YYABORT;
     }
     amyplanyy->ctx = ctx;
@@ -1231,7 +1253,7 @@ varref:
       }
       else
       {
-        printf("var %s not found\n", $1);
+        amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $1);
         YYABORT;
       }
       $$ = ABCE_OPCODE_PUSH_STACK;
@@ -1247,7 +1269,7 @@ varref:
       abce_sc_get_rec_str(&get_abce(amyplanyy)->dynscope, $2, 0);
     if (mb2 == NULL)
     {
-      printf("Variable %s not found\n", $2);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $2);
       YYABORT;
     }
     int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
@@ -1265,7 +1287,7 @@ varref:
       abce_sc_get_rec_str(&get_abce(amyplanyy)->dynscope, $2, 1);
     if (mb2 == NULL)
     {
-      printf("Variable %s not found\n", $2);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $2);
       YYABORT;
     }
     int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
@@ -1281,14 +1303,14 @@ varref:
   {
     if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
     {
-      printf("No parent scope, can't use immediate parent reference\n");
+      amyplanyyerror(scanner, amyplanyy, "No parent scope, can't use immediate parent reference");
       YYABORT;
     }
     struct abce_mb mb1 = {.typ = ABCE_T_SC, .u = {.area = get_abce(amyplanyy)->dynscope.u.area->u.sc.parent}};
     const struct abce_mb *mb2 = abce_sc_get_rec_str(&mb1, $2, 1);
     if (mb2 == NULL)
     {
-      printf("Variable %s not found\n", $2);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $2);
       YYABORT;
     }
     int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
@@ -1304,14 +1326,14 @@ varref:
   {
     if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
     {
-      printf("No parent scope, can't use immediate parent reference\n");
+      amyplanyyerror(scanner, amyplanyy, "No parent scope, can't use immediate parent reference");
       YYABORT;
     }
     struct abce_mb mb1 = {.typ = ABCE_T_SC, .u = {.area = get_abce(amyplanyy)->dynscope.u.area->u.sc.parent}};
     const struct abce_mb *mb2 = abce_sc_get_rec_str(&mb1, $2, 0);
     if (mb2 == NULL)
     {
-      printf("Variable %s not found\n", $2);
+      amyplanyyerrorfmt(scanner, amyplanyy, "Variable %s not found", $2);
       YYABORT;
     }
     int64_t idx = abce_cache_add(get_abce(amyplanyy), mb2);
@@ -1350,7 +1372,7 @@ scopetype:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
     {
-      printf("No parent scope, can't use lexical parent reference\n");
+      amyplanyyerror(scanner, amyplanyy, "No parent scope, can't use lexical parent reference");
       YYABORT;
     }
     amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.parent->u.sc.locidx);
@@ -1365,7 +1387,7 @@ scopetype:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
     if (get_abce(amyplanyy)->dynscope.u.area->u.sc.parent == NULL)
     {
-      printf("No parent scope, can't use lexical parent reference\n");
+      amyplanyyerror(scanner, amyplanyy, "No parent scope, can't use lexical parent reference");
       YYABORT;
     }
     amyplanyy_add_double(amyplanyy, get_abce(amyplanyy)->dynscope.u.area->u.sc.parent->u.sc.locidx);
@@ -1983,79 +2005,79 @@ expr0_without_string:
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | IMM OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | DYNO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | LEXO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | IMMO OPEN_BRACKET expr CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   YYABORT;
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   free($3.str);
   YYABORT;
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist OPEN_PAREN maybe_arglist CLOSE_PAREN
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   free($3.str);
   YYABORT;
 }
 | LOC OPEN_BRACKET STRING_LITERAL CLOSE_BRACKET maybe_bracketexprlist MAYBE_CALL
 {
-  fprintf(stderr, "unsupported syntax\n");
+  amyplanyyerror(scanner, amyplanyy, "unsupported syntax");
   free($3.str);
   YYABORT;
 }
