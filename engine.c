@@ -22,7 +22,7 @@
 
 #define POPABORTS 1
 
-static inline void abce_maybeabort()
+static inline void abce_maybeabort(void)
 {
   abort();
 }
