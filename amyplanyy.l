@@ -84,7 +84,7 @@ struct amyplan_csnippet luaSnippet = {
 @fordict  return FORDICT;
 @fordictprev  return FORDICTPREV;
 @endfor   return ENDFOR;
-@fopen    return FOPEN;
+@fopen    return FOPEN2;
 @fclose   return FCLOSE;
 @fread    return FREAD2;
 @fseek    return FSEEK;

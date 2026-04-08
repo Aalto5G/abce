@@ -104,7 +104,7 @@ static void amyplanyy_add_corresponding_set(struct amyplanyy *amyplanyy, double 
 %token BEGINSCOPE BEGINHOLEYSCOPE ENDSCOPE
 %token FORDICT FORDICTPREV FOR ENDFOR
 
-%token FOPEN FCLOSE FREAD2 FSEEK FFLUSH FWRITE2 FGETDELIM
+%token FOPEN2 FCLOSE FREAD2 FSEEK FFLUSH FWRITE2 FGETDELIM
 
 %token DYNO LEXO IMMO DYN LEX IMM SCOPE
 %token IF ELSE ELSEIF ENDIF WHILE ENDWHILE ONCE ENDONCE BREAK CONTINUE
@@ -1861,7 +1861,7 @@ expr0_without_string:
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRAPPEND); }
 | STRSTRIP OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRSTRIP); }
-| FOPEN OPEN_PAREN expr COMMA expr CLOSE_PAREN
+| FOPEN2 OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_OPEN); }
 | FCLOSE OPEN_PAREN expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_FILE_CLOSE); }
