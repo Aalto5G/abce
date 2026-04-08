@@ -8,6 +8,7 @@
 #include "abcescopes.h"
 #include "amyplanlocvarctx.h"
 #include "amyplan.h"
+#include <stdarg.h>
 
 void amyplanyy_store_lineno(struct amyplanyy *amyplanyy, yyscan_t scanner)
 {
