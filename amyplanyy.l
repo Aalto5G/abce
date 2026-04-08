@@ -86,11 +86,11 @@ struct amyplan_csnippet luaSnippet = {
 @endfor   return ENDFOR;
 @fopen    return FOPEN;
 @fclose   return FCLOSE;
-@fread    return FREAD;
+@fread    return FREAD2;
 @fseek    return FSEEK;
 @fgetdelim return FGETDELIM;
 @fflush   return FFLUSH;
-@fwrite   return FWRITE;
+@fwrite   return FWRITE2;
 @jsonenc  return JSONENC;
 @jsondec  return JSONDEC;
 @jsontest return JSONTEST;
