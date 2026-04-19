@@ -3,6 +3,9 @@
 SRC_LIB := amyplanyyutils.c memblock.c abcerbtree.c amyplanlocvarctx.c engine.c abcestring.c abcetrees.c abcescopes.c abce.c abceapi.c safemode.c abcejmalloc.c abceprettyftoa.c abce_caj_out.c abcestreamingatof.c abce_caj.c
 SRC := $(SRC_LIB) amyplantest.c main.c locvartest.c treetest.c fiboefftest.c fibonaccitest.c bttest.c ret.c breaktest.c gctest.c reftest.c fortest.c iftest.c dumptest.c shortcut.c dictnext.c amyplan.c
 
+BYACC ?= byacc
+FLEX ?= flex
+
 SRC_CPP_LIB :=
 SRC_CPP := $(SRC_CPP_LIB)
 
@@ -150,15 +153,15 @@ amyplanyy.tab.d: amyplanyy.tab.h amyplanyy.lex.h
 amyplanyy.tab.o: amyplanyy.tab.h amyplanyy.lex.h
 
 amyplanyy.lex.c: amyplanyy.l Makefile
-	flex --outfile=amyplanyy.lex.c --header-file=/dev/null amyplanyy.l
+	$(FLEX) --outfile=amyplanyy.lex.c --header-file=/dev/null amyplanyy.l
 amyplanyy.lex.h: amyplanyy.l Makefile
-	flex --outfile=/dev/null --header-file=amyplanyy.lex.h amyplanyy.l
+	$(FLEX) --outfile=/dev/null --header-file=amyplanyy.lex.h amyplanyy.l
 amyplanyy.tab.c: amyplanyy.y Makefile
-	byacc -d -p amyplanyy -o .tmpc.amyplanyy.tab.c amyplanyy.y
+	$(BYACC) -d -p amyplanyy -o .tmpc.amyplanyy.tab.c amyplanyy.y
 	rm .tmpc.amyplanyy.tab.h
 	mv .tmpc.amyplanyy.tab.c amyplanyy.tab.c
 amyplanyy.tab.h: amyplanyy.y Makefile
-	byacc -d -p amyplanyy -o .tmph.amyplanyy.tab.c amyplanyy.y
+	$(BYACC) -d -p amyplanyy -o .tmph.amyplanyy.tab.c amyplanyy.y
 	rm .tmph.amyplanyy.tab.c
 	mv .tmph.amyplanyy.tab.h amyplanyy.tab.h
 
