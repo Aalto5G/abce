@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include <stddef.h>
+#include <math.h>
 
 void abce_pretty_ftoa_fix_exponent(char *buf)
 {
@@ -96,7 +97,7 @@ static void abce_ftoa_iter(char *buf, size_t bufsiz, int digits, double d,
 		abce_pretty_ftoa_fix_exponent(buf);
 		len = strlen(buf);
 	}
-	if (!is_expo && strchr(buf, '.') == NULL)
+	if (!is_expo && strchr(buf, '.') == NULL && isfinite(d))
 	{
 		if (len >= bufsiz - 2)
 		{
