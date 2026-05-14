@@ -283,7 +283,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mbsc = NULL;
       struct abce_mb *funname = NULL;
       GETDBL(&argcnt, -1);
-      if (abce_unlikely((double)(size_t)argcnt != argcnt))
+      if (abce_unlikely((double)abce_to_size(argcnt) != argcnt))
       {
         abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
         abce->err.mb.typ = ABCE_T_D;
@@ -622,7 +622,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = end;
         return -ERANGE;
       }
-      if ((double)(size_t)end != end)
+      if ((double)abce_to_size(end) != end)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -637,7 +637,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = start;
         return -ERANGE;
       }
-      if ((double)(size_t)start != start)
+      if ((double)abce_to_size(start) != start)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -675,7 +675,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       double ch;
       char chch;
       GETDBL(&ch, -1);
-      if ((int64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
+      if ((double)abce_to_u64(ch) != ch || ch < 0 || (uint64_t)ch >= 256)
       {
         abce->err.code = ABCE_E_INVALID_CH;
         abce->err.mb.typ = ABCE_T_D;
@@ -774,7 +774,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETDBL(&ch, -1);
       GETDBL(&loc, -2);
       VERIFYMB(-3, ABCE_T_S);
-      if ((int64_t)ch < 0 || (uint64_t)ch >= 256 || (double)(uint64_t)ch != ch)
+      if ((double)abce_to_u64(ch) != ch || ch < 0 || (uint64_t)ch >= 256)
       {
         abce->err.code = ABCE_E_INVALID_CH;
         abce->err.mb.typ = ABCE_T_D;
@@ -782,16 +782,16 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -EINVAL;
       }
       GETMBSTRPTR(&mbbase, -3);
-      if ((int64_t)loc < 0 || (uint64_t)loc >= mbbase->u.area->u.str.size)
+      if ((double)abce_to_u64(loc) != loc)
       {
-        abce->err.code = ABCE_E_INDEX_OOB;
+        abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
         abce->err.mb.u.d = loc;
         return -EINVAL;
       }
-      if ((double)(uint64_t)loc != loc)
+      if ((int64_t)loc < 0 || (uint64_t)loc >= mbbase->u.area->u.str.size)
       {
-        abce->err.code = ABCE_E_INDEX_NOT_INT;
+        abce->err.code = ABCE_E_INDEX_OOB;
         abce->err.mb.typ = ABCE_T_D;
         abce->err.mb.u.d = loc;
         return -EINVAL;
@@ -909,7 +909,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = wordidx;
         return -EINVAL;
       }
-      if ((double)(uint64_t)wordidx != wordidx)
+      if ((double)abce_to_u64(wordidx) != wordidx)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -1018,7 +1018,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       VERIFYMB(-1, ABCE_T_D);
       VERIFYMB(-2, ABCE_T_S);
       GETDBL(&cnt, -1);
-      if ((double)(size_t)cnt != cnt)
+      if ((double)abce_to_size(cnt) != cnt)
       {
         abce->err.code = ABCE_E_REPCNT_NOT_UINT;
         abce->err.mb.typ = ABCE_T_D;
@@ -1273,7 +1273,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       int64_t locint;
       GETDBL(&loc, -1);
       GETMBARPTR(&mbar, -2);
-      if (loc != (double)(uint64_t)loc)
+      if (loc != (double)abce_to_u64(loc) || loc != (double)abce_to_i64(loc))
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -1307,7 +1307,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETMBPTR(&mb, -1);
       GETDBL(&loc, -2);
       GETMBARPTR(&mbar, -3);
-      if (loc != (double)(uint64_t)loc)
+      if (loc != (double)abce_to_u64(loc) || loc != (double)abce_to_i64(loc))
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -1552,14 +1552,14 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETDBL(&nbytes, -1);
       GETDBL(&off, -2);
       GETMBPBPTR(&mbpb, -3);
-      if ((double)(size_t)nbytes != nbytes)
+      if ((double)abce_to_size(nbytes) != nbytes)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
         abce->err.mb.u.d = nbytes;
         return -ERANGE;
       }
-      if ((double)(size_t)off != off)
+      if ((double)abce_to_size(off) != off)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -1718,7 +1718,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       else if (mbmaxbytes->typ == ABCE_T_D)
       {
-        if ((double)(size_t)mbmaxbytes->u.d != mbmaxbytes->u.d)
+        if ((double)abce_to_size(mbmaxbytes->u.d) != mbmaxbytes->u.d)
         {
           abce->err.code = ABCE_E_INDEX_NOT_INT;
           abce->err.mb.typ = ABCE_T_D;
@@ -1740,7 +1740,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce_mb_errreplace_noinline(abce, mbmaxbytes);
         return -EINVAL;
       }
-      if ((double)(size_t)off != off)
+      if ((double)abce_to_size(off) != off)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -1942,7 +1942,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct tm result;
       struct abce_mb *mbt;
       GETDBL(&timed, -1);
-      time64 = (int64_t)timed;
+      time64 = abce_to_i64(timed);
       tv.tv_sec = time64/(1000*1000);
       tv.tv_usec = time64%(1000*1000);
       if (!isfinite(timed))
@@ -2080,14 +2080,14 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETDBL(&off, -2);
       GETMBPBPTR(&mbpb, -3);
       GETMBIOSPTR(&mbios, -4);
-      if ((double)(size_t)nbytes != nbytes)
+      if ((double)abce_to_size(nbytes) != nbytes)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
         abce->err.mb.u.d = nbytes;
         return -ERANGE;
       }
-      if ((double)(size_t)off != off)
+      if ((double)abce_to_size(off) != off)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -2152,7 +2152,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = whence;
         return -EINVAL;
       }
-      if ((double)(size_t)off != off)
+      if ((double)abce_to_size(off) != off)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -2192,14 +2192,14 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       GETDBL(&off, -2);
       GETMBPBPTR(&mbpb, -3);
       GETMBIOSPTR(&mbios, -4);
-      if ((double)(size_t)nbytes != nbytes)
+      if ((double)abce_to_size(nbytes) != nbytes)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
         abce->err.mb.u.d = nbytes;
         return -ERANGE;
       }
-      if ((double)(size_t)off != off)
+      if ((double)abce_to_size(off) != off)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -2250,7 +2250,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = end;
         return -ERANGE;
       }
-      if ((double)(size_t)end != end)
+      if ((double)abce_to_size(end) != end)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -2265,7 +2265,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = start;
         return -ERANGE;
       }
-      if ((double)(size_t)start != start)
+      if ((double)abce_to_size(start) != start)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -2940,7 +2940,7 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int rettmp;
           double dbl;
           GETDBL(&argcnt, -1);
-          if (abce_unlikely((double)(size_t)argcnt != argcnt))
+          if (abce_unlikely((double)abce_to_size(argcnt) != argcnt))
           {
             abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3040,7 +3040,7 @@ calltrailer:
             ret = rettmp;
             break;
           }
-          if (abce_unlikely(dbl != (double)(uint64_t)argcnt))
+          if (abce_unlikely(dbl != (double)abce_to_u64(argcnt)))
           {
             abce->err.code = ABCE_E_INVALID_ARG_CNT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3111,7 +3111,7 @@ calltrailer:
           struct abce_mb *mbpb;
           double sz;
           GETDBL(&sz, -1);
-          if ((double)(size_t)sz != sz)
+          if ((double)abce_to_size(sz) != sz)
           {
             abce->err.code = ABCE_E_PB_NEW_LEN_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3150,7 +3150,7 @@ calltrailer:
           }
           GETDBL(&off, -3);
           GETDBL(&sz, -2);
-          if ((double)(size_t)off != off)
+          if ((double)abce_to_size(off) != off)
           {
             abce->err.code = ABCE_E_PB_OFF_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3239,7 +3239,7 @@ outpbset:
           uint32_t val;
           GETDBL(&off, -2);
           GETDBL(&sz, -1);
-          if ((double)(size_t)off != off)
+          if ((double)abce_to_size(off) != off)
           {
             abce->err.code = ABCE_E_PB_OFF_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3314,7 +3314,7 @@ outpbset:
           GETDBL(&loc, -2);
           GETMBARPTR(&mbar, -3);
           GETMBPTR(&mbit, -1);
-          if (loc != (double)(uint64_t)loc)
+          if (loc != (double)abce_to_u64(loc) || loc != (double)abce_to_i64(loc))
           {
             abce->err.code = ABCE_E_INDEX_NOT_INT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3344,7 +3344,7 @@ outpbset:
           int64_t locint;
           GETDBL(&loc, -1);
           GETMBSTRPTR(&mbstr, -2);
-          if (loc != (double)(uint64_t)loc)
+          if (loc != (double)abce_to_u64(loc) || loc != (double)abce_to_i64(loc))
           {
             abce->err.code = ABCE_E_INDEX_NOT_INT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3371,7 +3371,7 @@ outpbset:
           int64_t locint;
           GETDBL(&loc, -1);
           GETMBARPTR(&mbar, -2);
-          if (loc != (double)(uint64_t)loc)
+          if (loc != (double)abce_to_u64(loc) || loc != (double)abce_to_i64(loc))
           {
             abce->err.code = ABCE_E_INDEX_NOT_INT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3399,7 +3399,7 @@ outpbset:
           size_t addrm1;
           GETDBL(&loc, -1);
           POP();
-          if (loc != (double)(int64_t)loc)
+          if (loc != (double)abce_to_i64(loc))
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3427,7 +3427,7 @@ outpbset:
           double loc;
           size_t addr;
           GETDBL(&loc, -1);
-          if (loc != (double)(int64_t)loc)
+          if (loc != (double)abce_to_i64(loc))
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3453,7 +3453,7 @@ outpbset:
           double loc;
           size_t addr;
           GETDBL(&loc, -2);
-          if (loc != (double)(int64_t)loc)
+          if (loc != (double)abce_to_i64(loc))
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3505,7 +3505,7 @@ outpbset:
           size_t i;
           GETDBL(&cntloc, -1);
           GETDBL(&cntargs, -2);
-          if (abce_unlikely(cntloc != (uint32_t)cntloc))
+          if (abce_unlikely(cntloc != abce_to_u32(cntloc)))
           {
             abce->err.code = ABCE_E_RET_LOCVARCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3513,7 +3513,7 @@ outpbset:
             ret = -EINVAL;
             break;
           }
-          if (abce_unlikely(cntargs != (uint32_t)cntargs))
+          if (abce_unlikely(cntargs != abce_to_u32(cntargs)))
           {
             abce->err.code = ABCE_E_RET_ARGCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3554,7 +3554,7 @@ outpbset:
           double d;
           GETDBL(&d, -1);
           POP();
-          new_ip = d;
+          new_ip = abce_to_i64(d);
           if (!((new_ip >= 0 && (size_t)new_ip <= abce->bytecodesz) ||
                 (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip <= -(int64_t)guard)))
           {
@@ -3582,7 +3582,7 @@ outpbset:
           GETDBL(&d, -1);
           POP();
           POP();
-          new_ip = d;
+          new_ip = abce_to_i64(d);
           if (!((new_ip >= 0 && (size_t)new_ip <= abce->bytecodesz) ||
                 (new_ip >= -(int64_t)addsz-(int64_t)guard && new_ip <= -(int64_t)guard)))
           {
@@ -3657,7 +3657,7 @@ outpbset:
           GETDBL(&d1, -2);
           POP();
           POP();
-          if (abce_push_double(abce, (((int64_t)d1) & ((int64_t)d2))) != 0)
+          if (abce_push_double(abce, ((abce_to_i64(d1)) & (abce_to_i64(d2)))) != 0)
           {
             abce_maybeabort();
           }
@@ -3683,7 +3683,7 @@ outpbset:
           GETDBL(&d1, -2);
           POP();
           POP();
-          if (abce_push_double(abce, (((int64_t)d1) | ((int64_t)d2))) != 0)
+          if (abce_push_double(abce, ((abce_to_i64(d1)) | (abce_to_i64(d2)))) != 0)
           {
             abce_maybeabort();
           }
@@ -3696,7 +3696,7 @@ outpbset:
           GETDBL(&d1, -2);
           POP();
           POP();
-          if (abce_push_double(abce, (((int64_t)d1) ^ ((int64_t)d2))) != 0)
+          if (abce_push_double(abce, ((abce_to_i64(d1)) ^ (abce_to_i64(d2)))) != 0)
           {
             abce_maybeabort();
           }
@@ -3718,7 +3718,7 @@ outpbset:
           double d;
           GETDBL(&d, -1);
           POP();
-          if (abce_push_double(abce, ~(int64_t)d) != 0)
+          if (abce_push_double(abce, ~abce_to_i64(d)) != 0)
           {
             abce_maybeabort();
           }
@@ -3783,7 +3783,7 @@ outpbset:
           GETDBL(&d1, -2);
           POP();
           POP();
-          if (abce_push_double(abce, (((int64_t)d1) >> ((int64_t)d2))) != 0)
+          if (abce_push_double(abce, ((abce_to_i64(d1)) >> (abce_to_i64(d2)))) != 0)
           {
             abce_maybeabort();
           }
@@ -3796,7 +3796,7 @@ outpbset:
           GETDBL(&d1, -2);
           POP();
           POP();
-          if (abce_push_double(abce, (((int64_t)d1) << ((int64_t)d2))) != 0)
+          if (abce_push_double(abce, ((abce_to_i64(d1)) << (abce_to_i64(d2)))) != 0)
           {
             abce_maybeabort();
           }
@@ -3861,7 +3861,7 @@ outpbset:
           GETDBL(&d1, -2);
           POP();
           POP();
-          if (abce_push_double(abce, (((int64_t)d1) % ((int64_t)d2))) != 0)
+          if (abce_push_double(abce, ((abce_to_i64(d1)) % (abce_to_i64(d2)))) != 0)
           {
             abce_maybeabort();
           }
@@ -4001,7 +4001,7 @@ outpbset:
           int64_t i64;
           GETDBL(&dbl, -1);
           POP();
-          if ((double)(uint64_t)dbl != dbl)
+          if ((double)abce_to_u64(dbl) != dbl || (double)abce_to_i64(dbl) != dbl)
           {
             abce->err.code = ABCE_E_CACHE_IDX_NOT_INT;
             abce->err.mb.typ = ABCE_T_D;
@@ -4187,7 +4187,7 @@ outpbset:
               ret = rettmp;
               break;
             }
-            if (dbl != (double)(uint64_t)argcnt)
+            if (dbl != (double)abce_to_u64(argcnt))
             {
               ret = -EINVAL;
               break;

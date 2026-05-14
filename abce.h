@@ -3,6 +3,9 @@
 
 #include "abcedatatypes.h"
 #include "abcelikely.h"
+#include <limits.h>
+#include <stdint.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -564,6 +567,97 @@ static inline int abce_cpush_boolean(struct abce *abce, int val)
   abce->csp++;
   return 0;
 }
+static inline long long abce_to_ll(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return LLONG_MIN;
+  }
+  if (dbl < LLONG_MIN || dbl > LLONG_MAX)
+  {
+    return LLONG_MIN;
+  }
+  return (long long)dbl;
+}
+static inline unsigned long long abce_to_ull(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return ULLONG_MAX;
+  }
+  if (dbl < 0 || dbl > ULLONG_MAX)
+  {
+    return ULLONG_MAX;
+  }
+  return (unsigned long long)dbl;
+}
+static inline int64_t abce_to_i64(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return INT64_MIN;
+  }
+  if (dbl < INT64_MIN || dbl > INT64_MAX)
+  {
+    return INT64_MIN;
+  }
+  return (int64_t)dbl;
+}
+static inline uint64_t abce_to_u64(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return UINT64_MAX;
+  }
+  if (dbl < 0 || dbl > UINT64_MAX)
+  {
+    return UINT64_MAX;
+  }
+  return (uint64_t)dbl;
+}
+static inline uint32_t abce_to_u32(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return UINT32_MAX;
+  }
+  if (dbl < 0 || dbl > UINT32_MAX)
+  {
+    return UINT32_MAX;
+  }
+  return (uint32_t)dbl;
+}
+static inline size_t abce_to_size(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return SIZE_MAX;
+  }
+  if (dbl < 0 || dbl > SIZE_MAX)
+  {
+    return SIZE_MAX;
+  }
+  return (size_t)dbl;
+}
+static inline int abce_is_int(double dbl)
+{
+  int is_small = 0;
+  int is_int = 0;
+  if (!isfinite(dbl))
+  {
+    return 0;
+  }
+  is_small = (dbl+1 != dbl || dbl-1 != dbl);
+  if (dbl >= INTMAX_MIN && dbl <= INTMAX_MAX)
+  {
+    is_int = ((double)(intmax_t)dbl == dbl);
+  }
+  else if (dbl >= 0 && dbl <= UINTMAX_MAX)
+  {
+    is_int = ((double)(uintmax_t)dbl == dbl);
+  }
+  return is_small && is_int;
+}
 static inline int abce_cpush_double(struct abce *abce, double d)
 {
   if (abce_unlikely(abce->csp >= abce->cstacklimit))
@@ -749,7 +843,7 @@ static inline int abce_push_fun(struct abce *abce, double fun_addr)
     abce->err.mb.u.d = fun_addr;
     return -EOVERFLOW;
   }
-  if (abce_unlikely((double)(int64_t)fun_addr != fun_addr))
+  if (abce_unlikely((double)abce_to_i64(fun_addr) != fun_addr))
   {
     abce->err.code = ABCE_E_FUNADDR_NOT_INT;
     abce->err.mb.typ = ABCE_T_F;
