@@ -217,7 +217,7 @@ static int abce_caj_internal_put_flop(struct abce_caj_out_ctx *ctx, double d)
 	{
 		abort();
 	}
-	abce_pretty_ftoa(buf128, sizeof(buf128), d);
+	abce_pretty_ftoa(buf128, sizeof(buf128), d, 0);
 	return ctx->datasink(ctx, buf128, strlen(buf128));
 }
 static int abce_caj_internal_put_flop_ex(struct abce_caj_out_ctx *ctx, double d)
@@ -227,7 +227,7 @@ static int abce_caj_internal_put_flop_ex(struct abce_caj_out_ctx *ctx, double d)
 	{
 		return ctx->datasink(ctx, "null", 4);
 	}
-	abce_pretty_ftoa(buf128, sizeof(buf128), d);
+	abce_pretty_ftoa(buf128, sizeof(buf128), d, 0);
 	return ctx->datasink(ctx, buf128, strlen(buf128));
 }
 static int abce_caj_internal_put_number(struct abce_caj_out_ctx *ctx, double d)

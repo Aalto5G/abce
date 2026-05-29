@@ -5,6 +5,6 @@
 
 void abce_pretty_ftoa_fix_exponent(char *buf);
 
-void abce_pretty_ftoa(char *buf, size_t bufsiz, double d);
+void abce_pretty_ftoa(char *buf, size_t bufsiz, double d, unsigned exponent_fuzz);
 
 #endif
