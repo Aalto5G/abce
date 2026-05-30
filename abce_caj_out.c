@@ -230,9 +230,17 @@ static int abce_caj_internal_put_flop_ex(struct abce_caj_out_ctx *ctx, double d)
 	abce_pretty_ftoa(buf128, sizeof(buf128), d, 0);
 	return ctx->datasink(ctx, buf128, strlen(buf128));
 }
+static inline int64_t abce_caj_to_i64(double d)
+{
+	if (!isfinite(d) || d < INT64_MIN || d > INT64_MAX)
+	{
+		return INT64_MIN;
+	}
+	return (int64_t)d;
+}
 static int abce_caj_internal_put_number(struct abce_caj_out_ctx *ctx, double d)
 {
-	int64_t i64 = (int64_t)d;
+	int64_t i64 = abce_caj_to_i64(d);
 	if ((double)i64 == d && i64 <= (1LL<<48) && i64 >= -(1LL<<48))
 	{
 		// Let's represent at most 48-bit integers accurately
@@ -242,7 +250,7 @@ static int abce_caj_internal_put_number(struct abce_caj_out_ctx *ctx, double d)
 }
 static int abce_caj_internal_put_number_ex(struct abce_caj_out_ctx *ctx, double d)
 {
-	int64_t i64 = (int64_t)d;
+	int64_t i64 = abce_caj_to_i64(d);
 	if ((double)i64 == d && i64 <= (1LL<<48) && i64 >= -(1LL<<48))
 	{
 		// Let's represent at most 48-bit integers accurately
