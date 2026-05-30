@@ -239,7 +239,7 @@ static int set_int_cfield(struct abce *abce, struct abce_mb *mbt, const char *fn
     abce_cpop(abce);
     return -EINVAL;
   }
-  *cfield = ((int)mbres->u.d) - off;
+  *cfield = abce_to_int(mbres->u.d) - off;
   abce_cpop(abce);
   return 0;
 }
@@ -283,7 +283,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       struct abce_mb *mbsc = NULL;
       struct abce_mb *funname = NULL;
       GETDBL(&argcnt, -1);
-      if (abce_unlikely((double)abce_to_size(argcnt) != argcnt))
+      if (abce_unlikely((double)abce_to_size(argcnt) != argcnt ||
+                        (double)abce_to_int(argcnt) != argcnt))
       {
         abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
         abce->err.mb.typ = ABCE_T_D;
@@ -304,12 +305,12 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
 
       lua_getglobal(mbsc->u.area->u.sc.lua, abce_mba_str(funname->u.area));
-      for (i = argcnt; i > 0; i--)
+      for (i = (size_t)argcnt; i > 0; i--)
       {
         GETMBPTR(&mb, -(int)i);
         mb_to_lua(mbsc->u.area->u.sc.lua, mb);
       }
-      for (i = 0; i < argcnt; i++)
+      for (i = 0; i < (size_t)argcnt; i++)
       {
         POP(); // args
       }
@@ -317,7 +318,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       abce_push_rg(abce); // to capture backtrace in stages
       abce->err.code = ABCE_E_NONE;
       abce->err.mb.typ = ABCE_T_N;
-      if (lua_pcall(mbsc->u.area->u.sc.lua, argcnt, 1, 0) != 0)
+      if (lua_pcall(mbsc->u.area->u.sc.lua, (int)argcnt, 1, 0) != 0)
       {
         abce_pop(abce); // rg
         if (abce->err.code == ABCE_E_NONE)
@@ -2940,7 +2941,8 @@ int abce_engine(struct abce *abce, unsigned char *addcode, size_t addsz)
           int rettmp;
           double dbl;
           GETDBL(&argcnt, -1);
-          if (abce_unlikely((double)abce_to_size(argcnt) != argcnt))
+          if (abce_unlikely((double)abce_to_size(argcnt) != argcnt ||
+                            (double)abce_to_int(argcnt) != argcnt))
           {
             abce->err.code = ABCE_E_CALL_ARGCNT_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;

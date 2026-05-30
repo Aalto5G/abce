@@ -130,7 +130,7 @@ int main(int argc, char **argv, char **envp)
     fprintf(stderr, "Return value from engine not a number\n");
     return 253;
   }
-  ret = (int)amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d;
+  ret = abce_to_int(amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d);
   if (amyplanyy.abce.stackbase[amyplanyy.abce.sp-1].u.d != (double)ret)
   {
     fprintf(stderr, "Return value from engine not an integer\n");

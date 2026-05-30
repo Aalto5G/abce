@@ -1236,13 +1236,13 @@ void abce_mb_dump_impl(const struct abce_mb *mb, struct abce_dump_list *ll)
       printf("%s", mb->u.d ? "true" : "false");
       break;
     case ABCE_T_F:
-      printf("fun(%lld)", (long long)mb->u.d);
+      printf("fun(%lld)", abce_to_ll(mb->u.d));
       break;
     case ABCE_T_BP:
-      printf("bp(%lld)", (long long)mb->u.d);
+      printf("bp(%lld)", abce_to_ll(mb->u.d));
       break;
     case ABCE_T_IP:
-      printf("ip(%lld)", (long long)mb->u.d);
+      printf("ip(%lld)", abce_to_ll(mb->u.d));
       break;
     case ABCE_T_IOS:
       printf("ios(%p)", (void*)mb->u.area);

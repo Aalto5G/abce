@@ -103,7 +103,7 @@ int main(int argc, char **argv)
     printf("sp %zu\n", amyplanyy.abce.sp);
     printf("num %g\n", amyplanyy.abce.stackbase[0].u.d);
     printf("same_in_c %d\n", same_in_c(x));
-    if ((int)amyplanyy.abce.stackbase[0].u.d != same_in_c(x))
+    if (abce_to_int(amyplanyy.abce.stackbase[0].u.d) != same_in_c(x))
     {
       abort();
     }
