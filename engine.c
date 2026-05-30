@@ -3431,7 +3431,7 @@ outpbset:
           double loc;
           size_t addr;
           GETDBL(&loc, -1);
-          if (loc != (double)abce_to_i64(loc))
+          if (loc != (double)abce_to_i64(loc) || loc < INT64_MIN + 1)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3441,7 +3441,7 @@ outpbset:
           }
           if (loc < 0)
           {
-            loc -= 1; // FIXME overflow?
+            loc -= 1;
           }
           if (abce_calc_addr(&addr, abce, loc) != 0)
           {
@@ -3457,7 +3457,7 @@ outpbset:
           double loc;
           size_t addr;
           GETDBL(&loc, -2);
-          if (loc != (double)abce_to_i64(loc))
+          if (loc != (double)abce_to_i64(loc) || loc < INT64_MIN + 2)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3470,7 +3470,7 @@ outpbset:
           //POP();
 	  if (loc < 0)
 	  {
-            loc -= 2; // FIXME overflow?
+            loc -= 2;
 	  }
           if (abce_calc_addr(&addr, abce, loc) != 0)
           {
