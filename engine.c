@@ -2153,7 +2153,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = whence;
         return -EINVAL;
       }
-      if ((double)abce_to_size(off) != off)
+      if ((double)abce_to_size(off) != off ||
+          (double)abce_to_long(off) != off)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
@@ -2165,7 +2166,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.code = ABCE_E_FILE_IS_CLOSED;
         return -EINVAL;
       }
-      fseek(mbios->u.area->u.ios.f, (long)off, iwhence);
+      fseek(mbios->u.area->u.ios.f, abce_to_long(off), iwhence);
       abce_npoppushdbl(abce, 3, ftell(mbios->u.area->u.ios.f));
       break;
     }

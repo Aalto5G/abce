@@ -579,6 +579,18 @@ static inline int abce_to_int(double dbl)
   }
   return (int)dbl;
 }
+static inline long abce_to_long(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return LONG_MIN;
+  }
+  if (dbl < LONG_MIN || dbl > LONG_MAX)
+  {
+    return LONG_MIN;
+  }
+  return (long)dbl;
+}
 static inline long long abce_to_ll(double dbl)
 {
   if (!isfinite(dbl))
