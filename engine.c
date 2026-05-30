@@ -783,7 +783,8 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         return -EINVAL;
       }
       GETMBSTRPTR(&mbbase, -3);
-      if ((double)abce_to_u64(loc) != loc)
+      if ((double)abce_to_u64(loc) != loc ||
+          (double)abce_to_i64(loc) != loc)
       {
         abce->err.code = ABCE_E_INDEX_NOT_INT;
         abce->err.mb.typ = ABCE_T_D;
