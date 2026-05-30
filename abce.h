@@ -567,6 +567,14 @@ static inline int abce_cpush_boolean(struct abce *abce, int val)
   abce->csp++;
   return 0;
 }
+static inline char abce_uchar_to_char(unsigned char uch)
+{
+  if (CHAR_MIN < 0 && uch > CHAR_MAX)
+  {
+    return (char)(((int)uch) - (((int)UCHAR_MAX)+1));
+  }
+  return (char)uch;
+}
 static inline int abce_to_int(double dbl)
 {
   if (!isfinite(dbl))

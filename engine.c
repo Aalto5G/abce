@@ -683,7 +683,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
         abce->err.mb.u.d = ch;
         return -EINVAL;
       }
-      chch = (char)(unsigned char)ch;
+      chch = abce_uchar_to_char((unsigned char)ch);
       if (abce_mb_cpush_create_string(abce, &chch, 1) == NULL)
       {
         return -ENOMEM;
@@ -805,7 +805,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       {
         return -ENOMEM;
       }
-      abce_mba_str(res->u.area)[(uint64_t)loc] = (char)(unsigned char)ch;
+      abce_mba_str(res->u.area)[(uint64_t)loc] = abce_uchar_to_char((unsigned char)ch);
       abce_npoppushc(abce, 3);
       abce_cpop(abce);
       return 0;
@@ -1003,10 +1003,10 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       mbbase = &abce->cstackbase[abce->csp-1];
       for (i = 0; i < mbbase->u.area->u.str.size/2; i++)
       {
-        uint8_t tmp = (uint8_t)abce_mba_str(mbbase->u.area)[i];
+        char tmp = abce_mba_str(mbbase->u.area)[i];
         abce_mba_str(mbbase->u.area)[i] =
           abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1];
-        abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1] = (char)tmp;
+        abce_mba_str(mbbase->u.area)[mbbase->u.area->u.str.size-i-1] = tmp;
       }
       abce_npoppushc(abce, 1);
       abce_cpop(abce);
@@ -1809,10 +1809,10 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
             }
             resized = 1;
           }
-          mbpb->u.area->u.pb.buf[curoff] = (char)chr;
+          mbpb->u.area->u.pb.buf[curoff] = abce_uchar_to_char((unsigned char)chr);
           curoff++;
           bytes_read++;
-          if ((char)chr == delim && hasdelim)
+          if (abce_uchar_to_char((unsigned char)chr) == delim && hasdelim)
           {
             if (resized && abce_mb_pb_resize(abce, mbpb, curoff))
             {
