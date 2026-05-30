@@ -1911,7 +1911,7 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       res = mktime(&result);
       if (res == (time_t)-1)
       {
-        abce_npoppushdbl(abce, 1, 0.0/0.0);
+        abce_npoppushnil(abce, 1);
       }
       else
       {
