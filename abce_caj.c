@@ -6,6 +6,16 @@
 #include <math.h>
 #include <string.h>
 #include <stddef.h>
+#include <limits.h>
+
+static inline char abce_caj_uchar_to_char(unsigned char uch)
+{
+  if (CHAR_MIN < 0 && uch > CHAR_MAX)
+  {
+    return (char)(((int)uch) - (((int)UCHAR_MAX)+1));
+  }
+  return (char)uch;
+}
 
 void abce_caj_init(struct abce_caj_ctx *caj, struct abce_caj_handler *handler)
 {
@@ -382,7 +392,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			}
 			else
 			{
-				if (abce_caj_put_key(caj, (char)data[i]) != 0)
+				if (abce_caj_put_key(caj, abce_caj_uchar_to_char(data[i])) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -448,7 +458,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			}
 			else
 			{
-				if (abce_caj_put_val(caj, (char)data[i]) != 0)
+				if (abce_caj_put_val(caj, abce_caj_uchar_to_char(data[i])) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -495,7 +505,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			{
 				return -EILSEQ;
 			}
-			caj->uescape[caj->sz++] = (char)data[i];
+			caj->uescape[caj->sz++] = abce_caj_uchar_to_char(data[i]);
 			if (caj->sz < 4)
 			{
 				continue;
@@ -504,7 +514,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			codepoint = strtoul(caj->uescape, NULL, 16);
 			if (codepoint < 0x80)
 			{
-				if (abce_caj_put_key(caj, (char)codepoint) != 0)
+				if (abce_caj_put_key(caj, abce_caj_uchar_to_char(codepoint)) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -513,26 +523,26 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			}
 			if (codepoint < 0x800)
 			{
-				if (abce_caj_put_key(caj, (char)(0xC0 | (codepoint>>6))) != 0)
+				if (abce_caj_put_key(caj, abce_caj_uchar_to_char(0xC0 | (codepoint>>6))) != 0)
 				{
 					return -ENOMEM;
 				}
-				if (abce_caj_put_key(caj, (char)(0x80 | (codepoint & 0x3F))) != 0)
+				if (abce_caj_put_key(caj, abce_caj_uchar_to_char(0x80 | (codepoint & 0x3F))) != 0)
 				{
 					return -ENOMEM;
 				}
 				caj->mode = ABCE_CAJ_MODE_KEYSTRING;
 				continue;
 			}
-			if (abce_caj_put_key(caj, (char)(0xE0 | (codepoint>>12))) != 0)
+			if (abce_caj_put_key(caj, abce_caj_uchar_to_char(0xE0 | (codepoint>>12))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_caj_put_key(caj, (char)(0x80 | ((codepoint>>6)&0x3F))) != 0)
+			if (abce_caj_put_key(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>6)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_caj_put_key(caj, (char)(0x80 | ((codepoint>>0)&0x3F))) != 0)
+			if (abce_caj_put_key(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>0)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
@@ -546,7 +556,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			{
 				return -EILSEQ;
 			}
-			caj->uescape[caj->sz++] = (char)data[i];
+			caj->uescape[caj->sz++] = abce_caj_uchar_to_char(data[i]);
 			if (caj->sz < 4)
 			{
 				continue;
@@ -555,7 +565,7 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			codepoint = strtoul(caj->uescape, NULL, 16);
 			if (codepoint < 0x80)
 			{
-				if (abce_caj_put_val(caj, (char)codepoint) != 0)
+				if (abce_caj_put_val(caj, abce_caj_uchar_to_char(codepoint)) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -564,26 +574,26 @@ int abce_caj_feed(struct abce_caj_ctx *caj, const void *vdata, size_t usz, int e
 			}
 			if (codepoint < 0x800)
 			{
-				if (abce_caj_put_val(caj, (char)(0xC0 | (codepoint>>6))) != 0)
+				if (abce_caj_put_val(caj, abce_caj_uchar_to_char(0xC0 | (codepoint>>6))) != 0)
 				{
 					return -ENOMEM;
 				}
-				if (abce_caj_put_val(caj, (char)(0x80 | (codepoint & 0x3F))) != 0)
+				if (abce_caj_put_val(caj, abce_caj_uchar_to_char(0x80 | (codepoint & 0x3F))) != 0)
 				{
 					return -ENOMEM;
 				}
 				caj->mode = ABCE_CAJ_MODE_STRING;
 				continue;
 			}
-			if (abce_caj_put_val(caj, (char)(0xE0 | (codepoint>>12))) != 0)
+			if (abce_caj_put_val(caj, abce_caj_uchar_to_char(0xE0 | (codepoint>>12))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_caj_put_val(caj, (char)(0x80 | ((codepoint>>6)&0x3F))) != 0)
+			if (abce_caj_put_val(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>6)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_caj_put_val(caj, (char)(0x80 | ((codepoint>>0)&0x3F))) != 0)
+			if (abce_caj_put_val(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>0)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
@@ -1225,7 +1235,7 @@ int abce_pullcaj_get_event(struct abce_pullcaj_ctx *caj, struct abce_pullcaj_eve
 			}
 			else
 			{
-				if (abce_pullcaj_put_key(caj, (char)data[caj->i]) != 0)
+				if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(data[caj->i])) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -1272,7 +1282,7 @@ state1:
 			}
 			else
 			{
-				if (abce_pullcaj_put_val(caj, (char)data[caj->i]) != 0)
+				if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(data[caj->i])) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -1319,7 +1329,7 @@ state1:
 			{
 				return -EILSEQ;
 			}
-			caj->uescape[caj->sz++] = (char)data[caj->i];
+			caj->uescape[caj->sz++] = abce_caj_uchar_to_char(data[caj->i]);
 			if (caj->sz < 4)
 			{
 				continue;
@@ -1328,7 +1338,7 @@ state1:
 			codepoint = strtoul(caj->uescape, NULL, 16);
 			if (codepoint < 0x80)
 			{
-				if (abce_pullcaj_put_key(caj, (char)codepoint) != 0)
+				if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(codepoint)) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -1337,26 +1347,26 @@ state1:
 			}
 			if (codepoint < 0x800)
 			{
-				if (abce_pullcaj_put_key(caj, (char)(0xC0 | (codepoint>>6))) != 0)
+				if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(0xC0 | (codepoint>>6))) != 0)
 				{
 					return -ENOMEM;
 				}
-				if (abce_pullcaj_put_key(caj, (char)(0x80 | (codepoint & 0x3F))) != 0)
+				if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(0x80 | (codepoint & 0x3F))) != 0)
 				{
 					return -ENOMEM;
 				}
 				caj->mode = ABCE_CAJ_MODE_KEYSTRING;
 				continue;
 			}
-			if (abce_pullcaj_put_key(caj, (char)(0xE0 | (codepoint>>12))) != 0)
+			if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(0xE0 | (codepoint>>12))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_pullcaj_put_key(caj, (char)(0x80 | ((codepoint>>6)&0x3F))) != 0)
+			if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>6)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_pullcaj_put_key(caj, (char)(0x80 | ((codepoint>>0)&0x3F))) != 0)
+			if (abce_pullcaj_put_key(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>0)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
@@ -1370,7 +1380,7 @@ state1:
 			{
 				return -EILSEQ;
 			}
-			caj->uescape[caj->sz++] = (char)data[caj->i];
+			caj->uescape[caj->sz++] = abce_caj_uchar_to_char(data[caj->i]);
 			if (caj->sz < 4)
 			{
 				continue;
@@ -1379,7 +1389,7 @@ state1:
 			codepoint = strtoul(caj->uescape, NULL, 16);
 			if (codepoint < 0x80)
 			{
-				if (abce_pullcaj_put_val(caj, (char)codepoint) != 0)
+				if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(codepoint)) != 0)
 				{
 					return -ENOMEM;
 				}
@@ -1388,26 +1398,26 @@ state1:
 			}
 			if (codepoint < 0x800)
 			{
-				if (abce_pullcaj_put_val(caj, (char)(0xC0 | (codepoint>>6))) != 0)
+				if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(0xC0 | (codepoint>>6))) != 0)
 				{
 					return -ENOMEM;
 				}
-				if (abce_pullcaj_put_val(caj, (char)(0x80 | (codepoint & 0x3F))) != 0)
+				if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(0x80 | (codepoint & 0x3F))) != 0)
 				{
 					return -ENOMEM;
 				}
 				caj->mode = ABCE_CAJ_MODE_STRING;
 				continue;
 			}
-			if (abce_pullcaj_put_val(caj, (char)(0xE0 | (codepoint>>12))) != 0)
+			if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(0xE0 | (codepoint>>12))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_pullcaj_put_val(caj, (char)(0x80 | ((codepoint>>6)&0x3F))) != 0)
+			if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>6)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
-			if (abce_pullcaj_put_val(caj, (char)(0x80 | ((codepoint>>0)&0x3F))) != 0)
+			if (abce_pullcaj_put_val(caj, abce_caj_uchar_to_char(0x80 | ((codepoint>>0)&0x3F))) != 0)
 			{
 				return -ENOMEM;
 			}
