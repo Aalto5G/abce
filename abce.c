@@ -267,6 +267,9 @@ void abce_init_opts(struct abce *abce, int map_shared)
   abce->bytecode = abce_alloc_bcode(abce, abce->bytecodecap);
   abce->bytecodesz = 0;
   abce->oneblock.typ = ABCE_T_N;
+#ifdef WITH_LUA
+  abce->luaopen_caller = NULL;
+#endif
 
   abce->cachecap = 8*1024;
   abce->cachebase = abce_alloc_stack(abce, abce->cachecap);
@@ -795,6 +798,9 @@ void abce_free(struct abce *abce)
   abce_free_stack(abce, abce->gcblockbase, abce->gcblockcap);
   abce->gcblockbase = NULL;
   abce->gcblockcap = 0;
+#ifdef WITH_LUA
+  abce->luaopen_caller = NULL;
+#endif
 }
 
 struct abce_mb abce_mb_concat_string(struct abce *abce, const char *str1, size_t sz1,

@@ -793,7 +793,8 @@ int luaopen_abce(lua_State *lua)
 #endif
 
 #ifdef WITH_LUA
-lua_State *lua_create_abce(struct abce_mb_area *mba, struct abce *abce)
+lua_State *lua_create_abce(struct abce_mb_area *mba, struct abce *abce,
+                           void (*luaopen_caller)(lua_State *lua, struct abce *abce, struct abce_mb_area *scope))
 {
   lua_State *lua;
   lua = luaL_newstate();
@@ -814,6 +815,10 @@ lua_State *lua_create_abce(struct abce_mb_area *mba, struct abce *abce)
   lua_setglobal(lua, "__abcelua_scope");
   lua_pushlightuserdata(lua, abce);
   lua_setglobal(lua, "__abcelua_abce");
+  if (luaopen_caller)
+  {
+    luaopen_caller(lua, abce, mba);
+  }
   return lua;
 }
 
@@ -823,7 +828,7 @@ int abce_ensure_lua(struct abce_mb_area *mba, struct abce *abce)
   {
     return 0;
   }
-  mba->u.sc.lua = lua_create_abce(mba, abce);
+  mba->u.sc.lua = lua_create_abce(mba, abce, abce->luaopen_caller);
   if (mba->u.sc.lua == NULL)
   {
     return -ENOMEM;

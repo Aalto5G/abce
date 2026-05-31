@@ -1486,6 +1486,13 @@ static inline void abce_init(struct abce *abce)
   abce_init_opts(abce, 0);
 }
 
+#ifdef WITH_LUA
+static inline void abce_set_luaopen_caller(struct abce *abce, void (*luaopen_caller)(lua_State *lua, struct abce *abce, struct abce_mb_area *scope))
+{
+  abce->luaopen_caller = luaopen_caller;
+}
+#endif
+
 void abce_free_bt(struct abce *abce);
 
 void abce_free(struct abce *abce);

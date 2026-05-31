@@ -185,6 +185,9 @@ struct abce {
   size_t btcap;
   size_t btsz;
   struct abce_mb *btbase;
+#ifdef WITH_LUA
+  void (*luaopen_caller)(lua_State *lua, struct abce *abce, struct abce_mb_area *scope);
+#endif
 };
 
 #define ABCE_EMPTY {.userdata = NULL}
