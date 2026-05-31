@@ -567,6 +567,30 @@ static inline int abce_cpush_boolean(struct abce *abce, int val)
   abce->csp++;
   return 0;
 }
+static inline int8_t abce_uint8_to_int8(uint8_t u)
+{
+  if (u > INT8_MAX)
+  {
+    return (int8_t)(((int)u) - (((int)UINT8_MAX)+1));
+  }
+  return (int8_t)u;
+}
+static inline int16_t abce_uint16_to_int16(uint16_t u)
+{
+  if (u > INT16_MAX)
+  {
+    return (int16_t)(((long)u) - (((long)UINT16_MAX)+1));
+  }
+  return (int16_t)u;
+}
+static inline int32_t abce_uint32_to_int32(uint32_t u)
+{
+  if (u > INT32_MAX)
+  {
+    return (int32_t)(((long long)u) - (((long long)UINT32_MAX)+1));
+  }
+  return (int32_t)u;
+}
 static inline char abce_uchar_to_char(unsigned char uch)
 {
   if (CHAR_MIN < 0 && uch > CHAR_MAX)
@@ -622,6 +646,66 @@ static inline unsigned long long abce_to_ull(double dbl)
     return ULLONG_MAX;
   }
   return (unsigned long long)dbl;
+}
+static inline uint8_t abce_to_u8(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return UINT8_MAX;
+  }
+  if (dbl < 0 || dbl > UINT8_MAX)
+  {
+    return UINT8_MAX;
+  }
+  return (uint8_t)dbl;
+}
+static inline uint16_t abce_to_u16(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return UINT16_MAX;
+  }
+  if (dbl < 0 || dbl > UINT16_MAX)
+  {
+    return UINT16_MAX;
+  }
+  return (uint16_t)dbl;
+}
+static inline int8_t abce_to_i8(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return INT8_MIN;
+  }
+  if (dbl < INT8_MIN || dbl > INT8_MAX)
+  {
+    return INT8_MIN;
+  }
+  return (int8_t)dbl;
+}
+static inline int16_t abce_to_i16(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return INT16_MIN;
+  }
+  if (dbl < INT16_MIN || dbl > INT16_MAX)
+  {
+    return INT16_MIN;
+  }
+  return (int16_t)dbl;
+}
+static inline int32_t abce_to_i32(double dbl)
+{
+  if (!isfinite(dbl))
+  {
+    return INT32_MIN;
+  }
+  if (dbl < INT32_MIN || dbl > INT32_MAX)
+  {
+    return INT32_MIN;
+  }
+  return (int32_t)dbl;
 }
 static inline int64_t abce_to_i64(double dbl)
 {

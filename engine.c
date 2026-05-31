@@ -3912,19 +3912,19 @@ outpbset:
           switch (i)
           {
             case 0:
-              if (abce_push_double(abce, (uint8_t)(int8_t)d) != 0)
+              if (abce_push_double(abce, (uint8_t)abce_to_i8(d)) != 0)
               {
                 abce_maybeabort();
               }
               break;
             case 1:
-              if (abce_push_double(abce, (uint16_t)(int16_t)d) != 0)
+              if (abce_push_double(abce, (uint16_t)abce_to_i16(d)) != 0)
               {
                 abce_maybeabort();
               }
               break;
             case 2:
-              if (abce_push_double(abce, (uint32_t)(int32_t)d) != 0)
+              if (abce_push_double(abce, (uint32_t)abce_to_i32(d)) != 0)
               {
                 abce_maybeabort();
               }
@@ -3964,19 +3964,19 @@ outpbset:
           switch (i)
           {
             case 0:
-              if (abce_push_double(abce, (int8_t)(uint8_t)d) != 0)
+              if (abce_push_double(abce, abce_uint8_to_int8(abce_to_u8(d))) != 0)
               {
                 abce_maybeabort();
               }
               break;
             case 1:
-              if (abce_push_double(abce, (int16_t)(uint16_t)d) != 0)
+              if (abce_push_double(abce, abce_uint16_to_int16(abce_to_u16(d))) != 0)
               {
                 abce_maybeabort();
               }
               break;
             case 2:
-              if (abce_push_double(abce, (int32_t)(uint32_t)d) != 0)
+              if (abce_push_double(abce, abce_uint32_to_int32(abce_to_u32(d))) != 0)
               {
                 abce_maybeabort();
               }
