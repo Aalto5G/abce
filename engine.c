@@ -3430,8 +3430,10 @@ outpbset:
         {
           double loc;
           size_t addr;
+          int64_t i64loc;
           GETDBL(&loc, -1);
-          if (loc != (double)abce_to_i64(loc) || loc < INT64_MIN + 1)
+          i64loc = abce_to_i64(loc);
+          if (loc != (double)i64loc || i64loc < INT64_MIN + 1)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3439,11 +3441,11 @@ outpbset:
             ret = -EINVAL;
             break;
           }
-          if (loc < 0)
+          if (i64loc < 0)
           {
-            loc -= 1;
+            i64loc -= 1;
           }
-          if (abce_calc_addr(&addr, abce, loc) != 0)
+          if (abce_calc_addr(&addr, abce, i64loc) != 0)
           {
             ret = -EOVERFLOW;
             break;
@@ -3456,8 +3458,10 @@ outpbset:
           struct abce_mb *mb;
           double loc;
           size_t addr;
+          int64_t i64loc;
           GETDBL(&loc, -2);
-          if (loc != (double)abce_to_i64(loc) || loc < INT64_MIN + 2)
+          i64loc = abce_to_i64(loc);
+          if (loc != (double)i64loc || i64loc < INT64_MIN + 2)
           {
             abce->err.code = ABCE_E_STACK_IDX_NOT_UINT;
             abce->err.mb.typ = ABCE_T_D;
@@ -3468,11 +3472,11 @@ outpbset:
           GETMBPTR(&mb, -1);
           //POP();
           //POP();
-	  if (loc < 0)
+	  if (i64loc < 0)
 	  {
-            loc -= 2;
+            i64loc -= 2;
 	  }
-          if (abce_calc_addr(&addr, abce, loc) != 0)
+          if (abce_calc_addr(&addr, abce, i64loc) != 0)
           {
             ret = -EOVERFLOW;
             break;

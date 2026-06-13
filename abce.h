@@ -617,7 +617,7 @@ static inline long abce_to_long(double dbl)
   {
     return LONG_MIN;
   }
-  if (dbl < LONG_MIN || dbl > LONG_MAX)
+  if (dbl < (double)LONG_MIN || dbl > (double)LONG_MAX)
   {
     return LONG_MIN;
   }
@@ -629,7 +629,7 @@ static inline long long abce_to_ll(double dbl)
   {
     return LLONG_MIN;
   }
-  if (dbl < LLONG_MIN || dbl > LLONG_MAX)
+  if (dbl < (double)LLONG_MIN || dbl > (double)LLONG_MAX)
   {
     return LLONG_MIN;
   }
@@ -641,7 +641,7 @@ static inline unsigned long long abce_to_ull(double dbl)
   {
     return ULLONG_MAX;
   }
-  if (dbl < 0 || dbl > ULLONG_MAX)
+  if (dbl < 0 || dbl > (double)ULLONG_MAX)
   {
     return ULLONG_MAX;
   }
@@ -713,7 +713,7 @@ static inline int64_t abce_to_i64(double dbl)
   {
     return INT64_MIN;
   }
-  if (dbl < INT64_MIN || dbl > INT64_MAX)
+  if (dbl < (double)INT64_MIN || dbl > (double)INT64_MAX)
   {
     return INT64_MIN;
   }
@@ -725,7 +725,7 @@ static inline uint64_t abce_to_u64(double dbl)
   {
     return UINT64_MAX;
   }
-  if (dbl < 0 || dbl > UINT64_MAX)
+  if (dbl < 0 || dbl > (double)UINT64_MAX)
   {
     return UINT64_MAX;
   }
@@ -749,7 +749,7 @@ static inline size_t abce_to_size(double dbl)
   {
     return SIZE_MAX;
   }
-  if (dbl < 0 || dbl > SIZE_MAX)
+  if (dbl < 0 || dbl > (double)SIZE_MAX)
   {
     return SIZE_MAX;
   }
@@ -764,11 +764,11 @@ static inline int abce_is_int(double dbl)
     return 0;
   }
   is_small = (dbl+1 != dbl || dbl-1 != dbl);
-  if (dbl >= INTMAX_MIN && dbl <= INTMAX_MAX)
+  if (dbl >= (double)INTMAX_MIN && dbl <= (double)INTMAX_MAX)
   {
     is_int = ((double)(intmax_t)dbl == dbl);
   }
-  else if (dbl >= 0 && dbl <= UINTMAX_MAX)
+  else if (dbl >= 0 && dbl <= (double)UINTMAX_MAX)
   {
     is_int = ((double)(uintmax_t)dbl == dbl);
   }
