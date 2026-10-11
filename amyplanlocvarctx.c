@@ -1,4 +1,5 @@
 #include "amyplanlocvarctx.h"
+#include "wyhash.h"
 
 struct amyplan_locvarctx *amyplan_locvarctx_breakcontinue(struct amyplan_locvarctx *ctx, size_t levels)
 {
@@ -81,7 +82,8 @@ void amyplan_locvarctx_free(struct amyplan_locvarctx *ctx)
 static inline uint32_t abce_str_hash(const char *str)
 {
   size_t len = strlen(str);
-  return abce_murmur_buf(0x12345678U, str, len);
+  return wyhash(str, len, 0, _wyp);
+  //return abce_murmur_buf(0x12345678U, str, len);
 }
 
 static inline int amyplan_locvar_str_cmp_asym(const void *strv, struct abce_rb_tree_node *n2, void *ud)

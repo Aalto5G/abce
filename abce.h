@@ -2,6 +2,7 @@
 #define _ABCE_H_
 
 #include "abcedatatypes.h"
+#include "wyhash.h"
 #include "abcelikely.h"
 #include <limits.h>
 #include <stdint.h>
@@ -1145,12 +1146,14 @@ abce_mb_cpush_create_string_nul(struct abce *abce, const char *str)
 static inline uint32_t abce_str_hash(const char *str)
 {
   size_t len = strlen(str);
-  return abce_murmur_buf(0x12345678U, str, len);
+  return wyhash(str, len, 0, _wyp);
+  //return abce_murmur_buf(0x12345678U, str, len);
 }
 static inline uint32_t abce_str_len_hash(const struct abce_const_str_len *str_len)
 {
   size_t len = str_len->len;
-  return abce_murmur_buf(0x12345678U, str_len->str, len);
+  return wyhash(str_len->str, len, 0, _wyp);
+  //return abce_murmur_buf(0x12345678U, str_len->str, len);
 }
 static inline uint32_t abce_mb_str_hash(const struct abce_mb *mb)
 {
@@ -1158,7 +1161,8 @@ static inline uint32_t abce_mb_str_hash(const struct abce_mb *mb)
   {
     abort();
   }
-  return abce_murmur_buf(0x12345678U, abce_mba_str(mb->u.area), mb->u.area->u.str.size);
+  return wyhash(abce_mba_str(mb->u.area), mb->u.area->u.str.size, 0, _wyp);
+  //return abce_murmur_buf(0x12345678U, abce_mba_str(mb->u.area), mb->u.area->u.str.size);
 }
 static inline int abce_str_cache_cmp_asymlen(const void *str_lenv, struct abce_rb_tree_node *n2, void *ud)
 {
