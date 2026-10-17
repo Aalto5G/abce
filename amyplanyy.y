@@ -749,7 +749,7 @@ statement:
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_STACK);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_TYPE);
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_PUSH_DBL);
-    amyplanyy_add_double(amyplanyy, ABCE_T_N);
+    amyplanyy_add_double(amyplanyy, abce_typemangle(ABCE_T_N));
     amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_NE);
     size_t addressof_break = get_abce(amyplanyy)->bytecodesz;
   //midpoint:
