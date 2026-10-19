@@ -4,6 +4,46 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stddef.h>
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define ALIGN (_Alignof(max_align_t))
+#else
+static inline size_t get_max_align_compatibility(void)
+{
+  size_t res = 8;
+  if (sizeof(void*) > res) res *= 2;
+  if (sizeof(void*) > res) res *= 2;
+  if (sizeof(void*) > res) res *= 2;
+  if (sizeof(void*) > res) res *= 2;
+  if (sizeof(void(*)(void)) > res) res *= 2;
+  if (sizeof(void(*)(void)) > res) res *= 2;
+  if (sizeof(void(*)(void)) > res) res *= 2;
+  if (sizeof(void(*)(void)) > res) res *= 2;
+  if (sizeof(ptrdiff_t) > res) res *= 2;
+  if (sizeof(ptrdiff_t) > res) res *= 2;
+  if (sizeof(ptrdiff_t) > res) res *= 2;
+  if (sizeof(ptrdiff_t) > res) res *= 2;
+  if (sizeof(size_t) > res) res *= 2;
+  if (sizeof(size_t) > res) res *= 2;
+  if (sizeof(size_t) > res) res *= 2;
+  if (sizeof(size_t) > res) res *= 2;
+  if (sizeof(long long) > res) res *= 2;
+  if (sizeof(long long) > res) res *= 2;
+  if (sizeof(long long) > res) res *= 2;
+  if (sizeof(long long) > res) res *= 2;
+  if (sizeof(unsigned long long) > res) res *= 2;
+  if (sizeof(unsigned long long) > res) res *= 2;
+  if (sizeof(unsigned long long) > res) res *= 2;
+  if (sizeof(unsigned long long) > res) res *= 2;
+  if (sizeof(double) > res) res *= 2;
+  if (sizeof(double) > res) res *= 2;
+  if (sizeof(double) > res) res *= 2;
+  if (sizeof(double) > res) res *= 2;
+  return res;
+}
+#define ALIGN (get_max_align_compatibility())
+#endif
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
@@ -92,35 +132,35 @@ void *abce_jmalloc(size_t sz)
   else
   {
     lookupval = abce_lookup[(sz+15)/16];
-    if (lookupval == 0 && sizeof(struct jmalloc_block) > 16)
+    if (lookupval == 0 && (sizeof(struct jmalloc_block) > 16 || ALIGN > 16))
     {
       lookupval = 1;
     }
-    if (lookupval == 1 && sizeof(struct jmalloc_block) > 32)
+    if (lookupval == 1 && (sizeof(struct jmalloc_block) > 32 || ALIGN > 32))
     {
       lookupval = 2;
     }
-    if (lookupval == 2 && sizeof(struct jmalloc_block) > 64)
+    if (lookupval == 2 && (sizeof(struct jmalloc_block) > 64 || ALIGN > 64))
     {
       lookupval = 3;
     }
-    if (lookupval == 3 && sizeof(struct jmalloc_block) > 128)
+    if (lookupval == 3 && (sizeof(struct jmalloc_block) > 128 || ALIGN > 128))
     {
       lookupval = 4;
     }
-    if (lookupval == 4 && sizeof(struct jmalloc_block) > 256)
+    if (lookupval == 4 && (sizeof(struct jmalloc_block) > 256 || ALIGN > 256))
     {
       lookupval = 5;
     }
-    if (lookupval == 5 && sizeof(struct jmalloc_block) > 512)
+    if (lookupval == 5 && (sizeof(struct jmalloc_block) > 512 || ALIGN > 512))
     {
       lookupval = 6;
     }
-    if (lookupval == 6 && sizeof(struct jmalloc_block) > 1024)
+    if (lookupval == 6 && (sizeof(struct jmalloc_block) > 1024 || ALIGN > 1024))
     {
       lookupval = 7;
     }
-    if (sizeof(struct jmalloc_block) > 2048)
+    if (sizeof(struct jmalloc_block) > 2048 || ALIGN > 2048)
     {
       abort();
     }
