@@ -40,6 +40,10 @@ static inline size_t get_max_align_compatibility(void)
   if (sizeof(double) > res) res *= 2;
   if (sizeof(double) > res) res *= 2;
   if (sizeof(double) > res) res *= 2;
+  if (sizeof(long double) > res) res *= 2;
+  if (sizeof(long double) > res) res *= 2;
+  if (sizeof(long double) > res) res *= 2;
+  if (sizeof(long double) > res) res *= 2;
   return res;
 }
 #define ALIGN (get_max_align_compatibility())
