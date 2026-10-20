@@ -1126,6 +1126,59 @@ abce_mid(struct abce *abce, uint16_t ins, unsigned char *addcode, size_t addsz)
       }
       return 0;
     }
+    case ABCE_OPCODE_STRLISTRMDUPES:
+    {
+      struct abce_mb *mbar, *mbar2, *mbt;
+      struct abce_mb *mbdummy;
+      const struct abce_mb mbnil = {.typ = ABCE_T_N};
+      size_t i;
+
+      VERIFYMB(-1, ABCE_T_A);
+      GETMBARPTR(&mbar, -1);
+      mbt = abce_mb_cpush_create_tree(abce);
+      if (mbt == NULL)
+      {
+        return -ENOMEM;
+      }
+      mbar2 = abce_mb_cpush_create_array(abce);
+      if (mbar2 == NULL)
+      {
+        abce_cpop(abce);
+        return -ENOMEM;
+      }
+      for (i = 0; i < mbar->u.area->u.ar.size; i++)
+      {
+        const struct abce_mb *mb = &mbar->u.area->u.ar.mbs[i];
+        if (mb->typ != ABCE_T_S)
+        {
+          abce_cpop(abce);
+          abce_cpop(abce);
+          abce->err.code = ABCE_E_EXPECT_STR;
+          abce_mb_errreplace_noinline(abce, mb);
+          return -EINVAL;
+        }
+        if (abce_tree_get_str(abce, &mbdummy, mbt, mb) == 0)
+        {
+          continue;
+        }
+        if (abce_tree_set_str(abce, mbt, mb, &mbnil) != 0)
+        {
+          abce_cpop(abce);
+          abce_cpop(abce);
+          return -ENOMEM;
+        }
+        if (abce_mb_array_append(abce, mbar2, mb) != 0)
+        {
+          abce_cpop(abce);
+          abce_cpop(abce);
+          return -ENOMEM;
+        }
+      }
+      abce_npoppushc(abce, 1);
+      abce_cpop(abce);
+      abce_cpop(abce);
+      return 0;
+    }
     case ABCE_OPCODE_STRLISTJOIN:
     {
       struct abce_mb *mbar, *mbjoiner;

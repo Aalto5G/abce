@@ -144,6 +144,7 @@ struct amyplan_csnippet luaSnippet = {
 @strstr return STRSTR;
 @strrep return STRREP;
 @strlistjoin return STRLISTJOIN;
+@strlistrmdupes return STRLISTRMDUPES;
 @strappend return STRAPPEND;
 @strstrip return STRSTRIP;
 @strsub return STRSUB;

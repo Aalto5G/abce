@@ -155,6 +155,7 @@ enum abce_opcode {
   ABCE_OPCODE_JSON_DECODE_TEST = 203,
   ABCE_OPCODE_LOGICAL_AND = 204, // not used
   ABCE_OPCODE_LOGICAL_OR = 205, // not used
+  ABCE_OPCODE_STRLISTRMDUPES = 206,
 };
 // FIXME hypot? round? erf? signum? log1p? expm1? cbrt? pow?
 

@@ -129,7 +129,7 @@ static void amyplanyy_add_corresponding_set(struct amyplanyy *amyplanyy, double 
 
 %token DICTNEXT DICTPREV
 %token STR_FROMCHR STR_LOWER STR_UPPER STR_REVERSE STRCMP STRSTR STRREP
-%token STRLISTJOIN STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
+%token STRLISTJOIN STRLISTRMDUPES STRAPPEND STRSTRIP STRSUB STRGSUB STRSET
 %token STRWORD STRWORDCNT STRWORDLIST
 %token SPLICE
 %token JSONENC JSONDEC JSONTEST
@@ -1871,6 +1871,8 @@ expr0_without_string:
 }
 | STRLISTJOIN OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLISTJOIN); }
+| STRLISTRMDUPES OPEN_PAREN expr CLOSE_PAREN
+{ if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRLISTRMDUPES); }
 | STRAPPEND OPEN_PAREN expr COMMA expr CLOSE_PAREN
 { if (amyplanyy_do_emit(amyplanyy)) amyplanyy_add_byte(amyplanyy, ABCE_OPCODE_STRAPPEND); }
 | STRSTRIP OPEN_PAREN expr COMMA expr CLOSE_PAREN
