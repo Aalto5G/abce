@@ -2918,6 +2918,9 @@ static struct abce_mb abce_fun_stringify(struct abce *abce, int64_t ip, unsigned
       case ABCE_OPCODE_PUSH_DBL:
         abce->ip += 8;
         break;
+      case ABCE_OPCODE_PUSH_INT:
+        abce->ip += 8;
+        break;
       case ABCE_OPCODE_FUN_TRAILER:
         //printf("Trailer\n");
         if (abce_fetch_d(&dbl, abce, addcode, addsz) != 0)
