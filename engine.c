@@ -2916,10 +2916,10 @@ static struct abce_mb abce_fun_stringify(struct abce *abce, int64_t ip, unsigned
     switch (ins)
     {
       case ABCE_OPCODE_PUSH_DBL:
-        abce->ip += 8;
+        abce->ip += (int)sizeof(double);
         break;
       case ABCE_OPCODE_PUSH_INT:
-        abce->ip += 8;
+        abce->ip += (int)sizeof(double);
         break;
       case ABCE_OPCODE_FUN_TRAILER:
         //printf("Trailer\n");

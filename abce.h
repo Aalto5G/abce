@@ -29,6 +29,10 @@ void *abce_jm_alloc(void *old, size_t oldsz, size_t newsz, void **pbaton);
 static inline int is_little_endian(void)
 {
   double d;
+  if (sizeof(double) != 8)
+  {
+    return 0; // Not IEEE 754, maybe we should warn
+  }
   memcpy(&d, "\x00\x00\x00\x00\x00\x00I@", 8);
   if (d == 50.0)
   {
@@ -39,7 +43,7 @@ static inline int is_little_endian(void)
   {
     return 0;
   }
-  abort(); // Not IEEE 754
+  return 0; // Not IEEE 754, maybe we should warn
 }
 
 static inline uint16_t abce_bswap16(uint16_t u16)
@@ -63,6 +67,11 @@ static inline uint32_t abce_bswap32(uint32_t u32)
 static inline void abce_put_dbl(double dbl, void *dest)
 {
   uint64_t u64;
+  if (sizeof(double) != 8)
+  {
+    memcpy(dest, &dbl, sizeof(double));
+    return;
+  }
   memcpy(&u64, &dbl, sizeof(u64));
   if (is_little_endian())
   {
@@ -81,7 +90,7 @@ static inline void abce_put_dbl(double dbl, void *dest)
 
 static inline int abce_set_double(struct abce *abce, size_t idx, double dbl)
 {
-  if (idx + 8 > abce->bytecodesz)
+  if (idx + sizeof(double) > abce->bytecodesz)
   {
     return -EFAULT;
   }
@@ -93,12 +102,12 @@ static inline int
 abce_add_double_alt(void *bcode, size_t *bsz, size_t cap, double dbl)
 {
   unsigned char *bytecode = (unsigned char*)bcode;
-  if ((*bsz) + 8 > cap)
+  if ((*bsz) + sizeof(double) > cap)
   {
     return -EFAULT;
   }
   abce_put_dbl(dbl, &bytecode[*bsz]);
-  (*bsz) += 8;
+  (*bsz) += (int)sizeof(double);
   return 0;
 }
 void abce_double_bytecode(struct abce *abce);
@@ -107,7 +116,7 @@ void abce_double_cache(struct abce *abce);
 
 static inline int abce_add_double(struct abce *abce, double dbl)
 {
-  if (abce->bytecodesz + 8 > abce->bytecodecap)
+  if (abce->bytecodesz + sizeof(double) > abce->bytecodecap)
   {
     abce_double_bytecode(abce);
   }
@@ -1591,6 +1600,11 @@ abce_fetch_b(uint8_t *b, struct abce *abce, unsigned char *addcode, size_t addsz
 static inline void abce_get_dbl(double *dbl, const void *src)
 {
   uint64_t u64;
+  if (sizeof(double) != 8)
+  {
+    memcpy(dbl, src, sizeof(double));
+    return;
+  }
   memcpy(&u64, src, sizeof(u64));
   if (is_little_endian())
   {
@@ -1612,8 +1626,8 @@ static inline int
 abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
 {
   const size_t guard = ABCE_GUARD;
-  if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip+8 <= abce->bytecodesz) ||
-        (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip+8 <= -(int64_t)guard))))
+  if (abce_unlikely(!((abce->ip >= 0 && (size_t)abce->ip+(int)sizeof(double) <= abce->bytecodesz) ||
+        (abce->ip >= -(int64_t)addsz-(int64_t)guard && abce->ip+(int)sizeof(double) <= -(int64_t)guard))))
   {
     abce->err.code = ABCE_E_BYTECODE_FAULT;
     abce->err.mb.typ = ABCE_T_D;
@@ -1623,11 +1637,11 @@ abce_fetch_d(double *d, struct abce *abce, unsigned char *addcode, size_t addsz)
   if (abce->ip >= 0)
   {
     abce_get_dbl(d, abce->bytecode + abce->ip);
-    abce->ip += 8;
+    abce->ip += (int)sizeof(double);
     return 0;
   }
   abce_get_dbl(d, addcode + abce->ip + guard + addsz);
-  abce->ip += 8;
+  abce->ip += (int)sizeof(double);
   return 0;
 }
 
