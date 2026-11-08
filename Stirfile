@@ -17,6 +17,14 @@ $(CFLAGS) ?= @nil
   @endif
 @endif
 
+$(AR) ?= @nil
+@if(@type($(AR)) == @type(@nil))
+  $(AR) ``= ["sh", "-c", "echo $AR"]
+  @if($(AR)[] == 0)
+    $(AR) = ["ar"]
+  @endif
+@endif
+
 $(FLEX) ?= @nil
 @if(@type($(FLEX)) == @type(@nil))
   $(FLEX) ``= ["sh", "-c", "echo $FLEX"]
@@ -103,7 +111,7 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 
 'libabce.a': $(OBJ_LIB) $(OBJGEN_LIB)
 @	["rm", "-f", $@]
-@	["ar", "rvs", $@, @@suffilter($^, ".o")]
+@	[@$(AR), "rvs", $@, @@suffilter($^, ".o")]
 
 @function $ADD_LEXX_YACC_DEPS($lex)
   @locvar $b = @sufsuball($lex, ".l", "")
