@@ -36,6 +36,9 @@ $(FLEX) ?= @nil
     $(FLEX) = ["flex"]
   @endif
 @endif
+@if($(FLEX)[] == 1 && @strcmp($(FLEX)[0], "false") == 0)
+  $(FLEX_AVAILABLE) ?= @false
+@endif
 $(FLEX_AVAILABLE) ?= @true
 
 $(BYACC) ?= @nil
@@ -48,6 +51,9 @@ $(BYACC) ?= @nil
     @endif
     $(BYACC) = ["byacc"]
   @endif
+@endif
+@if($(BYACC)[] == 1 && @strcmp($(BYACC)[0], "false") == 0)
+  $(BYACC_AVAILABLE) ?= @false
 @endif
 $(BYACC_AVAILABLE) ?= @true
 
