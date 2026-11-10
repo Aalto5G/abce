@@ -55,6 +55,7 @@ $(BYACC_AVAILABLE) ?= @true
 $(WITH_LUA) ?= @false
 $(LUAINCS) ?= ["-I/usr/include/luajit-2.1"]
 $(LUALIBS) ?= ["/usr/lib/x86_64-linux-gnu/libluajit-5.1.a"]
+$(LIBS) ?= []
 
 # You can modify these during development
 $(SRC_LIB) = ["amyplanyyutils.c", "memblock.c", "abcerbtree.c", \
@@ -95,7 +96,7 @@ $(PROG) = @sufsuball($(SRC_PROG), ".c", "")
 @	["wc", "-l", @$(LEX_LIB), @$(YACC_LIB), @$(SRC), @@suffilterout(@suffilterout(@glob("*.h"),".lex.h"),".tab.h")]
 
 @patrule @distrule: $(PROG): '%': '%.o' 'libabce.a'
-@	[@$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), '-lm']
+@	[@$(CC), @$(CFLAGS), "-o", $@, $<, 'libabce.a', @$(LUALIBS), @$(LIBS), '-lm']
 
 @patrule: $(OBJ): '%.o': '%.c' '%.d'
 @	[@$(CC), @$(CFLAGS), "-c", "-o", $@, $<]
